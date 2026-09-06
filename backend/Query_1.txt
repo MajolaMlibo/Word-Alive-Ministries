@@ -1,0 +1,69 @@
+-- 1. Profiles Table (Linked to Supabase Auth)
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    name VARCHAR(255),
+    current_streak INT DEFAULT 0,
+    is_admin BOOLEAN DEFAULT FALSE,
+    text_size VARCHAR(50) DEFAULT 'medium',
+    high_contrast BOOLEAN DEFAULT FALSE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Daily Readings Table
+CREATE TABLE daily_readings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scheduled_date DATE NOT NULL,
+    scripture_ref VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    audio_url VARCHAR(500),
+    week_number INT,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3. Bible Studies Table
+CREATE TABLE bible_studies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    study_name VARCHAR(255) NOT NULL,
+    chapter VARCHAR(255) NOT NULL,
+    scheduled_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 4. User Progress Table
+CREATE TABLE user_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    reading_id UUID REFERENCES daily_readings(id) ON DELETE CASCADE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 5. Prayer Requests Table
+CREATE TABLE prayer_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    description TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'Pending',
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    is_public BOOLEAN DEFAULT FALSE,
+    pray_count INT DEFAULT 0,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6. Announcements Table
+CREATE TABLE announcements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message TEXT NOT NULL,
+    broadcast_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 7. Live Streams Table
+CREATE TABLE live_streams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    platform VARCHAR(100) DEFAULT 'TikTok',
+    stream_url VARCHAR(500) NOT NULL,
+    is_live BOOLEAN DEFAULT FALSE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);

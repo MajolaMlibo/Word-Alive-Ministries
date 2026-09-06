@@ -1,0 +1,11 @@
+Word Alive Ministries/
+├── app/                  # Mobile & Web App code
+│   ├── assets/           # Images, fonts & logos
+│   ├── src/
+│   │   ├── components/   # Reusable UI parts (buttons, reading cards)
+│   │   ├── screens/      # Home, Bible Study, Profile
+│   │   ├── services/     # API calls and backend integration
+│   │   └── utils/        # Helper functions and styling themes
+├── admin-dashboard/      # Web-based Admin Portal
+├── backend/              # Cloud functions and database rules
+└── docs/                 # Formal SPMP, use cases, and diagrams
