@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { fetchScripture } from '../services/bibleService';
 import { supabase } from '../services/supabase';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [reading, setReading] = useState<any>(null);
   const [scripture, setScripture] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const getFormattedDate = () => {
+        const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+        return new Date().toLocaleDateString('en-GB', options); // Outputs format like "7 September 2026"
+      };
 
 useEffect(() => {
     loadTodayScripture();
@@ -39,13 +44,14 @@ useEffect(() => {
 
       {/* Today's Scripture Card */}
       <View style={styles.card}>
-        <Text style={styles.dateBadge}>27 August 2026</Text>
+        <Text style={styles.dateBadge}>{getFormattedDate()}</Text>
         <Text style={styles.title}>{scripture?.reference || 'Romans 8:1-17'}</Text>
         <Text style={styles.snippet}>"{scripture?.text}"</Text>
         
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>READ TODAY'S SCRIPTURE </Text>
-        </TouchableOpacity>
+  <Ionicons name="book-outline" size={20} color="#000" style={{ marginRight: 8 }} />
+  <Text style={styles.buttonText}>READ TODAY'S SCRIPTURE</Text>
+</TouchableOpacity>
       </View>
     </ScrollView>
   );
