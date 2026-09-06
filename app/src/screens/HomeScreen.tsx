@@ -47,7 +47,7 @@ export default function HomeScreen() {
         <Text style={styles.snippet}>"{reading?.content}"</Text>
         
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>READ TODAY'S SCRIPTURE ></Text>
+          <Text style={styles.buttonText}>READ TODAY'S SCRIPTURE </Text>
         </TouchableOpacity>
       </View>
     </View>
