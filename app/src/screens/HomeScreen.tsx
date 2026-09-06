@@ -1,27 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { fetchScripture } from '../services/bibleService';
 import { supabase } from '../services/supabase';
 
 export default function HomeScreen() {
   const [reading, setReading] = useState<any>(null);
+  const [scripture, setScripture] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTodayReading();
+useEffect(() => {
+    loadTodayScripture();
   }, []);
 
-  const fetchTodayReading = async () => {
+  const loadTodayScripture = async () => {
     try {
-      const { data, error } = await supabase
-        .from('daily_readings')
-        .select('*')
-        .eq('scheduled_date', '2026-08-27') 
-        .single();
-
-      if (error) throw error;
-      setReading(data);
+      // Fetching Romans 8:1-17 live via our API service with caching
+      const data = await fetchScripture('Romans 8:1-17');
+      setScripture(data);
     } catch (error) {
-      console.error('Error fetching reading:', error);
+      console.error('Failed to load scripture on home screen:', error);
     } finally {
       setLoading(false);
     }
@@ -36,21 +33,21 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.greeting}>Good morning, Qiniso</Text>
       <Text style={styles.subGreeting}>Welcome to Word Alive Ministries</Text>
 
       {/* Today's Scripture Card */}
       <View style={styles.card}>
-        <Text style={styles.dateBadge}>{reading?.scheduled_date}</Text>
-        <Text style={styles.title}>{reading?.scripture_ref}</Text>
-        <Text style={styles.snippet}>"{reading?.content}"</Text>
+        <Text style={styles.dateBadge}>27 August 2026</Text>
+        <Text style={styles.title}>{scripture?.reference || 'Romans 8:1-17'}</Text>
+        <Text style={styles.snippet}>"{scripture?.text}"</Text>
         
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>READ TODAY'S SCRIPTURE </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
