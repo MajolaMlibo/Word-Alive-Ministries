@@ -9,18 +9,18 @@ import BibleCalendarScreen from './src/screens/BibleCalendarScreen';
 import StudyScreen from './src/screens/StudyScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
-// Temporary placeholder screens 
-const PlaceholderScreen = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#Fdfcf0' }}>
-    <Text style={{ fontSize: 20, color: '#004d00', fontWeight: 'bold' }}>{name} Screen Coming Soon...</Text>
-  </View>
-);
+// // Temporary placeholder screens 
+// const PlaceholderScreen = ({ name }: { name: string }) => (
+//   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#Fdfcf0' }}>
+//     <Text style={{ fontSize: 20, color: '#004d00', fontWeight: 'bold' }}>{name} Screen Coming Soon...</Text>
+//   </View>
+// );
 
-const DailyReadingScreen = () => <PlaceholderScreen name="Daily Reading Screen" />;
-const BibleCalendarScreen = () => <PlaceholderScreen name="Bible Calander" />;
-const StudyScreen = () => <PlaceholderScreen name="Study" />;
-const ProfileScreen = () => <PlaceholderScreen name="Profile" />;
-///////////////////////////////////////////////////////////////////////////
+// const DailyReadingScreen = () => <PlaceholderScreen name="Daily Reading Screen" />;
+// const BibleCalendarScreen = () => <PlaceholderScreen name="Bible Calander" />;
+// const StudyScreen = () => <PlaceholderScreen name="Study" />;
+// const ProfileScreen = () => <PlaceholderScreen name="Profile" />;
+// ///////////////////////////////////////////////////////////////////////////
 
 const Tab = createBottomTabNavigator();
 
