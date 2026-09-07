@@ -8,37 +8,25 @@ import DailyReadingScreen from './src/screens/DailyReadingScreen';
 import BibleCalendarScreen from './src/screens/BibleCalendarScreen';
 import StudyScreen from './src/screens/StudyScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-
-// // Temporary placeholder screens 
-// const PlaceholderScreen = ({ name }: { name: string }) => (
-//   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#Fdfcf0' }}>
-//     <Text style={{ fontSize: 20, color: '#004d00', fontWeight: 'bold' }}>{name} Screen Coming Soon...</Text>
-//   </View>
-// );
-
-// const DailyReadingScreen = () => <PlaceholderScreen name="Daily Reading Screen" />;
-// const BibleCalendarScreen = () => <PlaceholderScreen name="Bible Calander" />;
-// const StudyScreen = () => <PlaceholderScreen name="Study" />;
-// const ProfileScreen = () => <PlaceholderScreen name="Profile" />;
-// ///////////////////////////////////////////////////////////////////////////
+import {AccessibilityProvider} from './src/theme/AccessibilityContext'
 
 const Tab = createBottomTabNavigator();
-
 export default function App() {
   return (
+<AccessibilityProvider>
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={ ({ route }) =>({
           tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
+            let iconName: keyof typeof Ionicons.glyphMap = 'calendar-outline';
 
             if (route.name === 'Home') {
               iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'BibleCalendar') {
+            } else if (route.name === 'Calendar') {
               iconName = focused ? 'calendar' : 'calendar-outline';
-            } else if (route.name === 'DailyReading') {
+            } else if (route.name === 'Bible') {
               iconName = focused ? 'book' : 'book-outline';
-            } else if (route.name === 'Prayer') {
+            } else if (route.name === 'Study') {
               iconName = focused ? 'school' : 'school-outline';
             } else if (route.name === 'Profile') {
               iconName = focused ? 'person' : 'person-outline';
@@ -46,7 +34,7 @@ export default function App() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: '#d8b906b8', // Ministry Gold
+          tabBarActiveTintColor: '#fedd21d8', // Ministry Gold
           tabBarInactiveTintColor: '#Fdfcf0', // Cream
           tabBarStyle: {
             backgroundColor: '#044b04af', // Ministry Green
@@ -67,5 +55,6 @@ export default function App() {
 
       </Tab.Navigator>
     </NavigationContainer>
+    </AccessibilityProvider>
   );
 }
