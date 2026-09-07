@@ -4,6 +4,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './src/screens/HomeScreen';
+import DailyReadingScreen from './src/screens/DailyReadingScreen';
+import BibleCalendarScreen from './src/screens/BibleCalendarScreen';
+import StudyScreen from './src/screens/StudyScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 // Temporary placeholder screens 
 const PlaceholderScreen = ({ name }: { name: string }) => (
@@ -12,10 +16,11 @@ const PlaceholderScreen = ({ name }: { name: string }) => (
   </View>
 );
 
-const CalendarScreen = () => <PlaceholderScreen name="Calendar" />;
-const BibleScreen = () => <PlaceholderScreen name="Bible" />;
+const DailyReadingScreen = () => <PlaceholderScreen name="Daily Reading Screen" />;
+const BibleCalendarScreen = () => <PlaceholderScreen name="Bible Calander" />;
 const StudyScreen = () => <PlaceholderScreen name="Study" />;
 const ProfileScreen = () => <PlaceholderScreen name="Profile" />;
+///////////////////////////////////////////////////////////////////////////
 
 const Tab = createBottomTabNavigator();
 
@@ -29,11 +34,11 @@ export default function App() {
 
             if (route.name === 'Home') {
               iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Calendar') {
+            } else if (route.name === 'BibleCalendar') {
               iconName = focused ? 'calendar' : 'calendar-outline';
-            } else if (route.name === 'Bible') {
+            } else if (route.name === 'DailyReading') {
               iconName = focused ? 'book' : 'book-outline';
-            } else if (route.name === 'Study') {
+            } else if (route.name === 'Prayer') {
               iconName = focused ? 'school' : 'school-outline';
             } else if (route.name === 'Profile') {
               iconName = focused ? 'person' : 'person-outline';
@@ -41,24 +46,25 @@ export default function App() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: '#e6c200', // Ministry Gold
+          tabBarActiveTintColor: '#d8b906b8', // Ministry Gold
           tabBarInactiveTintColor: '#Fdfcf0', // Cream
           tabBarStyle: {
-            backgroundColor: '#004d00', // Ministry Green
+            backgroundColor: '#044b04af', // Ministry Green
             paddingBottom: 5,
             height: 60,
           },
           headerStyle: {
-            backgroundColor: '#004d00',
+            backgroundColor: '#044b04af',
           },
           headerTintColor: '#Fdfcf0',
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Calendar" component={CalendarScreen} />
-        <Tab.Screen name="Bible" component={BibleScreen} />
+        <Tab.Screen name="Calendar" component={BibleCalendarScreen} />
+        <Tab.Screen name="Bible" component={DailyReadingScreen} />
         <Tab.Screen name="Study" component={StudyScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
+
       </Tab.Navigator>
     </NavigationContainer>
   );

@@ -12,8 +12,10 @@ export default function HomeScreen() {
 
   const getFormattedDate = () => {
         const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-        return new Date().toLocaleDateString('en-GB', options); // Outputs format like "7 September 2026"
+        return new Date().toLocaleDateString('en-GB', options); 
       };
+
+      
 
 useEffect(() => {
     loadDashboardData();
@@ -22,10 +24,13 @@ useEffect(() => {
   const loadDashboardData = async () => {
     try {
       // 1. Fetch Today's Scripture
+      
+      const today = new Date().toISOString().split('T')[0];
+
       const { data: readingData } = await supabase
         .from('daily_readings')
         .select('*')
-        .eq('scheduled_date', '2026-08-27')
+        .eq('scheduled_date', today)
         .single();
       setReading(readingData);
 
