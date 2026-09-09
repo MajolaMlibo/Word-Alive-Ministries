@@ -10,11 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
-import { fetchScripture } from '../services/bibleService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing, radii } from '../theme/theme';
-
-type Tab = 'read' | 'calendar';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -41,151 +38,13 @@ function toISODate(year: number, month: number, day: number) {
   return `${year}-${m}-${d}`;
 }
 
-export default function BibleCalendarScreen() {
+export default function Calendar() {
   const { colors, fonts } = useAccessibility();
-  const [tab, setTab] = useState<Tab>('read');
   const styles = makeStyles(colors, fonts);
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabRow}>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'read' && styles.tabButtonActive]}
-          onPress={() => setTab('read')}
-          accessibilityRole="button"
-          accessibilityLabel="Read the Bible"
-        >
-          <Ionicons
-            name="book-outline"
-            size={20}
-            color={tab === 'read' ? '#FFF' : colors.primary}
-          />
-          <Text style={[styles.tabText, tab === 'read' && styles.tabTextActive]}>
-            Read
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'calendar' && styles.tabButtonActive]}
-          onPress={() => setTab('calendar')}
-          accessibilityRole="button"
-          accessibilityLabel="View calendar"
-        >
-          <Ionicons
-            name="calendar-outline"
-            size={20}
-            color={tab === 'calendar' ? '#FFF' : colors.primary}
-          />
-          <Text style={[styles.tabText, tab === 'calendar' && styles.tabTextActive]}>
-            Calendar
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {tab === 'read' ? <BibleReader colors={colors} fonts={fonts} /> : <EventCalendar colors={colors} fonts={fonts} />}
-    </View>
-  );
-}
-
-// ---------- Read tab ----------
-
-function BibleReader({ colors, fonts }: any) {
-  const styles = makeStyles(colors, fonts);
-  const [book, setBook] = useState('John');
-  const [chapter, setChapter] = useState(1);
-  const [passage, setPassage] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [bookInput, setBookInput] = useState('John');
-
-  const load = useCallback(async (b: string, c: number) => {
-    setLoading(true);
-    try {
-      // Adjust to match the real signature of fetchScripture in
-      // services/bibleService.ts if it differs from (book, chapter).
-      const data = await fetchScripture(b);
-      setPassage(data);
-    } catch (e) {
-      console.error('Failed to load passage:', e);
-      setPassage(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load(book, chapter);
-  }, [book, chapter, load]);
-
-  function goToChapter(delta: number) {
-    const next = chapter + delta;
-    if (next < 1) return;
-    setChapter(next);
-  }
-
-  function submitBook() {
-    const trimmed = bookInput.trim();
-    if (!trimmed) return;
-    setBook(trimmed);
-    setChapter(1);
-  }
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.readerControls}>
-        <TextInput
-          style={styles.bookInput}
-          value={bookInput}
-          onChangeText={setBookInput}
-          onSubmitEditing={submitBook}
-          placeholder="Book, e.g. John"
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="go"
-          accessibilityLabel="Bible book name"
-        />
-        <View style={styles.chapterStepper}>
-          <TouchableOpacity
-            style={styles.stepperButton}
-            onPress={() => goToChapter(-1)}
-            accessibilityRole="button"
-            accessibilityLabel="Previous chapter"
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.chapterLabel}>Ch. {chapter}</Text>
-          <TouchableOpacity
-            style={styles.stepperButton}
-            onPress={() => goToChapter(1)}
-            accessibilityRole="button"
-            accessibilityLabel="Next chapter"
-          >
-            <Ionicons name="chevron-forward" size={22} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
-        <ScrollView style={styles.readerBody} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-          <Text style={styles.passageTitle}>
-            {book} {chapter}
-          </Text>
-          {passage?.verses?.length ? (
-            passage.verses.map((v: any) => (
-              <Text key={v.verse} style={styles.verseText}>
-                <Text style={styles.verseNumber}>{v.verse} </Text>
-                {v.text}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>
-              This passage could not be loaded. Check the book name and try again.
-            </Text>
-          )}
-        </ScrollView>
-      )}
+       <EventCalendar colors={colors} fonts={fonts} />
     </View>
   );
 }
@@ -359,15 +218,15 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    tabRow: {
-      flexDirection: 'row',
-      margin: spacing.lg,
-      backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      overflow: 'hidden',
-    },
+    // tabRow: {
+    //   flexDirection: 'row',
+    //   margin: spacing.lg,
+    //   backgroundColor: colors.surface,
+    //   borderRadius: radii.md,
+    //   borderWidth: 1,
+    //   borderColor: colors.borderSoft,
+    //   overflow: 'hidden',
+    // },
     tabButton: {
       flex: 1,
       flexDirection: 'row',
@@ -383,53 +242,6 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
       fontSize: fonts.body,
     },
     tabTextActive: { color: '#FFF' },
-
-    // reader
-    readerControls: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-    bookInput: {
-      backgroundColor: colors.surface,
-      borderRadius: radii.sm,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      fontSize: fonts.body,
-      color: colors.text,
-      marginBottom: spacing.sm,
-    },
-    chapterStepper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    stepperButton: {
-      padding: spacing.sm,
-      minWidth: 44,
-      minHeight: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    chapterLabel: {
-      fontSize: fonts.bodyLarge,
-      fontWeight: '700',
-      color: colors.primary,
-      marginHorizontal: spacing.md,
-    },
-    readerBody: { flex: 1, paddingHorizontal: spacing.lg },
-    passageTitle: {
-      fontSize: fonts.title,
-      fontWeight: '700',
-      color: colors.primary,
-      marginBottom: spacing.md,
-    },
-    verseText: {
-      fontSize: fonts.bodyLarge,
-      lineHeight: fonts.bodyLarge * 1.6,
-      color: colors.text,
-      marginBottom: spacing.xs,
-    },
-    verseNumber: { fontWeight: '700', color: colors.accentDeep },
-    emptyText: { fontSize: fonts.body, color: colors.textMuted, marginTop: spacing.md },
 
     // calendar
     calendarBody: { flex: 1, paddingHorizontal: spacing.lg },
@@ -490,7 +302,15 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
       padding: spacing.md,
       marginBottom: spacing.sm,
     },
+    stepperButton: {
+      padding: spacing.sm,
+      minWidth: 44,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     eventTitle: { fontSize: fonts.bodyLarge, fontWeight: '700', color: colors.primary },
     eventSubText: { fontSize: fonts.body, color: colors.textMuted, marginTop: 2 },
+    emptyText: { fontSize: fonts.body, color: colors.textMuted, marginTop: spacing.md },
   });
 }

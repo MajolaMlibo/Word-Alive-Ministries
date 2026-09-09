@@ -7,11 +7,13 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing, radii } from '../theme/theme';
+import { fetchScripture } from '../services/bibleService';
 
 export default function DailyReadingScreen() {
   const { colors, fonts } = useAccessibility();
@@ -107,8 +109,8 @@ export default function DailyReadingScreen() {
     return (
       <View style={styles.center}>
         <Ionicons name="book-outline" size={40} color={colors.textMuted} />
-        <Text style={styles.emptyText}>
-          No reading has been scheduled for today yet.
+        <Text style={styles.container}>
+           <BibleReader colors={colors} fonts={fonts} />
         </Text>
         <Text style={styles.emptySubText}>Please check back soon.</Text>
       </View>
@@ -155,6 +157,109 @@ export default function DailyReadingScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+  );
+}
+
+// ---------- Read tab ----------
+
+function BibleReader({ colors, fonts }: any) {
+  const styles = makeStyles(colors, fonts);
+  const [book, setBook] = useState('John');
+  const [chapter, setChapter] = useState(1);
+  const [passage, setPassage] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [bookInput, setBookInput] = useState('John');
+
+  const load = useCallback(async (b: string, c: number) => {
+    setLoading(true);
+    try {
+      // Adjust to match the real signature of fetchScripture in
+      // services/bibleService.ts if it differs from (book, chapter).
+      const data = await fetchScripture(b);
+      setPassage(data);
+    } catch (e) {
+      console.error('Failed to load passage:', e);
+      setPassage(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(book, chapter);
+  }, [book, chapter, load]);
+
+  function goToChapter(delta: number) {
+    const next = chapter + delta;
+    if (next < 1) return;
+    setChapter(next);
+  }
+
+  function submitBook() {
+    const trimmed = bookInput.trim();
+    if (!trimmed) return;
+    setBook(trimmed);
+    setChapter(1);
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.readerControls}>
+        <TextInput
+          style={styles.bookInput}
+          value={bookInput}
+          onChangeText={setBookInput}
+          onSubmitEditing={submitBook}
+          placeholder="Book, e.g. John"
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="go"
+          accessibilityLabel="Bible book name"
+        />
+        <View style={styles.chapterStepper}>
+          <TouchableOpacity
+            style={styles.stepperButton}
+            onPress={() => goToChapter(-1)}
+            accessibilityRole="button"
+            accessibilityLabel="Previous chapter"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.chapterLabel}>Ch. {chapter}</Text>
+          <TouchableOpacity
+            style={styles.stepperButton}
+            onPress={() => goToChapter(1)}
+            accessibilityRole="button"
+            accessibilityLabel="Next chapter"
+          >
+            <Ionicons name="chevron-forward" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <ScrollView style={styles.readerBody} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+          <Text style={styles.passageTitle}>
+            {book} {chapter}
+          </Text>
+          {passage?.verses?.length ? (
+            passage.verses.map((v: any) => (
+              <Text key={v.verse} style={styles.verseText}>
+                <Text style={styles.verseNumber}>{v.verse} </Text>
+                {v.text}
+              </Text>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>
+              This passage could not be loaded. Check the book name and try again.
+            </Text>
+          )}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
@@ -224,5 +329,51 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
     buttonDone: { backgroundColor: colors.primary },
     buttonText: { fontWeight: '700', color: colors.text, fontSize: fonts.body },
     buttonTextDone: { color: '#FFF' },
+
+        // reader
+    readerControls: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
+    bookInput: {
+      backgroundColor: colors.surface,
+      borderRadius: radii.sm,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      fontSize: fonts.body,
+      color: colors.text,
+      marginBottom: spacing.sm,
+    },
+    chapterStepper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepperButton: {
+      padding: spacing.sm,
+      minWidth: 44,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chapterLabel: {
+      fontSize: fonts.bodyLarge,
+      fontWeight: '700',
+      color: colors.primary,
+      marginHorizontal: spacing.md,
+    },
+    readerBody: { flex: 1, paddingHorizontal: spacing.lg },
+    passageTitle: {
+      fontSize: fonts.title,
+      fontWeight: '700',
+      color: colors.primary,
+      marginBottom: spacing.md,
+    },
+    verseText: {
+      fontSize: fonts.bodyLarge,
+      lineHeight: fonts.bodyLarge * 1.6,
+      color: colors.text,
+      marginBottom: spacing.xs,
+    },
+    verseNumber: { fontWeight: '700', color: colors.accentDeep },
   });
 }
