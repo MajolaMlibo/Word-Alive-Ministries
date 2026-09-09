@@ -3,12 +3,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from './screens/HomeScreen';
-import DailyReadingScreen from './screens/DailyReadingScreen';
-import BibleCalendarScreen from './screens/BibleCalendarScreen';
-import StudyScreen from './screens/StudyScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import {AccessibilityProvider} from './theme/AccessibilityContext'
+import HomeScreen from '../screens/HomeScreen';
+import DailyReadingScreen from '../screens/DailyReadingScreen';
+import BibleCalendarScreen from '../screens/BibleCalendarScreen';
+import StudyScreen from '../screens/StudyScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import {AccessibilityProvider} from '../theme/AccessibilityContext';
+
 
 const Tab = createBottomTabNavigator();
 export default function App() {
