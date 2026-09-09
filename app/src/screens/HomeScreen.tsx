@@ -120,7 +120,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('DailyReading')}
+          onPress={() => navigation.navigate("Bible")}
           accessibilityRole="button"
           accessibilityLabel="Read today's scripture"
         >
@@ -160,7 +160,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() => navigation.navigate('BibleCalendar')}
+          onPress={() => navigation.navigate("Calendar")}
           accessibilityRole="button"
           accessibilityLabel="View calendar"
         >
@@ -168,38 +168,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick links */}
-      <View style={styles.quickLinksRow}>
-        <TouchableOpacity
-          style={styles.quickLink}
-          onPress={() => navigation.navigate('Study')}
-          accessibilityRole="button"
-          accessibilityLabel="Go to Bible study"
-        >
-          <Ionicons name="library-outline" size={26} color={colors.primary} />
-          <Text style={styles.quickLinkText}>Study</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickLink}
-          onPress={() => navigation.navigate('BibleCalendar')}
-          accessibilityRole="button"
-          accessibilityLabel="Go to Bible and Calendar"
-        >
-          <Ionicons name="calendar-outline" size={26} color={colors.primary} />
-          <Text style={styles.quickLinkText}>Bible & Calendar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickLink}
-          onPress={() => navigation.navigate('Profile')}
-          accessibilityRole="button"
-          accessibilityLabel="Go to Profile"
-        >
-          <Ionicons name="person-outline" size={26} color={colors.primary} />
-          <Text style={styles.quickLinkText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 }
