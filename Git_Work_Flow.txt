@@ -1,0 +1,49 @@
+The industry standard for managing app changes is called Git Feature Branch Workflow (often integrated with GitHub Flow). It ensures your main branch remains clean, stable, and ready for deployment at all times, while keeping experimental or breaking changes isolated.
+------------------------------
+## The 5-Step Continuous Workflow Loop
+Whenever you want to build a new feature, fix a bug, or make any changes to your Word Alive Ministries app, follow this exact chronological sequence:
+## 1. Start from a Fresh Main Branch
+Before writing any new code, ensure your local main branch is identical to what is currently live on GitHub.
+
+git checkout main
+git pull origin main
+
+## 2. Create a Short-Lived Feature Branch
+Never write code directly on main. Create a descriptive branch named after the specific task you are working on.
+
+# Format: feature/short-description OR bugfix/short-description
+git checkout -b feature/login-page
+
+## 3. Write Code and Commit Iteratively
+Work on your files. Make small, logical commits as you make progress rather than one massive commit at the end.
+
+git add .
+git commit -m "Design basic layout for login screen"
+# ... write more code ...
+git add .
+git commit -m "Add form validation logic"
+
+## 4. Push to GitHub and Open a Pull Request (PR)
+When your feature is complete, push your local branch up to GitHub.
+
+git push -u origin feature/login-page
+
+Once pushed, go to your repository on GitHub (MajolaMlibo/Word-Alive-Ministries). GitHub will display a prominent yellow banner reading "Compare & pull request". Click it to open a Pull Request. This acts as a staging area where you (or teammates) can review the code differences before it goes live.
+## 5. Merge the PR and Clean Up
+After reviewing the changes in the PR interface on GitHub, click the green "Merge pull request" button. This securely brings your new code into the main branch without relying on risky --force pushes.
+Once merged, clean up your local machine:
+
+git checkout main
+git pull origin main
+git branch -d feature/login-page
+
+------------------------------
+## Industry Best Practices for Mobile/Web Apps
+
+* Keep Branches Tiny: A branch should only do one thing (e.g., feature/add-contact-button, not feature/redesign-entire-ui-and-fix-database). Small branches are fast to build, easy to review, and rarely cause merge conflicts.
+* Write Intentional Commit Messages: Avoid vague messages like git commit -m "fixed stuff". Use clear, imperative summaries like git commit -m "Fix homepage scaling issue on smaller mobile devices".
+* Automate Testing (CI/CD): As your app grows, you can link GitHub to automation tools. Every time you open a Pull Request, automated systems can run your app's test suites to check for runtime errors before you merge the code into main.
+
+------------------------------
+Would you like help setting up a Branch Protection Rule on GitHub right now to block accidental direct pushes to main, or should we map out a template for your next feature branch name based on what you plan to build next?
+
