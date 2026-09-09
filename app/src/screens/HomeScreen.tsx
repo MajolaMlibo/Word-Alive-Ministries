@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,15 +14,33 @@ import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing, radii } from '../theme/theme';
 
+// 1. Defined Strict Interfaces
+interface DailyReading {
+  scripture_ref: string;
+  content: string | null;
+  scheduled_date: string;
+}
+
+interface BibleStudy {
+  study_name: string;
+  chapter: string | null;
+  study_date: string;
+  start_time: string | null;
+}
+
 export default function HomeScreen() {
+  // Replace 'any' with your actual navigation param list type when available
   const navigation = useNavigation<any>();
   const { colors, fonts } = useAccessibility();
 
-  const [reading, setReading] = useState<any>(null);
-  const [nextStudy, setNextStudy] = useState<any>(null);
+  const [reading, setReading] = useState<DailyReading | null>(null);
+  const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // 2. Memoized Stylesheet to prevent recreation on every render
+  const styles = useMemo(() => makeStyles(colors, fonts), [colors, fonts]);
 
   const getFormattedDate = () =>
     new Date().toLocaleDateString('en-GB', {
@@ -31,9 +49,18 @@ export default function HomeScreen() {
       month: 'long',
     });
 
+  // 3. Fixed Date Logic to use the user's local timezone instead of UTC
+  const getLocalTodayString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const loadDashboardData = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalTodayString();
 
       const {
         data: { user },
@@ -53,7 +80,7 @@ export default function HomeScreen() {
         .select('*')
         .eq('scheduled_date', today)
         .single();
-      setReading(readingData);
+      setReading(readingData as DailyReading);
 
       const { data: studyData } = await supabase
         .from('bible_studies')
@@ -62,7 +89,7 @@ export default function HomeScreen() {
         .order('study_date', { ascending: true })
         .limit(1)
         .single();
-      setNextStudy(studyData);
+      setNextStudy(studyData as BibleStudy);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -79,8 +106,6 @@ export default function HomeScreen() {
     setRefreshing(true);
     loadDashboardData();
   };
-
-  const styles = makeStyles(colors, fonts);
 
   if (loading) {
     return (
@@ -171,6 +196,7 @@ export default function HomeScreen() {
   );
 }
 
+// 4. Cleaned up unused Quick Link styles
 function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
   return StyleSheet.create({
     container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
@@ -260,29 +286,5 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
       justifyContent: 'center',
     },
     secondaryButtonText: { fontWeight: '700', color: colors.primary, fontSize: fonts.body },
-    quickLinksRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: spacing.sm,
-    },
-    quickLink: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      paddingVertical: spacing.md,
-      marginHorizontal: spacing.xs / 2,
-      minHeight: 76,
-      justifyContent: 'center',
-    },
-    quickLinkText: {
-      marginTop: spacing.xs,
-      fontSize: fonts.caption + 1,
-      color: colors.primary,
-      fontWeight: '600',
-      textAlign: 'center',
-    },
   });
 }

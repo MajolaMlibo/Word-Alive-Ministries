@@ -17,7 +17,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#004d00"
-      }
+      },
+      "package": "com.mlibo.wordaliveministries"
     }
   }
 }
