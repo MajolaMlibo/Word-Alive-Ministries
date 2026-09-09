@@ -3,11 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from './src/screens/HomeScreen';
-import DailyReadingScreen from './src/screens/DailyReadingScreen';
-import BibleCalendarScreen from './src/screens/BibleCalendarScreen';
-import StudyScreen from './src/screens/StudyScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+import Home from './src/screens/Home';
+import Bible from './src/screens/Bible';
+import Calendar from './src/screens/Calendar';
+import Study from './src/screens/Study';
+import Profile from './src/screens/Profile';
 import {AccessibilityProvider} from './src/theme/AccessibilityContext'
 
 const Tab = createBottomTabNavigator();
@@ -47,11 +47,11 @@ export default function App() {
           headerTintColor: '#Fdfcf0',
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Calendar" component={BibleCalendarScreen} />
-        <Tab.Screen name="Bible" component={DailyReadingScreen} />
-        <Tab.Screen name="Study" component={StudyScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Home" component={Home} />
+        <Tab.Screen name="Calendar" component={Calendar} />
+        <Tab.Screen name="Bible" component={Bible} />
+        <Tab.Screen name="Study" component={Study} />
+        <Tab.Screen name="Profile" component={Profile} />
 
       </Tab.Navigator>
     </NavigationContainer>

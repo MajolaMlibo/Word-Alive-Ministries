@@ -12,3 +12,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+export interface PrayerRequest {
+  id: string; // UUID
+  user_id: string; // FK to Profiles
+  description: string;
+  status: 'Pending' | 'Reviewed';
+  sent_at: string; // ISO Timestamp
+  last_updated: string;
+}
+
+export interface Announcement {
+  id: string; // UUID
+  message: string;
+  broadcast_date: string; // ISO Timestamp
+  expires_at: string; // ISO Timestamp
+  last_updated: string;
+}
+
+export interface LiveStream {
+  id: string; // UUID
+  platform: string; // e.g., 'TikTok'
+  stream_url: string;
+  is_live: boolean;
+  last_updated: string;
+}
