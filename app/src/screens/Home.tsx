@@ -99,7 +99,7 @@ export default function HomeScreen() {
       }
     >
       <Text style={styles.greeting}>
-        Good morning{profileName ? `, ${profileName}` : ''}
+        Good morning {profileName ? `, ${profileName}` : ''}
       </Text>
       <Text style={styles.subGreeting}>Welcome to Word Alive Ministries</Text>
 
@@ -159,7 +159,7 @@ export default function HomeScreen() {
         ) : null}
 
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={styles.button}
           onPress={() => navigation.navigate("Calendar")}
           accessibilityRole="button"
           accessibilityLabel="View calendar"
