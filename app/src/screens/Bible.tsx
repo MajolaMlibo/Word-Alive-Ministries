@@ -13,14 +13,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing, radii } from '../theme/theme';
-import { fetchScripture } from '../services/bibleService';
+import { fetchScripture, saveLastPosition, getLastPosition } from '../services/bibleService';
+import { DailyReading } from '../services/database';
 
-export default function DailyReadingScreen() {
+type Tab = 'daily' | 'read';
+
+export default function Bible() {
   const { colors, fonts } = useAccessibility();
-  const [reading, setReading] = useState<any>(null);
+  const styles = makeStyles(colors, fonts);
+
+  const [tab, setTab] = useState<Tab>('daily');
+
+  const [reading, setReading] = useState<DailyReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [completed, setCompleted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
 
   const loadReading = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -95,87 +103,157 @@ export default function DailyReadingScreen() {
     Alert.alert('Well done', 'Today\u2019s reading is marked complete.');
   }
 
-  const styles = makeStyles(colors, fonts);
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (!reading) {
-    return (
-      <View style={styles.center}>
-        <Ionicons name="book-outline" size={40} color={colors.textMuted} />
-        <Text style={styles.container}>
-           <BibleReader colors={colors} fonts={fonts} />
-        </Text>
-        <Text style={styles.emptySubText}>Please check back soon.</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-      <View style={styles.header}>
-        <Ionicons name="book" size={28} color={colors.primary} />
-        <Text style={styles.heading}>Today's Reading</Text>
-      </View>
-
-      <Text style={styles.dateText}>
-        {new Date().toLocaleDateString('en-GB', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-      </Text>
-
-      <View style={styles.card}>
-        <Text style={styles.reference}>{reading.scripture_ref}</Text>
-        <Text style={styles.scripture}>{reading.content}</Text>
-
+    <View style={styles.container}>
+      {/* --- RESTORED TAB UI --- */}
+      <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[styles.button, completed && styles.buttonDone]}
-          onPress={markComplete}
-          disabled={completed || submitting}
+          style={[styles.tabButton, tab === 'daily' && styles.tabButtonActive]}
+          onPress={() => setTab('daily')}
           accessibilityRole="button"
-          accessibilityLabel={
-            completed ? 'Reading already completed' : 'Mark reading as complete'
-          }
+          accessibilityLabel="Today's Reading"
         >
           <Ionicons
-            name={completed ? 'checkmark-done-circle' : 'checkmark-circle'}
-            size={22}
-            color={completed ? '#FFF' : colors.text}
+            name="calendar-outline"
+            size={20}
+            color={tab === 'daily' ? '#FFF' : colors.primary}
           />
-          <Text style={[styles.buttonText, completed && styles.buttonTextDone]}>
-            {completed ? '  Completed' : '  Mark as complete'}
+          <Text style={[styles.tabText, tab === 'daily' && styles.tabTextActive]}>
+            Today
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabButton, tab === 'read' && styles.tabButtonActive]}
+          onPress={() => setTab('read')}
+          accessibilityRole="button"
+          accessibilityLabel="Read Full Bible"
+        >
+          <Ionicons
+            name="book-outline"
+            size={20}
+            color={tab === 'read' ? '#FFF' : colors.primary}
+          />
+          <Text style={[styles.tabText, tab === 'read' && styles.tabTextActive]}>
+            Full Bible
           </Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      {/* --- CONDITIONAL RENDERING BASED ON TAB --- */}
+      {tab === 'read' ? (
+        <BibleReader colors={colors} fonts={fonts} />
+      ) : loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : !reading ? (
+        <View style={styles.center}>
+          <Ionicons name="book-outline" size={40} color={colors.textMuted} />
+          <Text style={styles.emptyText}>No reading scheduled today.</Text>
+          <Text style={styles.emptySubText}>Please check back soon.</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
+          <View style={styles.header}>
+            <Ionicons name="book" size={28} color={colors.primary} />
+            <Text style={styles.heading}>Today's Reading</Text>
+          </View>
+
+          <Text style={styles.dateText}>
+            {new Date().toLocaleDateString('en-GB', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </Text>
+
+          <View style={styles.card}>
+            <Text style={styles.reference}>{reading.scripture_ref}</Text>
+            <Text style={styles.scripture}>{reading.content}</Text>
+
+            <TouchableOpacity
+              style={[styles.button, completed && styles.buttonDone]}
+              onPress={markComplete}
+              disabled={completed || submitting}
+            >
+              <Ionicons
+                name={completed ? 'checkmark-done-circle' : 'checkmark-circle'}
+                size={22}
+                color={completed ? '#FFF' : colors.text}
+              />
+              <Text style={[styles.buttonText, completed && styles.buttonTextDone]}>
+                {completed ? '  Completed' : '  Mark as complete'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 // ---------- Read tab ----------
 
+// Splits a free-typed reference into book / chapter / verse.
+// Handles "Genesis", "Genesis 3", "Genesis 3:1", and multi-word books
+// with numbers like "1 John 3:16" — the chapter/verse (if any) always
+// come from the trailing digits, not from whatever the caller appends.
+function parseReference(input: string): { book: string; chapter: number; verse?: number } {
+  const trimmed = input.trim();
+  const match = trimmed.match(/^(.*?)\s+(\d+)(?::(\d+))?$/);
+
+  if (match && match[1].trim()) {
+    return {
+      book: match[1].trim(),
+      chapter: parseInt(match[2], 10),
+      verse: match[3] ? parseInt(match[3], 10) : undefined,
+    };
+  }
+
+  // No trailing chapter/verse found — the whole input is just a book name.
+  return { book: trimmed, chapter: 1 };
+}
+
 function BibleReader({ colors, fonts }: any) {
   const styles = makeStyles(colors, fonts);
-  const [book, setBook] = useState('John');
+  const [book, setBook] = useState('Genesis');
   const [chapter, setChapter] = useState(1);
+  const [verse, setVerse] = useState<number | undefined>(undefined);
+  const [bookInput, setBookInput] = useState('Genesis');
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [bookInput, setBookInput] = useState('John');
+  const [restored, setRestored] = useState(false);
 
-  const load = useCallback(async (b: string, c: number) => {
+  // Restore the last book/chapter/verse the user was reading, so leaving
+  // this screen (or the app) and coming back doesn't lose their place.
+  useEffect(() => {
+    (async () => {
+      const saved = await getLastPosition();
+      if (saved?.book) {
+        setBook(saved.book);
+        setBookInput(
+          saved.chapter
+            ? `${saved.book} ${saved.chapter}${saved.verse ? ':' + saved.verse : ''}`
+            : saved.book
+        );
+      }
+      if (saved?.chapter) {
+        setChapter(saved.chapter);
+      }
+      setVerse(saved?.verse);
+      setRestored(true);
+    })();
+  }, []);
+
+  const load = useCallback(async (bookName: string, chapterNumber: number, verseNumber?: number) => {
     setLoading(true);
     try {
-      // Adjust to match the real signature of fetchScripture in
-      // services/bibleService.ts if it differs from (book, chapter).
-      const data = await fetchScripture(b);
+      // Build the reference from the parsed parts — never concatenate
+      // chapter/verse onto a string that might already contain them.
+      const reference = `${bookName} ${chapterNumber}${verseNumber ? ':' + verseNumber : ''}`;
+      const data = await fetchScripture(reference);
       setPassage(data);
     } catch (e) {
       console.error('Failed to load passage:', e);
@@ -186,20 +264,27 @@ function BibleReader({ colors, fonts }: any) {
   }, []);
 
   useEffect(() => {
-    load(book, chapter);
-  }, [book, chapter, load]);
+    // Wait for the saved position to be restored first, so we don't
+    // fetch "Genesis 1" and then immediately re-fetch the real position.
+    if (!restored) return;
+    load(book, chapter, verse);
+    saveLastPosition(book, chapter, verse);
+  }, [book, chapter, verse, load, restored]);
 
   function goToChapter(delta: number) {
     const next = chapter + delta;
     if (next < 1) return;
+    // Navigating chapters always shows the full chapter, not a single verse.
+    setVerse(undefined);
     setChapter(next);
   }
 
   function submitBook() {
-    const trimmed = bookInput.trim();
-    if (!trimmed) return;
-    setBook(trimmed);
-    setChapter(1);
+    const parsed = parseReference(bookInput);
+    if (!parsed.book) return;
+    setBook(parsed.book);
+    setChapter(parsed.chapter);
+    setVerse(parsed.verse);
   }
 
   return (
@@ -243,7 +328,7 @@ function BibleReader({ colors, fonts }: any) {
       ) : (
         <ScrollView style={styles.readerBody} contentContainerStyle={{ paddingBottom: spacing.xl }}>
           <Text style={styles.passageTitle}>
-            {book} {chapter}
+            {book} {chapter}{verse ? `:${verse}` : ''}
           </Text>
           {passage?.verses?.length ? (
             passage.verses.map((v: any) => (
@@ -375,5 +460,31 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
       marginBottom: spacing.xs,
     },
     verseNumber: { fontWeight: '700', color: colors.accentDeep },
+
+    //Tab Styles
+    tabRow: {
+      flexDirection: 'row',
+      marginBottom: spacing.lg,
+      backgroundColor: colors.surface,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      overflow: 'hidden',
+    },
+    tabButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.sm + 2,
+    },
+    tabButtonActive: { backgroundColor: colors.primary },
+    tabText: {
+      marginLeft: spacing.xs,
+      color: colors.primary,
+      fontWeight: '600',
+      fontSize: fonts.body,
+    },
+    tabTextActive: { color: '#FFF' },
   });
 }
