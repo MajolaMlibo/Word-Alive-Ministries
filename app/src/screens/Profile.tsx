@@ -25,16 +25,17 @@ const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
 export default function ProfileScreen() {
 const navigation = useNavigation<any>();
 
-  const {
-    colors,
-    fonts,
-    highContrast,
-    setHighContrast,
-    textScaleKey,
-    setTextScaleKey,
-  } = useAccessibility();
+const {
+  colors,
+  fonts,
+  highContrast,
+  setHighContrast,
+  textScaleKey,
+  setTextScaleKey,
+} = useAccessibility();
 
-  const styles = makeStyles(colors, fonts);
+const styles = makeStyles(colors, fonts);
+const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -62,6 +63,8 @@ async function loadProfile() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  setUser(user);
 
   if (!user) return;
 
@@ -169,23 +172,14 @@ async function loadProfile() {
         </Text>
       </View>
 
-      {/* SIGN IN */}
-      <TouchableOpacity
-        style={styles.login}
-        onPress={() => navigation.navigate("SignIn")}
-      >
-        <Ionicons name="log-in-outline" size={20} color="#FFF" />
-        <Text style={styles.logoutText}>Sign In</Text>
-      </TouchableOpacity>
+<TouchableOpacity
+  style={styles.logout}
+  onPress={() => supabase.auth.signOut()}
+>
+  <Ionicons name="log-out-outline" size={20} color="#FFF" />
+  <Text style={styles.logoutText}>Sign Out</Text>
+</TouchableOpacity>
 
-      {/* SIGN OUT */}
-      <TouchableOpacity
-        style={styles.logout}
-        onPress={() => supabase.auth.signOut()}
-      >
-        <Ionicons name="log-out-outline" size={20} color="#FFF" />
-        <Text style={styles.logoutText}>Sign Out</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }

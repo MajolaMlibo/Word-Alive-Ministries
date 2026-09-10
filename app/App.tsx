@@ -1,60 +1,89 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Session } from '@supabase/supabase-js';
+
+import { supabase } from './src/services/supabase';
+import { AccessibilityProvider } from './src/theme/AccessibilityContext';
+
 import Home from './src/screens/Home';
 import Bible from './src/screens/Bible';
 import Calendar from './src/screens/Calendar';
 import Study from './src/screens/Study';
 import Profile from './src/screens/Profile';
-import {AccessibilityProvider} from './src/theme/AccessibilityContext'
+import SignIn from './src/screens/SignIn';
 
 const Tab = createBottomTabNavigator();
-export default function App() {
+
+function MainTabs() {
   return (
-<AccessibilityProvider>
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={ ({ route }) =>({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap = 'calendar-outline';
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap = 'calendar-outline';
 
-            if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Calendar') {
-              iconName = focused ? 'calendar' : 'calendar-outline';
-            } else if (route.name === 'Bible') {
-              iconName = focused ? 'book' : 'book-outline';
-            } else if (route.name === 'Study') {
-              iconName = focused ? 'school' : 'school-outline';
-            } else if (route.name === 'Profile') {
-              iconName = focused ? 'person' : 'person-outline';
-            }
+          if (route.name === 'Home')
+            iconName = focused ? 'home' : 'home-outline';
+          else if (route.name === 'Calendar')
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          else if (route.name === 'Bible')
+            iconName = focused ? 'book' : 'book-outline';
+          else if (route.name === 'Study')
+            iconName = focused ? 'school' : 'school-outline';
+          else if (route.name === 'Profile')
+            iconName = focused ? 'person' : 'person-outline';
 
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: '#fedd21d8', // Ministry Gold
-          tabBarInactiveTintColor: '#Fdfcf0', // Cream
-          tabBarStyle: {
-            backgroundColor: '#044b04', // Ministry Green
-            paddingBottom: 5,
-            height: 60,
-          },
-          headerStyle: {
-            backgroundColor: '#044b04',
-          },
-          headerTintColor: '#Fdfcf0',
-        })}
-      >
-        <Tab.Screen name="Home" component={Home} />
-        <Tab.Screen name="Calendar" component={Calendar} />
-        <Tab.Screen name="Bible" component={Bible} />
-        <Tab.Screen name="Study" component={Study} />
-        <Tab.Screen name="Profile" component={Profile} />
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#fedd21',
+        tabBarInactiveTintColor: '#Fdfcf0',
+        tabBarStyle: {
+          backgroundColor: '#044b04',
+          height: 60,
+          paddingBottom: 5,
+        },
+        headerStyle: {
+          backgroundColor: '#044b04',
+        },
+        headerTintColor: '#Fdfcf0',
+      })}
+    >
+      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="Calendar" component={Calendar} />
+      <Tab.Screen name="Bible" component={Bible} />
+      <Tab.Screen name="Study" component={Study} />
+      <Tab.Screen name="Profile" component={Profile} />
+    </Tab.Navigator>
+  );
+}
 
-      </Tab.Navigator>
-    </NavigationContainer>
+export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) return null;
+
+  return (
+    <AccessibilityProvider>
+      <NavigationContainer>
+        {session ? <MainTabs /> : <SignIn />}
+      </NavigationContainer>
     </AccessibilityProvider>
   );
 }
