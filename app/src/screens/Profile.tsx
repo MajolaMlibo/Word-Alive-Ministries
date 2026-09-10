@@ -15,10 +15,6 @@ import { spacing, radii, TextScaleKey } from "../theme/theme";
 import { uploadAvatar, registerNotifications } from "../services/profileService";
 import { useNavigation } from "@react-navigation/native";
 
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-
-const navigation = useNavigation<any>();
 
 const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
   { key: "standard", label: "A", size: 16 },
@@ -27,6 +23,8 @@ const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
 ];
 
 export default function ProfileScreen() {
+const navigation = useNavigation<any>();
+
   const {
     colors,
     fonts,
@@ -49,8 +47,8 @@ export default function ProfileScreen() {
   } = await supabase.auth.getUser();
 
   if (!user) return;
-  
- const url = await uploadAvatar(user.id);
+
+  const url = await uploadAvatar(user.id);
 
   if (url) {
     setProfile({
@@ -58,24 +56,23 @@ export default function ProfileScreen() {
       avatar_url: url,
     });
   }
-  
 };
 
-  async function loadProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+async function loadProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) return;
+  if (!user) return;
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
-    setProfile(data);
-  }
+  setProfile(data);
+}
 
   return (
     <ScrollView

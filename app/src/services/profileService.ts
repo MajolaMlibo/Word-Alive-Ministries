@@ -1,8 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
-import  Notifications  from 'expo-notifications';
-import Device from 'expo-device';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 export async function registerNotifications(userId: string) {
   if (!Device.isDevice) return;
