@@ -105,7 +105,6 @@ export default function Bible() {
 
   return (
     <View style={styles.container}>
-      {/* --- RESTORED TAB UI --- */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={[styles.tabButton, tab === 'daily' && styles.tabButtonActive]}
@@ -196,10 +195,6 @@ export default function Bible() {
 
 // ---------- Read tab ----------
 
-// Splits a free-typed reference into book / chapter / verse.
-// Handles "Genesis", "Genesis 3", "Genesis 3:1", and multi-word books
-// with numbers like "1 John 3:16" — the chapter/verse (if any) always
-// come from the trailing digits, not from whatever the caller appends.
 function parseReference(input: string): { book: string; chapter: number; verse?: number } {
   const trimmed = input.trim();
   const match = trimmed.match(/^(.*?)\s+(\d+)(?::(\d+))?$/);
@@ -212,7 +207,6 @@ function parseReference(input: string): { book: string; chapter: number; verse?:
     };
   }
 
-  // No trailing chapter/verse found — the whole input is just a book name.
   return { book: trimmed, chapter: 1 };
 }
 
@@ -255,9 +249,10 @@ function BibleReader({ colors, fonts }: any) {
       const reference = `${bookName} ${chapterNumber}${verseNumber ? ':' + verseNumber : ''}`;
       const data = await fetchScripture(reference);
       setPassage(data);
-    } catch (e) {
-      console.error('Failed to load passage:', e);
+    } catch (e:any) {
+      console.error('Failed to load passage:', e.message);
       setPassage(null);
+
     } finally {
       setLoading(false);
     }

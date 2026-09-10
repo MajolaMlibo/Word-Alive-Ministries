@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const CACHE_PREFIX = '@word_alive_scripture_';
 export const LAST_POSITION_KEY = '@word_alive_last_position';
 
+
 function getCacheKey(reference: string) {
   return `${CACHE_PREFIX}${reference.replace(/\s+/g, '_').toLowerCase()}`;
 }
