@@ -216,17 +216,9 @@ function EventCalendar({ colors, fonts }: any) {
 
 function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
   return StyleSheet.create({
+    // Tab Styles
     container: { flex: 1, backgroundColor: colors.background },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    // tabRow: {
-    //   flexDirection: 'row',
-    //   margin: spacing.lg,
-    //   backgroundColor: colors.surface,
-    //   borderRadius: radii.md,
-    //   borderWidth: 1,
-    //   borderColor: colors.borderSoft,
-    //   overflow: 'hidden',
-    // },
     tabButton: {
       flex: 1,
       flexDirection: 'row',
@@ -243,7 +235,7 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
     },
     tabTextActive: { color: '#FFF' },
 
-    // calendar
+    // Calendar styles
     calendarBody: { flex: 1, paddingHorizontal: spacing.lg },
     monthHeader: {
       flexDirection: 'row',
