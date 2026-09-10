@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
-import { spacing, radii, TEXT_SCALES, TextScaleKey } from '../theme/theme';
+import {
+  spacing,
+  radii,
+  TextScaleKey,
+} from '../theme/theme';
 
-const TEXT_SIZE_OPTIONS: { key: TextScaleKey; label: string }[] = [
-  { key: 'standard', label: 'A' },
-  { key: 'large', label: 'A' },
-  { key: 'extraLarge', label: 'A' },
+const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
+  { key: 'standard', label: 'A', size: 16 },
+  { key: 'large', label: 'A', size: 22 },
+  { key: 'extraLarge', label: 'A', size: 28 },
 ];
 
 export default function ProfileScreen() {
@@ -20,6 +31,7 @@ export default function ProfileScreen() {
     textScaleKey,
     setTextScaleKey,
   } = useAccessibility();
+
   const styles = makeStyles(colors, fonts);
 
   const [profile, setProfile] = useState<any>(null);
@@ -33,160 +45,283 @@ export default function ProfileScreen() {
       data: { user },
     } = await supabase.auth.getUser();
 
+    if (!user) return;
+
     const { data } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user?.id)
+      .eq('id', user.id)
       .single();
 
     setProfile(data);
   }
 
   return (
-    <View style={styles.container}>
-      <Ionicons name="person-circle" size={90} color={colors.primary} />
-      <Text style={styles.name}>{profile?.name || 'Member'}</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: spacing.xl }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* HERO */}
+      <View style={styles.hero}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={42} color="#FFF" />
+        </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Reading Streak</Text>
-        <Text style={styles.streak}>{profile?.current_streak || 0} Days</Text>
+        <Text style={styles.name}>{profile?.name || 'Member'}</Text>
+        <Text style={styles.member}>Word Alive Ministries</Text>
       </View>
 
-      <View style={styles.settingsCard}>
-        <Text style={styles.sectionLabel}>Display Settings</Text>
+      {/* STATS */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Ionicons name="flame" size={22} color="#F9A825" />
+          <Text style={styles.statNumber}>
+            {profile?.current_streak || 0}
+          </Text>
+          <Text style={styles.statLabel}>Day Streak</Text>
+        </View>
 
-        <View style={styles.setting}>
+        <View style={styles.statCard}>
+          <Ionicons name="book" size={22} color={colors.primary} />
+          <Text style={styles.statNumber}>
+            {profile?.current_streak || 0}
+          </Text>
+          <Text style={styles.statLabel}>Completed</Text>
+        </View>
+      </View>
+
+      {/* SETTINGS */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Display Settings</Text>
+
+        <View style={styles.settingRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.settingLabel}>High Contrast</Text>
-            <Text style={styles.settingHint}>Stronger colors, easier to read</Text>
+            <Text style={styles.settingHint}>
+              Improve readability across the app
+            </Text>
           </View>
+
           <Switch
             value={highContrast}
             onValueChange={setHighContrast}
-            accessibilityLabel="Toggle high contrast"
           />
         </View>
 
-        <View style={[styles.setting, { marginTop: spacing.lg }]}>
-          <Text style={styles.settingLabel}>Text Size</Text>
-        </View>
-        <View style={styles.textSizeRow}>
-          {TEXT_SIZE_OPTIONS.map((option, index) => (
+        <View style={styles.divider} />
+
+        <Text style={styles.settingLabel}>Text Size</Text>
+
+        <View style={styles.textRow}>
+          {TEXT_OPTIONS.map((item) => (
             <TouchableOpacity
-              key={option.key}
+              key={item.key}
               style={[
-                styles.textSizeButton,
-                textScaleKey === option.key && styles.textSizeButtonActive,
+                styles.textBtn,
+                textScaleKey === item.key && styles.textBtnActive,
               ]}
-              onPress={() => setTextScaleKey(option.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Set text size to ${option.key}`}
+              onPress={() => setTextScaleKey(item.key)}
             >
               <Text
                 style={[
-                  styles.textSizeButtonLabel,
-                  { fontSize: 16 + index * 6 },
-                  textScaleKey === option.key && styles.textSizeButtonLabelActive,
+                  {
+                    fontSize: item.size,
+                    fontWeight: '700',
+                    color:
+                      textScaleKey === item.key
+                        ? '#FFF'
+                        : colors.primary,
+                  },
                 ]}
               >
-                {option.label}
+                {item.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
+      {/* ACHIEVEMENT */}
+      <View style={styles.achievement}>
+        <Ionicons name="trophy" size={28} color="#FDD835" />
+        <Text style={styles.achievementTitle}>
+          Keep Going!
+        </Text>
+        <Text style={styles.achievementText}>
+          Every completed reading strengthens your daily walk with God.
+        </Text>
+      </View>
+
+      {/* SIGN OUT */}
       <TouchableOpacity
         style={styles.logout}
         onPress={() => supabase.auth.signOut()}
-        accessibilityRole="button"
-        accessibilityLabel="Sign out"
       >
+        <Ionicons name="log-out-outline" size={20} color="#FFF" />
         <Text style={styles.logoutText}>Sign Out</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
-function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
+function makeStyles(colors: any, fonts: any) {
   return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
-      alignItems: 'center',
       padding: spacing.lg,
     },
-    name: {
-      fontSize: fonts.title,
-      fontWeight: '700',
-      color: colors.primary,
+
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: 24,
+      alignItems: 'center',
+      padding: spacing.xl,
       marginBottom: spacing.lg,
     },
-    card: {
-      width: '100%',
-      backgroundColor: colors.surface,
-      borderRadius: radii.lg,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      padding: spacing.lg,
+
+    avatar: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: spacing.md,
     },
-    label: { color: colors.textMuted, fontSize: fonts.body },
-    streak: {
-      fontSize: fonts.display,
+
+    name: {
+      color: '#FFF',
+      fontSize: fonts.title,
       fontWeight: '700',
-      color: colors.primary,
-      marginTop: spacing.xs,
     },
-    settingsCard: {
-      width: '100%',
-      backgroundColor: colors.surface,
-      borderRadius: radii.lg,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      padding: spacing.lg,
-      marginTop: spacing.lg,
+
+    member: {
+      color: '#DDF4E6',
+      marginTop: 4,
     },
-    sectionLabel: {
-      fontSize: fonts.caption + 1,
-      fontWeight: '700',
-      color: colors.primary,
-      marginBottom: spacing.sm,
-    },
-    setting: {
+
+    statsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      marginBottom: spacing.lg,
+    },
+
+    statCard: {
+      width: '48%',
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      padding: spacing.lg,
       alignItems: 'center',
     },
-    settingLabel: { fontSize: fonts.body, color: colors.text, fontWeight: '600' },
-    settingHint: { fontSize: fonts.caption, color: colors.textMuted, marginTop: 2 },
-    textSizeRow: {
+
+    statNumber: {
+      fontSize: fonts.display,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: spacing.xs,
+    },
+
+    statLabel: {
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+
+    sectionTitle: {
+      color: colors.primary,
+      fontWeight: '700',
+      fontSize: fonts.subtitle,
+      marginBottom: spacing.md,
+    },
+
+    settingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    settingLabel: {
+      fontSize: fonts.body,
+      fontWeight: '600',
+      color: colors.text,
+    },
+
+    settingHint: {
+      color: colors.textMuted,
+      marginTop: 2,
+      fontSize: fonts.caption,
+    },
+
+    divider: {
+      height: 1,
+      backgroundColor: colors.borderSoft,
+      marginVertical: spacing.lg,
+    },
+
+    textRow: {
       flexDirection: 'row',
       marginTop: spacing.sm,
     },
-    textSizeButton: {
+
+    textBtn: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
       borderWidth: 1,
       borderColor: colors.borderSoft,
-      borderRadius: radii.sm,
-      paddingVertical: spacing.sm + 2,
-      marginRight: spacing.sm,
-      minHeight: 48,
-    },
-    textSizeButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    textSizeButtonLabel: { color: colors.primary, fontWeight: '700' },
-    textSizeButtonLabelActive: { color: '#FFF' },
-    logout: {
-      marginTop: spacing.xl,
-      backgroundColor: colors.danger,
-      paddingVertical: spacing.sm + 4,
-      width: '100%',
-      borderRadius: radii.md,
+      borderRadius: 14,
       alignItems: 'center',
-      minHeight: 50,
       justifyContent: 'center',
+      paddingVertical: 12,
+      marginRight: spacing.sm,
     },
-    logoutText: { color: '#FFF', fontWeight: '700', fontSize: fonts.body },
+
+    textBtnActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+
+    achievement: {
+      backgroundColor: '#0E5C38',
+      borderRadius: 20,
+      padding: spacing.lg,
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+    },
+
+    achievementTitle: {
+      color: '#FFF',
+      fontWeight: '700',
+      fontSize: fonts.subtitle,
+      marginTop: spacing.sm,
+    },
+
+    achievementText: {
+      color: '#E8F5E9',
+      textAlign: 'center',
+      lineHeight: fonts.body * 1.5,
+      marginTop: spacing.xs,
+    },
+
+    logout: {
+      backgroundColor: '#C62828',
+      borderRadius: 16,
+      paddingVertical: 15,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    logoutText: {
+      color: '#FFF',
+      fontWeight: '700',
+      fontSize: fonts.body,
+      marginLeft: spacing.sm,
+    },
   });
 }

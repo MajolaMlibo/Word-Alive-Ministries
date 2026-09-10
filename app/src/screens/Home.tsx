@@ -20,10 +20,9 @@ export default function HomeScreen() {
 
   const [reading, setReading] = useState<any>(null);
   const [nextStudy, setNextStudy] = useState<any>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const Todays_Scripture = 'Numbers 6:24';
 
   const getFormattedDate = () =>
     new Date().toLocaleDateString('en-GB', {
@@ -31,6 +30,13 @@ export default function HomeScreen() {
       day: 'numeric',
       month: 'long',
     });
+
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -41,12 +47,13 @@ export default function HomeScreen() {
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
-          .select('name')
+          .select('*')
           .eq('id', user.id)
           .single();
-        setProfileName(profile?.name || null);
+
+        setProfile(profileData);
       }
 
       const { data: readingData } = await supabase
@@ -54,6 +61,7 @@ export default function HomeScreen() {
         .select('*')
         .eq('scheduled_date', today)
         .single();
+
       setReading(readingData);
 
       const { data: studyData } = await supabase
@@ -63,9 +71,10 @@ export default function HomeScreen() {
         .order('study_date', { ascending: true })
         .limit(1)
         .single();
+
       setNextStudy(studyData);
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
+    } catch (err) {
+      console.log(err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,194 +108,338 @@ export default function HomeScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-       <View>
-          <Text style={styles.dateBadge}>{getFormattedDate()}</Text>
-          <Text> </Text>
-       </View>
+      {/* HERO */}
+      <View style={styles.hero}>
+        <View style={styles.heroTop}>
+          <View>
+            <Text style={styles.date}>{getFormattedDate()}</Text>
+            <Text style={styles.greeting}>
+              {greeting()}
+              {profile?.name ? `, ${profile.name}` : ''}
+            </Text>
+          </View>
 
-      <Text style={styles.greeting}>
-        Good { new Date().getHours() < 12 ? 'morning' : 'afternoon'} {profileName ? `, ${profileName}` : ''}
-      </Text>
-      <Text style={styles.subGreeting}>Welcome to Word Alive Ministries</Text>
-
-      {/* Today's Scripture */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Ionicons name="book-outline" size={22} color={colors.primary} />
-          <Text style={styles.cardHeaderText}>Today's Scripture</Text>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={26} color="#FFF" />
+          </View>
         </View>
 
-        <Text style={styles.title}>
-          {reading?.scripture_ref || `${Todays_Scripture}`}
-        </Text>
-        {reading?.content ? (
-          <Text style={styles.snippet}>"{reading.content}"</Text>
-        ) : null}
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("Bible")}
-          accessibilityRole="button"
-          accessibilityLabel="Read today's scripture"
-        >
-          
-          <Text style={styles.buttonText}>Read today's scripture</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Upcoming Bible Study */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-          <Text style={styles.cardHeaderText}>Upcoming Bible Study</Text>
-        </View>
-
-        <Text style={styles.title}>
-          {nextStudy?.study_name || 'No upcoming study scheduled'}
-        </Text>
-        {nextStudy?.chapter ? (
-          <Text style={styles.subText}>Chapter: {nextStudy.chapter}</Text>
-        ) : null}
-        {nextStudy?.study_date ? (
-          <Text style={styles.subText}>
-            {new Date(nextStudy.study_date).toLocaleDateString('en-GB', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-            {nextStudy?.start_time ? ` | ${nextStudy.start_time}` : ''}
+        <View style={styles.streakCard}>
+          <Ionicons name="flame" size={20} color="#FDD835" />
+          <Text style={styles.streakNumber}>
+            {profile?.current_streak || 0}
           </Text>
-        ) : null}
+          <Text style={styles.streakLabel}>Day Streak</Text>
+        </View>
+      </View>
+
+      {/* TODAY'S WORD */}
+      <View style={styles.featureCard}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="book" size={20} color={colors.primary} />
+          <Text style={styles.sectionTitle}>Today's Word</Text>
+        </View>
+
+        <Text style={styles.reference}>
+          {reading?.scripture_ref || 'Daily Reading'}
+        </Text>
+
+        <Text numberOfLines={5} style={styles.scripture}>
+          {reading?.content ||
+            'Daily Scrupture...'}
+        </Text>
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("Calendar")}
-          accessibilityRole="button"
-          accessibilityLabel="View calendar"
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('Bible')}
         >
-          <Text style={styles.buttonText}>View calendar</Text>
+          <Text style={styles.primaryButtonText}>Continue Reading</Text>
+          <Ionicons name="arrow-forward" size={18} color="#FFF" />
         </TouchableOpacity>
       </View>
 
+      {/* NEXT STUDY */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="calendar" size={20} color={colors.primary} />
+          <Text style={styles.sectionTitle}>Next Bible Study</Text>
+        </View>
+
+        <Text style={styles.studyName}>
+          {nextStudy?.study_name || 'No upcoming study'}
+        </Text>
+
+        {nextStudy?.chapter ? (
+          <Text style={styles.studyMeta}>Chapter {nextStudy.chapter}</Text>
+        ) : null}
+
+        {nextStudy?.study_date ? (
+          <View style={styles.studyRow}>
+            <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+            <Text style={styles.studyMeta}>
+              {new Date(nextStudy.study_date).toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+              {nextStudy.start_time ? ` • ${nextStudy.start_time}` : ''}
+            </Text>
+          </View>
+        ) : null}
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('Calendar')}
+        >
+          <Text style={styles.secondaryButtonText}>Open Calendar</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ENCOURAGEMENT */}
+      <View style={styles.encourageCard}>
+        <Ionicons name="heart" size={22} color="#FDD835" />
+        <Text style={styles.encourageTitle}>Stay Encouraged</Text>
+        <Text style={styles.encourageText}>
+          “Your word is a lamp to my feet and a light to my path.”
+        </Text>
+        <Text style={styles.encourageRef}>Psalm 119:105</Text>
+      </View>
     </ScrollView>
   );
 }
 
-function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
+function makeStyles(
+  colors: ReturnType<typeof import('../theme/theme').getColors>,
+  fonts: any
+) {
   return StyleSheet.create({
-    container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      padding: spacing.lg,
+    },
+
     center: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors.background,
     },
-    greeting: { fontSize: fonts.display, fontWeight: 'bold', color: colors.text },
-    subGreeting: {
-      fontSize: fonts.body,
-      color: colors.textMuted,
-      marginBottom: spacing.lg,
-    },
-    card: {
-      backgroundColor: colors.surface,
+
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: 24,
       padding: spacing.lg,
-      borderRadius: radii.lg,
-      borderWidth: 2,
-      borderColor: colors.border,
       marginBottom: spacing.lg,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 2,
     },
-    cardHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      width: '100%',
-      marginBottom: spacing.sm,
-    },
-    cardHeaderText: {
-      fontWeight: '700',
-      color: colors.primary,
-      marginLeft: spacing.xs,
-      fontSize: fonts.caption + 2,
-      flex: 1,
-    },
-    dateBadge: {
-      backgroundColor: colors.accentDeep,
-      color: '#FFF',
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs / 2,
-      marginRight: 40,
-      marginLeft: 40,
-      borderRadius: radii.sm,
-      fontSize: fonts.caption,
-      fontWeight: '700',
-      overflow: 'hidden',
-      textAlign: 'center' ,
-    },
-    title: { fontSize: fonts.title, fontWeight: 'bold', color: colors.primary, marginTop: 4 },
-    snippet: {
-      fontStyle: 'italic',
-      textAlign: 'center',
-      marginVertical: spacing.sm,
-      color: colors.text,
-      fontSize: fonts.body,
-      lineHeight: fonts.body * 1.4,
-    },
-    subText: {
-      fontSize: fonts.body,
-      color: colors.textMuted,
-      marginVertical: 2,
-      alignSelf: 'flex-start',
-    },
-    button: {
-      backgroundColor: colors.accent,
-      paddingVertical: spacing.sm + 2,
-      borderRadius: radii.sm,
-      width: '100%',
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: spacing.sm,
-      minHeight: 48,
-    },
-    buttonText: { fontWeight: '700', color: colors.text, fontSize: fonts.body },
-    secondaryButton: {
-      backgroundColor: colors.accentSoft,
-      paddingVertical: spacing.sm,
-      borderRadius: radii.sm,
-      width: '100%',
-      alignItems: 'center',
-      marginTop: spacing.md,
-      minHeight: 48,
-      justifyContent: 'center',
-    },
-    secondaryButtonText: { fontWeight: '700', color: colors.primary, fontSize: fonts.body },
-    quickLinksRow: {
+
+    heroTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginTop: spacing.sm,
-    },
-    quickLink: {
-      flex: 1,
       alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      paddingVertical: spacing.md,
-      marginHorizontal: spacing.xs / 2,
-      minHeight: 76,
-      justifyContent: 'center',
     },
-    quickLinkText: {
-      marginTop: spacing.xs,
-      fontSize: fonts.caption + 1,
+
+    date: {
+      color: '#D9F7E2',
+      fontSize: fonts.caption,
+      marginBottom: 4,
+    },
+
+    greeting: {
+      color: '#FFF',
+      fontSize: fonts.display,
+      fontWeight: '700',
+      maxWidth: '85%',
+    },
+
+    avatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    streakCard: {
+      marginTop: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.12)',
+      borderRadius: 16,
+      padding: spacing.md,
+    },
+
+    streakNumber: {
+      color: '#FFF',
+      fontSize: fonts.title,
+      fontWeight: '700',
+      marginHorizontal: 8,
+    },
+
+    streakLabel: {
+      color: '#FFF',
+      opacity: 0.9,
+      fontSize: fonts.body,
+    },
+
+    featureCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+    },
+
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: spacing.lg,
+      marginTop: spacing.lg,
+      elevation: 1,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
+
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+
+    sectionTitle: {
+      marginLeft: spacing.xs,
+      color: colors.primary,
+      fontSize: fonts.body,
+      fontWeight: '700',
+    },
+
+    reference: {
+      fontSize: fonts.title,
+      color: colors.primary,
+      fontWeight: '700',
+      marginBottom: spacing.sm,
+    },
+
+    scripture: {
+      fontSize: fonts.body,
+      color: colors.text,
+      lineHeight: fonts.body * 1.7,
+      fontStyle: 'italic',
+      marginBottom: spacing.lg,
+    },
+
+    primaryButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    primaryButtonText: {
+      color: '#FFF',
+      fontWeight: '700',
+      fontSize: fonts.body,
+      marginRight: 6,
+    },
+
+    quickTitle: {
+      fontSize: fonts.subtitle,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing.md,
+    },
+
+    quickGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+
+    quickItem: {
+      width: '48%',
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      paddingVertical: spacing.lg,
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+
+    quickText: {
+      marginTop: spacing.sm,
       color: colors.primary,
       fontWeight: '600',
+      fontSize: fonts.body,
+    },
+
+    studyName: {
+      fontSize: fonts.title,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 4,
+    },
+
+    studyMeta: {
+      color: colors.textMuted,
+      fontSize: fonts.body,
+    },
+
+    studyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: spacing.xs,
+    },
+
+    secondaryButton: {
+      marginTop: spacing.lg,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+
+    secondaryButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
+      fontSize: fonts.body,
+    },
+
+    encourageCard: {
+      marginTop: spacing.lg,
+      backgroundColor: '#0E5C38',
+      borderRadius: 20,
+      padding: spacing.lg,
+      alignItems: 'center',
+    },
+
+    encourageTitle: {
+      color: '#FFF',
+      fontWeight: '700',
+      fontSize: fonts.subtitle,
+      marginTop: spacing.sm,
+    },
+
+    encourageText: {
+      color: '#FFF',
       textAlign: 'center',
+      fontStyle: 'italic',
+      lineHeight: fonts.body * 1.6,
+      marginTop: spacing.sm,
+    },
+
+    encourageRef: {
+      color: '#FDD835',
+      fontWeight: '700',
+      marginTop: spacing.sm,
     },
   });
 }

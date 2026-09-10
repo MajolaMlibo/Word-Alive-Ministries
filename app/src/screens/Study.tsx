@@ -25,15 +25,18 @@ export default function StudyScreen() {
 
   const loadStudies = useCallback(async (which: StudyFilter) => {
     setLoading(true);
+
     const today = new Date().toISOString().split('T')[0];
 
     let query = supabase.from('bible_studies').select('*');
+
     query =
       which === 'upcoming'
         ? query.gte('study_date', today).order('study_date', { ascending: true })
         : query.lt('study_date', today).order('study_date', { ascending: false });
 
     const { data } = await query;
+
     setStudies(data || []);
     setLoading(false);
   }, []);
@@ -44,35 +47,46 @@ export default function StudyScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="library" size={26} color={colors.primary} />
-        <Text style={styles.heading}>Bible Study</Text>
+      {/* Hero */}
+      <View style={styles.hero}>
+        <Ionicons name="library" size={34} color="#FFF" />
+        <Text style={styles.heroTitle}>Bible Study</Text>
+        <Text style={styles.heroSub}>
+          Grow together through scheduled teachings and Scripture.
+        </Text>
       </View>
 
-      <View style={styles.filterRow}>
+      {/* Filter */}
+      <View style={styles.segment}>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'upcoming' && styles.filterButtonActive]}
+          style={[
+            styles.segmentBtn,
+            filter === 'upcoming' && styles.segmentActive,
+          ]}
           onPress={() => setFilter('upcoming')}
-          accessibilityRole="button"
-          accessibilityLabel="Show upcoming studies"
         >
           <Text
             style={[
-              styles.filterText,
-              filter === 'upcoming' && styles.filterTextActive,
+              styles.segmentText,
+              filter === 'upcoming' && styles.segmentTextActive,
             ]}
           >
             Upcoming
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'past' && styles.filterButtonActive]}
+          style={[
+            styles.segmentBtn,
+            filter === 'past' && styles.segmentActive,
+          ]}
           onPress={() => setFilter('past')}
-          accessibilityRole="button"
-          accessibilityLabel="Show past studies"
         >
           <Text
-            style={[styles.filterText, filter === 'past' && styles.filterTextActive]}
+            style={[
+              styles.segmentText,
+              filter === 'past' && styles.segmentTextActive,
+            ]}
           >
             Past
           </Text>
@@ -85,60 +99,101 @@ export default function StudyScreen() {
         </View>
       ) : studies.length === 0 ? (
         <View style={styles.center}>
-          <Ionicons name="book-outline" size={36} color={colors.textMuted} />
+          <Ionicons
+            name="book-outline"
+            size={46}
+            color={colors.textMuted}
+          />
+          <Text style={styles.emptyTitle}>Nothing here yet</Text>
           <Text style={styles.emptyText}>
             {filter === 'upcoming'
-              ? 'No studies are scheduled yet.'
-              : 'No past studies to show.'}
+              ? 'There are no upcoming Bible studies.'
+              : 'No previous studies have been added.'}
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop: 0 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: spacing.xl }}
+        >
           {studies.map((study) => {
-            const isOpen = expandedId === study.id;
+            const open = expandedId === study.id;
+
             return (
               <TouchableOpacity
                 key={study.id}
+                activeOpacity={0.9}
                 style={styles.card}
-                onPress={() => setExpandedId(isOpen ? null : study.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`${study.study_name}, ${isOpen ? 'collapse' : 'expand'} details`}
+                onPress={() => setExpandedId(open ? null : study.id)}
               >
-                <View style={styles.cardTopRow}>
+                <View style={styles.topRow}>
+                  <View style={styles.iconCircle}>
+                    <Ionicons
+                      name="book"
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.studyName}>{study.study_name}</Text>
+                    <Text style={styles.studyName}>
+                      {study.study_name}
+                    </Text>
+
                     {study.chapter ? (
-                      <Text style={styles.studySubText}>Chapter: {study.chapter}</Text>
-                    ) : null}
-                    {study.study_date ? (
-                      <Text style={styles.studySubText}>
-                        {new Date(study.study_date).toLocaleDateString('en-GB', {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'long',
-                        })}
-                        {study.start_time ? ` | ${study.start_time}` : ''}
+                      <Text style={styles.chapter}>
+                        Chapter {study.chapter}
                       </Text>
                     ) : null}
                   </View>
+
                   <Ionicons
-                    name={isOpen ? 'chevron-up' : 'chevron-down'}
+                    name={open ? 'chevron-up' : 'chevron-down'}
                     size={22}
                     color={colors.primary}
                   />
                 </View>
 
-                {isOpen ? (
-                  <View style={styles.detailBox}>
-                    {study.description ? (
-                      <Text style={styles.detailText}>{study.description}</Text>
-                    ) : (
-                      <Text style={styles.detailTextMuted}>
-                        No additional notes for this study yet.
-                      </Text>
+                <View style={styles.metaRow}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={15}
+                    color={colors.textMuted}
+                  />
+                  <Text style={styles.meta}>
+                    {new Date(study.study_date).toLocaleDateString(
+                      'en-GB',
+                      {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                      }
                     )}
+                  </Text>
+
+                  {study.start_time ? (
+                    <>
+                      <Text style={styles.dot}>•</Text>
+                      <Ionicons
+                        name="time-outline"
+                        size={15}
+                        color={colors.textMuted}
+                      />
+                      <Text style={styles.meta}>{study.start_time}</Text>
+                    </>
+                  ) : null}
+                </View>
+
+                {open && (
+                  <View style={styles.detailBox}>
+                    <Text style={styles.detailTitle}>Study Notes</Text>
+
+                    <Text style={styles.detailText}>
+                      {study.description ||
+                        'No additional notes have been provided for this Bible study.'}
+                    </Text>
                   </View>
-                ) : null}
+                )}
               </TouchableOpacity>
             );
           })}
@@ -148,64 +203,156 @@ export default function StudyScreen() {
   );
 }
 
-function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
+function makeStyles(colors: any, fonts: any) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
       padding: spacing.lg,
-      paddingBottom: spacing.sm,
     },
-    heading: {
-      fontSize: fonts.title,
+
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: 22,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+
+    heroTitle: {
+      color: '#FFF',
+      fontSize: fonts.display,
       fontWeight: '700',
-      marginLeft: spacing.sm,
-      color: colors.primary,
-    },
-    filterRow: {
-      flexDirection: 'row',
-      paddingHorizontal: spacing.lg,
-      marginBottom: spacing.md,
-    },
-    filterButton: {
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radii.sm,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      marginRight: spacing.sm,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    filterButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    filterText: { color: colors.primary, fontWeight: '600', fontSize: fonts.body },
-    filterTextActive: { color: '#FFF' },
-    emptyText: {
-      fontSize: fonts.body,
-      color: colors.textMuted,
       marginTop: spacing.sm,
-      textAlign: 'center',
     },
+
+    heroSub: {
+      color: '#DDF5E6',
+      marginTop: 6,
+      lineHeight: fonts.body * 1.5,
+    },
+
+    segment: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 4,
+      marginBottom: spacing.lg,
+    },
+
+    segmentBtn: {
+      flex: 1,
+      paddingVertical: 12,
+      alignItems: 'center',
+      borderRadius: 12,
+    },
+
+    segmentActive: {
+      backgroundColor: colors.primary,
+    },
+
+    segmentText: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+
+    segmentTextActive: {
+      color: '#FFF',
+    },
+
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+
+    emptyTitle: {
+      fontSize: fonts.subtitle,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: spacing.md,
+    },
+
+    emptyText: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+      lineHeight: fonts.body * 1.5,
+    },
+
     card: {
       backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
+      borderRadius: 20,
       padding: spacing.md,
-      marginBottom: spacing.sm,
+      marginBottom: spacing.md,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
     },
-    cardTopRow: { flexDirection: 'row', alignItems: 'center' },
-    studyName: { fontSize: fonts.bodyLarge, fontWeight: '700', color: colors.primary },
-    studySubText: { fontSize: fonts.body, color: colors.textMuted, marginTop: 2 },
-    detailBox: {
+
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.sm,
+    },
+
+    studyName: {
+      fontSize: fonts.bodyLarge,
+      fontWeight: '700',
+      color: colors.text,
+    },
+
+    chapter: {
+      color: colors.primary,
+      marginTop: 2,
+      fontWeight: '600',
+    },
+
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginTop: spacing.sm,
-      paddingTop: spacing.sm,
+      flexWrap: 'wrap',
+    },
+
+    meta: {
+      color: colors.textMuted,
+      marginLeft: 4,
+      fontSize: fonts.caption + 1,
+    },
+
+    dot: {
+      marginHorizontal: 6,
+      color: colors.textMuted,
+    },
+
+    detailBox: {
+      marginTop: spacing.md,
+      paddingTop: spacing.md,
       borderTopWidth: 1,
       borderTopColor: colors.borderSoft,
     },
-    detailText: { fontSize: fonts.body, color: colors.text, lineHeight: fonts.body * 1.5 },
-    detailTextMuted: { fontSize: fonts.body, color: colors.textMuted, fontStyle: 'italic' },
+
+    detailTitle: {
+      color: colors.primary,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
+    },
+
+    detailText: {
+      color: colors.text,
+      lineHeight: fonts.body * 1.6,
+    },
   });
 }

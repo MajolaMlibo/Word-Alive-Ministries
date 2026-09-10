@@ -6,70 +6,69 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing, radii } from '../theme/theme';
 
-const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function buildMonthGrid(year: number, month: number) {
-  // month is 0-indexed. Returns weeks of 7 cells (nulls for padding).
   const firstDay = new Date(year, month, 1);
-  const startWeekday = firstDay.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const start = firstDay.getDay();
+  const days = new Date(year, month + 1, 0).getDate();
 
   const cells: (number | null)[] = [
-    ...Array(startWeekday).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ...Array(start).fill(null),
+    ...Array.from({ length: days }, (_, i) => i + 1),
   ];
+
   while (cells.length % 7 !== 0) cells.push(null);
 
   const weeks: (number | null)[][] = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  for (let i = 0; i < cells.length; i += 7)
+    weeks.push(cells.slice(i, i + 7));
+
   return weeks;
 }
 
-function toISODate(year: number, month: number, day: number) {
-  const m = String(month + 1).padStart(2, '0');
-  const d = String(day).padStart(2, '0');
-  return `${year}-${m}-${d}`;
+function toISO(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(
+    2,
+    '0'
+  )}`;
 }
 
-export default function Calendar() {
+export default function CalendarScreen() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
-  return (
-    <View style={styles.container}>
-       <EventCalendar colors={colors} fonts={fonts} />
-    </View>
-  );
-}
-
-// ---------- Calendar tab ----------
-
-function EventCalendar({ colors, fonts }: any) {
-  const styles = makeStyles(colors, fonts);
   const today = new Date();
+
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
+
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const weeks = useMemo(() => buildMonthGrid(year, month), [year, month]);
-  const monthLabel = new Date(year, month, 1).toLocaleDateString('en-GB', {
+
+  const monthLabel = new Date(year, month).toLocaleDateString('en-GB', {
     month: 'long',
     year: 'numeric',
   });
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
-    const start = toISODate(year, month, 1);
-    const end = toISODate(year, month, new Date(year, month + 1, 0).getDate());
+
+    const start = toISO(year, month, 1);
+    const end = toISO(
+      year,
+      month,
+      new Date(year, month + 1, 0).getDate()
+    );
 
     const { data } = await supabase
       .from('bible_studies')
@@ -86,223 +85,384 @@ function EventCalendar({ colors, fonts }: any) {
     loadEvents();
   }, [loadEvents]);
 
-  function changeMonth(delta: number) {
-    let m = month + delta;
-    let y = year;
-    if (m < 0) {
-      m = 11;
-      y -= 1;
-    } else if (m > 11) {
-      m = 0;
-      y += 1;
-    }
-    setMonth(m);
-    setYear(y);
-    setSelectedDay(1);
-  }
-
   const eventDates = useMemo(
     () => new Set(events.map((e) => e.study_date)),
     [events]
   );
 
-  const selectedISO = toISODate(year, month, selectedDay);
+  const selectedISO = toISO(year, month, selectedDay);
+
   const dayEvents = events.filter((e) => e.study_date === selectedISO);
+
   const isToday = (day: number) =>
-    day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    day === today.getDate() &&
+    month === today.getMonth() &&
+    year === today.getFullYear();
+
+  const changeMonth = (delta: number) => {
+    let m = month + delta;
+    let y = year;
+
+    if (m < 0) {
+      m = 11;
+      y--;
+    }
+
+    if (m > 11) {
+      m = 0;
+      y++;
+    }
+
+    setMonth(m);
+    setYear(y);
+    setSelectedDay(1);
+  };
 
   return (
-    <ScrollView style={styles.calendarBody} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-      <View style={styles.monthHeader}>
-        <TouchableOpacity
-          onPress={() => changeMonth(-1)}
-          accessibilityRole="button"
-          accessibilityLabel="Previous month"
-          style={styles.stepperButton}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={styles.monthLabel}>{monthLabel}</Text>
-        <TouchableOpacity
-          onPress={() => changeMonth(1)}
-          accessibilityRole="button"
-          accessibilityLabel="Next month"
-          style={styles.stepperButton}
-        >
-          <Ionicons name="chevron-forward" size={22} color={colors.primary} />
-        </TouchableOpacity>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: spacing.xl }}
+    >
+      {/* HERO */}
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>Ministry Calendar</Text>
+        <Text style={styles.heroSub}>
+          Align and Prosper
+        </Text>
       </View>
 
-      <View style={styles.weekdayRow}>
-        {WEEKDAY_LABELS.map((w, i) => (
-          <Text key={i} style={styles.weekdayLabel}>
-            {w}
-          </Text>
+      {/* MONTH CARD */}
+      <View style={styles.calendarCard}>
+        <View style={styles.monthHeader}>
+          <TouchableOpacity onPress={() => changeMonth(-1)}>
+            <Ionicons
+              name="chevron-back-circle"
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+
+          <Text style={styles.monthText}>{monthLabel}</Text>
+
+          <TouchableOpacity onPress={() => changeMonth(1)}>
+            <Ionicons
+              name="chevron-forward-circle"
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.weekRow}>
+          {WEEKDAYS.map((d) => (
+            <Text key={d} style={styles.weekday}>
+              {d}
+            </Text>
+          ))}
+        </View>
+
+        {weeks.map((week, i) => (
+          <View key={i} style={styles.weekRow}>
+            {week.map((day, idx) => {
+              if (!day)
+                return <View key={idx} style={styles.dayContainer} />;
+
+              const iso = toISO(year, month, day);
+              const hasEvent = eventDates.has(iso);
+              const selected = day === selectedDay;
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.dayContainer,
+                    selected && styles.selectedDay,
+                    isToday(day) && !selected && styles.todayBorder,
+                  ]}
+                  onPress={() => setSelectedDay(day)}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      selected && styles.selectedDayText,
+                    ]}
+                  >
+                    {day}
+                  </Text>
+
+                  {hasEvent && (
+                    <View
+                      style={[
+                        styles.dot,
+                        selected && { backgroundColor: '#FFF' },
+                      ]}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         ))}
       </View>
 
-      {weeks.map((week, wi) => (
-        <View key={wi} style={styles.weekRow}>
-          {week.map((day, di) => {
-            const iso = day ? toISODate(year, month, day) : null;
-            const hasEvent = iso ? eventDates.has(iso) : false;
-            const selected = day === selectedDay;
-            return (
-              <TouchableOpacity
-                key={di}
-                style={[
-                  styles.dayCell,
-                  selected && styles.dayCellSelected,
-                  day ? (isToday(day) && !selected ? styles.dayCellToday : null) : null,
-                ]}
-                disabled={!day}
-                onPress={() => day && setSelectedDay(day)}
-                accessibilityRole={day ? 'button' : undefined}
-                accessibilityLabel={day ? `${day} ${monthLabel}` : undefined}
-              >
-                {day ? (
-                  <>
-                    <Text
-                      style={[styles.dayText, selected && styles.dayTextSelected]}
-                    >
-                      {day}
-                    </Text>
-                    {hasEvent ? (
-                      <View
-                        style={[
-                          styles.eventDot,
-                          selected && { backgroundColor: '#FFF' },
-                        ]}
-                      />
-                    ) : null}
-                  </>
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      ))}
-
-      <View style={styles.agenda}>
-        <Text style={styles.agendaHeading}>
+      {/* SELECTED DAY */}
+      <View style={styles.agendaHeader}>
+        <Ionicons
+          name="calendar-outline"
+          size={20}
+          color={colors.primary}
+        />
+        <Text style={styles.agendaTitle}>
           {new Date(year, month, selectedDay).toLocaleDateString('en-GB', {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
           })}
         </Text>
-
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />
-        ) : dayEvents.length ? (
-          dayEvents.map((e) => (
-            <View key={e.id} style={styles.eventCard}>
-              <Text style={styles.eventTitle}>{e.study_name}</Text>
-              {e.chapter ? (
-                <Text style={styles.eventSubText}>Chapter: {e.chapter}</Text>
-              ) : null}
-              {e.start_time ? (
-                <Text style={styles.eventSubText}>{e.start_time}</Text>
-              ) : null}
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>No study scheduled for this day.</Text>
-        )}
       </View>
+
+      {loading ? (
+        <ActivityIndicator
+          color={colors.primary}
+          style={{ marginTop: spacing.lg }}
+        />
+      ) : dayEvents.length ? (
+        dayEvents.map((event) => (
+          <View key={event.id} style={styles.eventCard}>
+            <View style={styles.eventTop}>
+              <View style={styles.eventIcon}>
+                <Ionicons name="book" size={20} color="#FFF" />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.eventTitle}>{event.study_name}</Text>
+
+                {event.chapter && (
+                  <Text style={styles.eventSub}>
+                    Chapter {event.chapter}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {event.start_time && (
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="time-outline"
+                  size={16}
+                  color={colors.textMuted}
+                />
+                <Text style={styles.infoText}>{event.start_time}</Text>
+              </View>
+            )}
+
+            {event.description && (
+              <Text style={styles.description}>{event.description}</Text>
+            )}
+          </View>
+        ))
+      ) : (
+        <View style={styles.emptyCard}>
+          <Ionicons
+            name="calendar-clear-outline"
+            size={42}
+            color={colors.textMuted}
+          />
+          <Text style={styles.emptyTitle}>No Bible Study</Text>
+          <Text style={styles.emptyText}>
+            There are no scheduled events for this day.
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
 
-function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors>, fonts: any) {
+function makeStyles(colors: any, fonts: any) {
   return StyleSheet.create({
-    // Tab Styles
-    container: { flex: 1, backgroundColor: colors.background },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    tabButton: {
+    container: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: spacing.sm + 2,
+      backgroundColor: colors.background,
+      padding: spacing.lg,
     },
-    tabButtonActive: { backgroundColor: colors.primary },
-    tabText: {
-      marginLeft: spacing.xs,
-      color: colors.primary,
-      fontWeight: '600',
-      fontSize: fonts.body,
-    },
-    tabTextActive: { color: '#FFF' },
 
-    // Calendar styles
-    calendarBody: { flex: 1, paddingHorizontal: spacing.lg },
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: 24,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+
+    heroTitle: {
+      color: '#FFF',
+      fontSize: fonts.display,
+      fontWeight: '700',
+    },
+
+    heroSub: {
+      color: '#DDF4E5',
+      marginTop: 6,
+      fontSize: fonts.body,
+      lineHeight: fonts.body * 1.5,
+      textAlign: 'auto',
+    },
+
+    calendarCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 22,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+      elevation: 2,
+    },
+
     monthHeader: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: spacing.sm,
+      marginBottom: spacing.md,
     },
-    monthLabel: {
-      fontSize: fonts.subtitle,
+
+    monthText: {
+      fontSize: fonts.title,
       fontWeight: '700',
       color: colors.primary,
-      marginHorizontal: spacing.md,
-      minWidth: 160,
-      textAlign: 'center',
     },
-    weekdayRow: { flexDirection: 'row', marginBottom: spacing.xs },
-    weekdayLabel: {
+
+    weekRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+
+    weekday: {
       flex: 1,
       textAlign: 'center',
       color: colors.textMuted,
-      fontWeight: '600',
+      fontWeight: '700',
       fontSize: fonts.caption,
     },
-    weekRow: { flexDirection: 'row', marginBottom: spacing.xs },
-    dayCell: {
+
+    dayContainer: {
       flex: 1,
       aspectRatio: 1,
-      alignItems: 'center',
+      margin: 2,
+      borderRadius: 14,
       justifyContent: 'center',
-      borderRadius: radii.sm,
-      marginHorizontal: 2,
+      alignItems: 'center',
     },
-    dayCellSelected: { backgroundColor: colors.primary },
-    dayCellToday: { borderWidth: 1, borderColor: colors.primary },
-    dayText: { fontSize: fonts.body, color: colors.text },
-    dayTextSelected: { color: '#FFF', fontWeight: '700' },
-    eventDot: {
-      width: 5,
-      height: 5,
+
+    selectedDay: {
+      backgroundColor: colors.primary,
+    },
+
+    todayBorder: {
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+    },
+
+    dayText: {
+      color: colors.text,
+      fontSize: fonts.body,
+      fontWeight: '600',
+    },
+
+    selectedDayText: {
+      color: '#FFF',
+    },
+
+    dot: {
+      width: 6,
+      height: 6,
       borderRadius: 3,
-      backgroundColor: colors.accentDeep,
-      marginTop: 2,
+      backgroundColor: '#D4AF37',
+      marginTop: 4,
     },
-    agenda: { marginTop: spacing.lg },
-    agendaHeading: {
+
+    agendaHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+
+    agendaTitle: {
+      marginLeft: spacing.sm,
       fontSize: fonts.subtitle,
       fontWeight: '700',
-      color: colors.primary,
-      marginBottom: spacing.sm,
+      color: colors.text,
     },
+
     eventCard: {
       backgroundColor: colors.surface,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
+      borderRadius: 20,
       padding: spacing.md,
+      marginBottom: spacing.md,
+      elevation: 1,
+    },
+
+    eventTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginBottom: spacing.sm,
     },
-    stepperButton: {
-      padding: spacing.sm,
-      minWidth: 44,
-      minHeight: 44,
-      alignItems: 'center',
+
+    eventIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: colors.primary,
       justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.sm,
     },
-    eventTitle: { fontSize: fonts.bodyLarge, fontWeight: '700', color: colors.primary },
-    eventSubText: { fontSize: fonts.body, color: colors.textMuted, marginTop: 2 },
-    emptyText: { fontSize: fonts.body, color: colors.textMuted, marginTop: spacing.md },
+
+    eventTitle: {
+      fontSize: fonts.bodyLarge,
+      fontWeight: '700',
+      color: colors.text,
+    },
+
+    eventSub: {
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+
+    infoText: {
+      marginLeft: 6,
+      color: colors.textMuted,
+      fontSize: fonts.body,
+    },
+
+    description: {
+      marginTop: spacing.sm,
+      color: colors.text,
+      lineHeight: fonts.body * 1.5,
+    },
+
+    emptyCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: spacing.xl,
+      alignItems: 'center',
+    },
+
+    emptyTitle: {
+      marginTop: spacing.sm,
+      fontSize: fonts.subtitle,
+      fontWeight: '700',
+      color: colors.text,
+    },
+
+    emptyText: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: 6,
+      lineHeight: fonts.body * 1.5,
+    },
   });
 }
