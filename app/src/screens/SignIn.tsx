@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,128 +6,115 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../services/supabase';
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
+import { supabase } from "../services/supabase";
 
 export default function SignIn() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [LastName, setLastName] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleAuth() {
-    if (!email || !password) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
+  const redirectTo = Linking.createURL("/");
+
+  const signInWithEmail = async () => {
+    if (!email) {
+      Alert.alert("Enter your email");
       return;
     }
 
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) Alert.alert('Login failed', error.message);
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        Alert.alert('Sign up failed', error.message);
-      } else if (data.user) {
-        await supabase.from('profiles').insert({
-          id: data.user.id,
-          name,
-          current_streak: 0,
-          is_admin: false,
-          high_contrast: false,
-          text_size: 'standard',
-        });
-
-        Alert.alert(
-          'Account created',
-          'Please verify your email before signing in.'
-        );
-      }
-    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    });
 
     setLoading(false);
-  }
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
+      Alert.alert("Check your email", "We've sent you a secure sign-in link.");
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) Alert.alert("Error", error.message);
+  };
+
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) Alert.alert("Error", error.message);
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <Ionicons name="book" size={54} color="#FDD835" />
+        <Ionicons name="book" size={56} color="#FDD835" />
         <Text style={styles.title}>Word Alive</Text>
         <Text style={styles.subtitle}>Ministries</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.heading}>
-          {isLogin ? 'Welcome Back' : 'Create Account'}
+        <Text style={styles.heading}>Welcome</Text>
+        <Text style={styles.text}>
+          Sign in securely with your email or continue with Google.
         </Text>
 
-        {!isLogin && (
-          <TextInput
-            placeholder="First Name"
-            value={name}
-            onChangeText={setName}
-            style={styles.input}
-          />
-        )}
-
         <TextInput
-            placeholder="Last Name"
-            value={LastName}
-            onChangeText={setLastName}
-            style={styles.input}
-          />
-
-        <TextInput
-          placeholder="Email"
-          autoCapitalize="none"
+          placeholder="Email address"
           keyboardType="email-address"
+          autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
           style={styles.input}
         />
 
-        <TextInput
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-        />
-
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleAuth}
+          style={styles.primary}
+          onPress={signInWithEmail}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>
-            {loading
-              ? 'Please wait...'
-              : isLogin
-              ? 'Sign In'
-              : 'Create Account'}
+          <Ionicons name="mail-outline" size={20} color="#FFF" />
+          <Text style={styles.primaryText}>
+            {loading ? "Sending..." : "Email me a sign-in link"}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-          <Text style={styles.switch}>
-            {isLogin
-              ? "Don't have an account? Sign Up"
-              : 'Already have an account? Sign In'}
-          </Text>
+        <View style={styles.dividerRow}>
+          <View style={styles.line} />
+          <Text style={styles.or}>OR</Text>
+          <View style={styles.line} />
+        </View>
+
+        <TouchableOpacity style={styles.oauth} onPress={signInWithGoogle}>
+          <Ionicons name="logo-google" size={22} color="#DB4437" />
+          <Text style={styles.oauthText}>Continue with Google</Text>
         </TouchableOpacity>
+
+        {Platform.OS === "ios" && (
+          <TouchableOpacity style={styles.oauth} onPress={signInWithApple}>
+            <Ionicons name="logo-apple" size={22} color="#000" />
+            <Text style={styles.oauthText}>Continue with Apple</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -136,59 +123,86 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#044b04',
-    justifyContent: 'center',
+    backgroundColor: "#044b04",
+    justifyContent: "center",
     padding: 24,
   },
   hero: {
-    alignItems: 'center',
-    marginBottom: 32,
+    alignItems: "center",
+    marginBottom: 36,
   },
   title: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 34,
-    fontWeight: '700',
-    marginTop: 8,
+    fontWeight: "700",
+    marginTop: 10,
   },
   subtitle: {
-    color: '#DDF4E6',
+    color: "#DDF4E6",
     fontSize: 18,
   },
   card: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 22,
     padding: 24,
   },
   heading: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#044b04',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#044b04",
+    textAlign: "center",
+  },
+  text: {
+    textAlign: "center",
+    color: "#666",
+    marginVertical: 14,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: "#DDD",
     borderRadius: 12,
     padding: 14,
     marginBottom: 14,
   },
-  button: {
-    backgroundColor: '#044b04',
-    padding: 16,
+  primary: {
+    backgroundColor: "#044b04",
     borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 6,
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  buttonText: {
-    color: '#FFF',
-    fontWeight: '700',
-    fontSize: 16,
+  primaryText: {
+    color: "#FFF",
+    fontWeight: "700",
+    marginLeft: 8,
   },
-  switch: {
-    color: '#044b04',
-    textAlign: 'center',
-    marginTop: 18,
-    fontWeight: '600',
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#DDD",
+  },
+  or: {
+    marginHorizontal: 10,
+    color: "#888",
+  },
+  oauth: {
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderRadius: 12,
+    padding: 15,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  oauthText: {
+    fontWeight: "600",
+    marginLeft: 10,
   },
 });
