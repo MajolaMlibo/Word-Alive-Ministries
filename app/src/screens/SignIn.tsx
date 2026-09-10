@@ -10,7 +10,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { supabase } from "../services/supabase";
+
+WebBrowser.maybeCompleteAuthSession();
+const redirectTo = Linking.createURL("auth/callback");
+
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -43,26 +48,43 @@ export default function SignIn() {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-      },
-    });
+  const redirectTo = Linking.createURL("auth/callback");
 
-    if (error) Alert.alert("Error", error.message);
-  };
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error) {
+    Alert.alert("Error", error.message);
+    return;
+  }
+
+  if (data?.url) {
+    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  }
+};
 
   const signInWithApple = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: {
-        redirectTo,
-      },
-    });
+  const redirectTo = Linking.createURL("auth/callback");
 
-    if (error) Alert.alert("Error", error.message);
-  };
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "apple",
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error) return Alert.alert("Error", error.message);
+
+  if (data?.url) {
+    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  }
+};
 
   return (
     <View style={styles.container}>

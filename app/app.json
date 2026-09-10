@@ -18,6 +18,9 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#004d00"
       }
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

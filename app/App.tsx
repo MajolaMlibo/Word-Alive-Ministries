@@ -14,6 +14,9 @@ import Study from './src/screens/Study';
 import Profile from './src/screens/Profile';
 import SignIn from './src/screens/SignIn';
 
+import * as Linking from "expo-linking";
+
+const DEV_BYPASS_AUTH = true;
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
@@ -68,6 +71,12 @@ export default function App() {
       setLoading(false);
     });
 
+  const sub = Linking.addEventListener("url", async ({ url }) => {
+    await supabase.auth.exchangeCodeForSession(url);
+  });
+
+  return () => sub.remove();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -80,10 +89,16 @@ export default function App() {
   if (loading) return null;
 
   return (
-    <AccessibilityProvider>
-      <NavigationContainer>
-        {session ? <MainTabs /> : <SignIn />}
-      </NavigationContainer>
-    </AccessibilityProvider>
-  );
+  <AccessibilityProvider>
+    <NavigationContainer>
+      {DEV_BYPASS_AUTH ? (
+        <MainTabs />
+      ) : session ? (
+        <MainTabs />
+      ) : (
+        <SignIn />
+      )}
+    </NavigationContainer>
+  </AccessibilityProvider>
+);
 }
