@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const Todays_Scripture = 'Numbers 6:24';
 
   const getFormattedDate = () =>
     new Date().toLocaleDateString('en-GB', {
@@ -98,8 +99,13 @@ export default function HomeScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+       <View>
+          <Text style={styles.dateBadge}>{getFormattedDate()}</Text>
+          <Text> </Text>
+       </View>
+
       <Text style={styles.greeting}>
-        Good morning {profileName ? `, ${profileName}` : ''}
+        Good { new Date().getHours() < 12 ? 'morning' : 'afternoon'} {profileName ? `, ${profileName}` : ''}
       </Text>
       <Text style={styles.subGreeting}>Welcome to Word Alive Ministries</Text>
 
@@ -108,11 +114,10 @@ export default function HomeScreen() {
         <View style={styles.cardHeader}>
           <Ionicons name="book-outline" size={22} color={colors.primary} />
           <Text style={styles.cardHeaderText}>Today's Scripture</Text>
-          <Text style={styles.dateBadge}>{getFormattedDate()}</Text>
         </View>
 
         <Text style={styles.title}>
-          {reading?.scripture_ref || 'Romans 8:1-17'}
+          {reading?.scripture_ref || `${Todays_Scripture}`}
         </Text>
         {reading?.content ? (
           <Text style={styles.snippet}>"{reading.content}"</Text>
@@ -124,21 +129,16 @@ export default function HomeScreen() {
           accessibilityRole="button"
           accessibilityLabel="Read today's scripture"
         >
-          <Ionicons
-            name="book"
-            size={20}
-            color={colors.text}
-            style={{ marginRight: 8 }}
-          />
+          
           <Text style={styles.buttonText}>Read today's scripture</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Next Bible Study */}
+      {/* Upcoming Bible Study */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-          <Text style={styles.cardHeaderText}>Next Bible Study</Text>
+          <Text style={styles.cardHeaderText}>Upcoming Bible Study</Text>
         </View>
 
         <Text style={styles.title}>
@@ -164,7 +164,7 @@ export default function HomeScreen() {
           accessibilityRole="button"
           accessibilityLabel="View calendar"
         >
-          <Text style={styles.secondaryButtonText}>View calendar</Text>
+          <Text style={styles.buttonText}>View calendar</Text>
         </TouchableOpacity>
       </View>
 
@@ -218,10 +218,13 @@ function makeStyles(colors: ReturnType<typeof import('../theme/theme').getColors
       color: '#FFF',
       paddingHorizontal: spacing.sm,
       paddingVertical: spacing.xs / 2,
+      marginRight: 40,
+      marginLeft: 40,
       borderRadius: radii.sm,
       fontSize: fonts.caption,
       fontWeight: '700',
       overflow: 'hidden',
+      textAlign: 'center' ,
     },
     title: { fontSize: fonts.title, fontWeight: 'bold', color: colors.primary, marginTop: 4 },
     snippet: {

@@ -135,7 +135,7 @@ export default function Bible() {
             color={tab === 'read' ? '#FFF' : colors.primary}
           />
           <Text style={[styles.tabText, tab === 'read' && styles.tabTextActive]}>
-            Full Bible
+            Full Bible (NIV)
           </Text>
         </TouchableOpacity>
       </View>
