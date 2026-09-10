@@ -37,12 +37,12 @@ export default function App() {
           tabBarActiveTintColor: '#fedd21d8', // Ministry Gold
           tabBarInactiveTintColor: '#Fdfcf0', // Cream
           tabBarStyle: {
-            backgroundColor: '#044b04af', // Ministry Green
+            backgroundColor: '#044b04', // Ministry Green
             paddingBottom: 5,
             height: 60,
           },
           headerStyle: {
-            backgroundColor: '#044b04af',
+            backgroundColor: '#044b04',
           },
           headerTintColor: '#Fdfcf0',
         })}

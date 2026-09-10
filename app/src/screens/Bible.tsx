@@ -18,6 +18,7 @@ import {
   saveLastPosition,
   getLastPosition,
 } from '../services/bibleService';
+import { DailyReading } from '../services/database';
 
 type Tab = 'daily' | 'read';
 
@@ -40,7 +41,7 @@ export default function Bible() {
   const styles = makeStyles(colors, fonts);
 
   const [tab, setTab] = useState<Tab>('daily');
-  const [reading, setReading] = useState<any>(null);
+  const [reading, setReading] = useState<DailyReading | null>(null);
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -230,9 +231,10 @@ function BibleReader() {
   const [book, setBook] = useState('Genesis');
   const [chapter, setChapter] = useState(1);
   const [verse, setVerse] = useState<number | undefined>();
-  const [input, setInput] = useState('Genesis 1');
+  const [input, setInput] = useState('Genesis');
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -242,11 +244,14 @@ function BibleReader() {
         setChapter(saved.chapter);
         setVerse(saved.verse);
         setInput(
-          `${saved.book} ${saved.chapter}${
-            saved.verse ? ':' + saved.verse : ''
-          }`
+         saved.chapter ? `${saved.book} ${saved.chapter}${saved.verse ? ':' + saved.verse : ''}` : saved.book
         );
       }
+      if (saved?.chapter) {
+        setChapter(saved.chapter);
+      }
+      setVerse(saved?.verse);
+      setRestored(true);
     })();
   }, []);
 
@@ -269,6 +274,7 @@ function BibleReader() {
 
   function submit() {
     const p = parseReference(input);
+    if (!p.book) return;
     setBook(p.book);
     setChapter(p.chapter);
     setVerse(p.verse);
@@ -277,13 +283,13 @@ function BibleReader() {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.searchCard}>
-        <TextInput
+        <TextInput 
           value={input}
           onChangeText={setInput}
           onSubmitEditing={submit}
           placeholder="John 3"
           placeholderTextColor={colors.textMuted}
-          style={styles.input}
+          style={styles.searchCard/*input*/}
         />
 
         <View style={styles.stepper}>
