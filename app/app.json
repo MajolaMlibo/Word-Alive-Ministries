@@ -21,6 +21,12 @@
     },
     "plugins": [
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "966c4966-bf09-4419-8652-2c5642b7503f"
+      }
+    },
+    "owner": "mlibo"
   }
 }
