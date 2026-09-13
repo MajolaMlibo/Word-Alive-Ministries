@@ -146,7 +146,7 @@ export default function HomeScreen() {
 
         <Text numberOfLines={5} style={styles.scripture}>
           {reading?.content ||
-            'Daily Scrupture...'}
+            'Daily Scripture...'}
         </Text>
 
         <TouchableOpacity
