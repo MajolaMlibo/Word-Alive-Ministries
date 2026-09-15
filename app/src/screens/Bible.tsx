@@ -732,11 +732,74 @@ function makeStyles(colors: any, fonts: any) {
       marginBottom: spacing.lg,
     },
 
+    verseTools: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      borderRadius: 14,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+      padding: spacing.sm,
+    },
+
+    selectionCount: {
+      color: colors.textMuted,
+      fontSize: fonts.body,
+      fontWeight: '600',
+      marginRight: 'auto',
+    },
+
+    toolButton: {
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      flexDirection: 'row',
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+
+    toolButtonText: {
+      color: '#FFF',
+      fontWeight: '700',
+    },
+
+    moreButton: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 3,
+      paddingHorizontal: 6,
+      paddingVertical: 8,
+    },
+
+    moreButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+
     verse: {
       fontSize: fonts.bodyLarge,
       lineHeight: fonts.bodyLarge * 1.9,
       color: colors.text,
+      borderRadius: 8,
       marginBottom: spacing.sm,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+
+    verseText: {
+      color: colors.text,
+      fontSize: fonts.bodyLarge,
+      lineHeight: fonts.bodyLarge * 1.9,
+    },
+
+    selectedVerse: {
+      backgroundColor: `${colors.primary}26`,
+    },
+
+    highlightedVerse: {
+      backgroundColor: '#F7E7A9',
     },
 
     verseNum: {
