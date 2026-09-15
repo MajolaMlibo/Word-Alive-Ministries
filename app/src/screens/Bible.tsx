@@ -22,6 +22,25 @@ import { DailyReading } from '../services/database';
 
 type Tab = 'daily' | 'read';
 
+const BIBLE_BOOKS = [
+  ['Genesis', 50], ['Exodus', 40], ['Leviticus', 27], ['Numbers', 36], ['Deuteronomy', 34],
+  ['Joshua', 24], ['Judges', 21], ['Ruth', 4], ['1 Samuel', 31], ['2 Samuel', 24],
+  ['1 Kings', 22], ['2 Kings', 25], ['1 Chronicles', 29], ['2 Chronicles', 36], ['Ezra', 10],
+  ['Nehemiah', 13], ['Esther', 10], ['Job', 42], ['Psalms', 150], ['Proverbs', 31],
+  ['Ecclesiastes', 12], ['Song of Solomon', 8], ['Isaiah', 66], ['Jeremiah', 52], ['Lamentations', 5],
+  ['Ezekiel', 48], ['Daniel', 12], ['Hosea', 14], ['Joel', 3], ['Amos', 9], ['Obadiah', 1],
+  ['Jonah', 4], ['Micah', 7], ['Nahum', 3], ['Habakkuk', 3], ['Zephaniah', 3], ['Haggai', 2],
+  ['Zechariah', 14], ['Malachi', 4], ['Matthew', 28], ['Mark', 16], ['Luke', 24], ['John', 21],
+  ['Acts', 28], ['Romans', 16], ['1 Corinthians', 16], ['2 Corinthians', 13], ['Galatians', 6],
+  ['Ephesians', 6], ['Philippians', 4], ['Colossians', 4], ['1 Thessalonians', 5],
+  ['2 Thessalonians', 3], ['1 Timothy', 6], ['2 Timothy', 4], ['Titus', 3], ['Philemon', 1],
+  ['Hebrews', 13], ['James', 5], ['1 Peter', 5], ['2 Peter', 3], ['1 John', 5], ['2 John', 1],
+  ['3 John', 1], ['Jude', 1], ['Revelation', 22],
+] as const;
+
+const getChapterCount = (book: string) =>
+  BIBLE_BOOKS.find(([name]) => name === book)?.[1] ?? 1;
+
 function parseReference(input: string) {
   const match = input.trim().match(/^(.*?)\s+(\d+)(?::(\d+))?$/);
 
@@ -234,7 +253,6 @@ function BibleReader() {
   const [input, setInput] = useState('Genesis');
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -251,7 +269,6 @@ function BibleReader() {
         setChapter(saved.chapter);
       }
       setVerse(saved?.verse);
-      setRestored(true);
     })();
   }, []);
 
@@ -259,7 +276,8 @@ function BibleReader() {
     setLoading(true);
 
     try {
-      const ref = `${book} ${chapter}${verse ? ':' + verse : ''}`;
+      // Always load the chapter so the verse picker remains available after a verse is chosen.
+      const ref = `${book} ${chapter}`;
       const data = await fetchScripture(ref);
       setPassage(data);
       saveLastPosition(book, chapter, verse);
@@ -275,29 +293,117 @@ function BibleReader() {
   function submit() {
     const p = parseReference(input);
     if (!p.book) return;
-    setBook(p.book);
-    setChapter(p.chapter);
+    const matchingBook = BIBLE_BOOKS.find(
+      ([name]) => name.toLowerCase() === p.book.toLowerCase()
+    );
+
+    if (!matchingBook) {
+      Alert.alert('Book not found', 'Choose a book from the suggestions below.');
+      return;
+    }
+
+    setBook(matchingBook[0]);
+    setChapter(Math.min(Math.max(p.chapter, 1), matchingBook[1]));
     setVerse(p.verse);
+  }
+
+  const bookQuery = input.replace(/\s+\d.*$/, '').trim().toLowerCase();
+  const bookSuggestions = BIBLE_BOOKS.filter(([name]) =>
+    name.toLowerCase().includes(bookQuery)
+  ).slice(0, 6);
+  const chapters = Array.from({ length: getChapterCount(book) }, (_, index) => index + 1);
+  const verses = passage?.verses?.map((item: any) => item.verse) ?? [];
+
+  function selectBook(selectedBook: string) {
+    setBook(selectedBook);
+    setChapter(1);
+    setVerse(undefined);
+    setInput(selectedBook);
+  }
+
+  function selectChapter(selectedChapter: number) {
+    setChapter(selectedChapter);
+    setVerse(undefined);
+    setInput(`${book} ${selectedChapter}`);
+  }
+
+  function selectVerse(selectedVerse: number) {
+    setVerse(selectedVerse);
+    setInput(`${book} ${chapter}:${selectedVerse}`);
   }
 
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.searchCard}>
-        <TextInput 
+        <TextInput
           value={input}
           onChangeText={setInput}
           onSubmitEditing={submit}
-          placeholder="John 3"
+          placeholder="Search a book, e.g. John"
           placeholderTextColor={colors.textMuted}
-          style={styles.searchCard/*input*/}
+          style={styles.input}
+          returnKeyType="search"
         />
+
+        <ScrollView
+          style={styles.pickerScroll}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+        >
+        <Text style={styles.pickerLabel}>Book</Text>
+        <View style={styles.bookSuggestions}>
+          {bookSuggestions.map(([name]) => (
+            <TouchableOpacity
+              key={name}
+              style={[styles.bookChip, name === book && styles.selectedChip]}
+              onPress={() => selectBook(name)}
+            >
+              <Text style={[styles.bookChipText, name === book && styles.selectedChipText]}>
+                {name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.pickerLabel}>Chapter</Text>
+        <View style={styles.numberGrid}>
+          {chapters.map((number) => (
+            <TouchableOpacity
+              key={number}
+              style={[styles.numberChip, number === chapter && styles.selectedChip]}
+              onPress={() => selectChapter(number)}
+            >
+              <Text style={[styles.numberChipText, number === chapter && styles.selectedChipText]}>{number}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.pickerLabel}>Verse</Text>
+        {loading ? (
+          <ActivityIndicator color={colors.primary} style={styles.verseLoading} />
+        ) : verses.length ? (
+          <View style={styles.numberGrid}>
+            {verses.map((number: number) => (
+              <TouchableOpacity
+                key={number}
+                style={[styles.numberChip, number === verse && styles.selectedChip]}
+                onPress={() => selectVerse(number)}
+              >
+                <Text style={[styles.numberChipText, number === verse && styles.selectedChipText]}>{number}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.pickerHint}>Choose a chapter to see its verses.</Text>
+        )}
+        </ScrollView>
 
         <View style={styles.stepper}>
           <TouchableOpacity
             onPress={() => {
               if (chapter > 1) {
                 setVerse(undefined);
-                setChapter(chapter - 1);
+                selectChapter(chapter - 1);
               }
             }}
           >
@@ -312,8 +418,7 @@ function BibleReader() {
 
           <TouchableOpacity
             onPress={() => {
-              setVerse(undefined);
-              setChapter(chapter + 1);
+              if (chapter < getChapterCount(book)) selectChapter(chapter + 1);
             }}
           >
             <Ionicons
@@ -340,7 +445,7 @@ function BibleReader() {
             {verse ? `:${verse}` : ''}
           </Text>
 
-          {passage?.verses?.map((v: any) => (
+          {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => (
             <Text key={v.verse} style={styles.verse}>
               <Text style={styles.verseNum}>{v.verse} </Text>
               {v.text}
@@ -461,6 +566,76 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.text,
       fontSize: fonts.body,
       marginBottom: spacing.md,
+    },
+
+    pickerLabel: {
+      color: colors.text,
+      fontWeight: '700',
+      marginBottom: spacing.sm,
+      marginTop: spacing.sm,
+    },
+
+    pickerScroll: {
+      maxHeight: 230,
+    },
+
+    bookSuggestions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginHorizontal: -3,
+    },
+
+    bookChip: {
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      margin: 3,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+
+    bookChipText: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+
+    numberGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginHorizontal: -3,
+    },
+
+    numberChip: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      justifyContent: 'center',
+      margin: 3,
+      minWidth: 34,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+    },
+
+    numberChipText: {
+      color: colors.text,
+      fontWeight: '700',
+    },
+
+    selectedChip: {
+      backgroundColor: colors.primary,
+    },
+
+    selectedChipText: {
+      color: '#FFF',
+    },
+
+    pickerHint: {
+      color: colors.textMuted,
+      fontSize: fonts.body,
+      marginBottom: spacing.sm,
+    },
+
+    verseLoading: {
+      marginVertical: spacing.sm,
     },
 
     stepper: {

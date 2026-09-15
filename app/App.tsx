@@ -16,7 +16,7 @@ import SignIn from './src/screens/SignIn';
 
 import * as Linking from "expo-linking";
 
-const DEV_BYPASS_AUTH = true;
+const DEV_BYPASS_AUTH = true; //Set to false to view Sign In, Set true to disable sign in
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
