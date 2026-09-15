@@ -141,12 +141,14 @@ export default function Bible() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Holy Bible</Text>
-        <Text style={styles.heroSub}>
-          Read daily devotionals or explore the full NIV Bible.
-        </Text>
-      </View>
+      {tab === 'daily' && (
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Holy Bible</Text>
+          <Text style={styles.heroSub}>
+            Read daily devotionals or explore the full NIV Bible.
+          </Text>
+        </View>
+      )}
 
       <View style={styles.tabs}>
         <TouchableOpacity
@@ -253,6 +255,9 @@ function BibleReader() {
   const [input, setInput] = useState('Genesis');
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [searchStep, setSearchStep] = useState<'book' | 'chapter' | 'verse' | null>(null);
+  const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
+  const [highlightedVerses, setHighlightedVerses] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -305,6 +310,7 @@ function BibleReader() {
     setBook(matchingBook[0]);
     setChapter(Math.min(Math.max(p.chapter, 1), matchingBook[1]));
     setVerse(p.verse);
+    setSearchStep(null);
   }
 
   const bookQuery = input.replace(/\s+\d.*$/, '').trim().toLowerCase();
@@ -318,18 +324,43 @@ function BibleReader() {
     setBook(selectedBook);
     setChapter(1);
     setVerse(undefined);
+    setSelectedVerses([]);
     setInput(selectedBook);
+    setSearchStep('chapter');
   }
 
   function selectChapter(selectedChapter: number) {
     setChapter(selectedChapter);
     setVerse(undefined);
+    setSelectedVerses([]);
     setInput(`${book} ${selectedChapter}`);
+    setSearchStep('verse');
   }
 
   function selectVerse(selectedVerse: number) {
     setVerse(selectedVerse);
     setInput(`${book} ${chapter}:${selectedVerse}`);
+    setSearchStep(null);
+  }
+
+  function toggleVerseSelection(selectedVerse: number) {
+    setSelectedVerses((current) =>
+      current.includes(selectedVerse)
+        ? current.filter((item) => item !== selectedVerse)
+        : [...current, selectedVerse]
+    );
+  }
+
+  function highlightSelectedVerses() {
+    setHighlightedVerses((current) => Array.from(new Set([...current, ...selectedVerses])));
+    setSelectedVerses([]);
+  }
+
+  function showMoreVerseActions() {
+    Alert.alert(
+      `${book} ${chapter}:${selectedVerses.join(', ')}`,
+      'More verse actions such as notes, sharing, and bookmarks can be added here.'
+    );
   }
 
   return (
@@ -337,21 +368,27 @@ function BibleReader() {
       <View style={styles.searchCard}>
         <TextInput
           value={input}
-          onChangeText={setInput}
+          onChangeText={(value) => {
+            setInput(value);
+            setSearchStep('book');
+          }}
           onSubmitEditing={submit}
+          onFocus={() => setSearchStep('book')}
           placeholder="Search a book, e.g. John"
           placeholderTextColor={colors.textMuted}
           style={styles.input}
           returnKeyType="search"
         />
 
-        <ScrollView
-          style={styles.pickerScroll}
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-        >
-        <Text style={styles.pickerLabel}>Book</Text>
-        <View style={styles.bookSuggestions}>
+        {searchStep && (
+          <ScrollView
+            style={styles.pickerScroll}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
+          {searchStep === 'book' && <>
+          <Text style={styles.pickerLabel}>Choose a book</Text>
+          <View style={styles.bookSuggestions}>
           {bookSuggestions.map(([name]) => (
             <TouchableOpacity
               key={name}
@@ -363,10 +400,12 @@ function BibleReader() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+          </View>
+          </>}
 
-        <Text style={styles.pickerLabel}>Chapter</Text>
-        <View style={styles.numberGrid}>
+          {searchStep === 'chapter' && <>
+          <Text style={styles.pickerLabel}>Choose a chapter</Text>
+          <View style={styles.numberGrid}>
           {chapters.map((number) => (
             <TouchableOpacity
               key={number}
@@ -376,10 +415,12 @@ function BibleReader() {
               <Text style={[styles.numberChipText, number === chapter && styles.selectedChipText]}>{number}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+          </View>
+          </>}
 
-        <Text style={styles.pickerLabel}>Verse</Text>
-        {loading ? (
+          {searchStep === 'verse' && <>
+          <Text style={styles.pickerLabel}>Choose a verse</Text>
+          {loading ? (
           <ActivityIndicator color={colors.primary} style={styles.verseLoading} />
         ) : verses.length ? (
           <View style={styles.numberGrid}>
@@ -396,7 +437,9 @@ function BibleReader() {
         ) : (
           <Text style={styles.pickerHint}>Choose a chapter to see its verses.</Text>
         )}
-        </ScrollView>
+          </>}
+          </ScrollView>
+        )}
 
         <View style={styles.stepper}>
           <TouchableOpacity
@@ -445,11 +488,36 @@ function BibleReader() {
             {verse ? `:${verse}` : ''}
           </Text>
 
+          {selectedVerses.length > 0 && (
+            <View style={styles.verseTools}>
+              <Text style={styles.selectionCount}>{selectedVerses.length} selected</Text>
+              <TouchableOpacity style={styles.toolButton} onPress={highlightSelectedVerses}>
+                <Ionicons name="color-fill-outline" size={18} color="#FFF" />
+                <Text style={styles.toolButtonText}>Highlight</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.moreButton} onPress={showMoreVerseActions}>
+                <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+                <Text style={styles.moreButtonText}>More</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => (
-            <Text key={v.verse} style={styles.verse}>
-              <Text style={styles.verseNum}>{v.verse} </Text>
-              {v.text}
-            </Text>
+            <TouchableOpacity
+              key={v.verse}
+              activeOpacity={0.7}
+              onPress={() => toggleVerseSelection(v.verse)}
+              style={[
+                styles.verse,
+                selectedVerses.includes(v.verse) && styles.selectedVerse,
+                highlightedVerses.includes(v.verse) && styles.highlightedVerse,
+              ]}
+            >
+              <Text style={styles.verseText}>
+                <Text style={styles.verseNum}>{v.verse} </Text>
+                {v.text}
+              </Text>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
