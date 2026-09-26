@@ -9,3 +9,23 @@ Word Alive Ministries/
 ├── admin-dashboard/      # Web-based Admin Portal
 ├── backend/              # Cloud functions and database rules
 └── docs/                 # Formal SPMP, use cases, and diagrams
+
+Branch Commands to remember:
+# Create and switch to a new branch
+git switch -c feature/Bible
+
+# Work, then commit
+git add .
+git commit -m "Add Bible screen"
+
+# Push the branch
+git push -u origin feature/Bible
+
+# Go back to main
+git switch main
+
+# Merge the feature
+git merge feature/Bible
+
+# Delete the local branch
+git branch -d feature/Bible
