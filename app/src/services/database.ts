@@ -1,62 +1,133 @@
-// types/database.ts
+/**
+ * Application-facing records for the production schema.
+ *
+ * Keep these aligned with `supabase/migrations/202611070001_initial_schema.sql`.
+ * They are deliberately independent of generated Supabase types until the new
+ * project exists and its database types can be generated from the live schema.
+ */
+
+export type AppRole = 'pastor' | 'admin' | 'editor' | 'member';
+export type ContentStatus = 'draft' | 'published' | 'archived';
+export type PrayerRequestStatus = 'pending' | 'reviewed' | 'approved' | 'closed';
 
 export interface Profile {
-  id: string; // UUID linked to Auth
-  name: string;
+  id: string;
+  name: string | null;
+  surname: string | null;
+  location: string | null;
+  bio: string | null;
+  avatar_path: string | null;
   current_streak: number;
-  is_admin: boolean;
-  text_size: string;
+  last_completed_at: string | null;
+  text_scale: 'standard' | 'large' | 'extraLarge';
   high_contrast: boolean;
-  last_updated: string; 
+  notifications_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserRole {
+  user_id: string;
+  role: AppRole;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReadingPlan {
+  id: string;
+  name: string;
+  plan_year: number;
+  description: string | null;
+  status: ContentStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DailyReading {
-  id: string; // UUID
-  scheduled_date: string; // YYYY-MM-DD format
+  id: string;
+  plan_id: string;
+  day_number: number;
+  scheduled_date: string;
   scripture_ref: string;
-  content: string;
-  audio_url?: string; // Optional field
-  week_number: number;
-  last_updated: string;
+  reflection: string | null;
+  audio_url: string | null;
+  status: ContentStatus;
+  published_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface BibleStudy {
-  id: string; // UUID
+  id: string;
   study_name: string;
-  chapter: string;
-  scheduled_time: string; // ISO Timestamp
-  last_updated: string;
+  scripture_ref: string | null;
+  study_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  description: string | null;
+  location_or_url: string | null;
+  status: ContentStatus;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface UserProgress {
-  id: string; // UUID
-  user_id: string; // FK to Profiles
-  reading_id: string; // FK to Daily_Readings
-  completed_at: string; // ISO Timestamp
-  last_updated: string;
+export interface ReadingCompletion {
+  id: string;
+  user_id: string;
+  reading_id: string;
+  completed_at: string;
+  created_at: string;
 }
 
 export interface PrayerRequest {
-  id: string; // UUID
-  user_id: string; // FK to Profiles
+  id: string;
+  user_id: string;
   description: string;
-  status: 'Pending' | 'Reviewed';
-  sent_at: string; // ISO Timestamp
-  last_updated: string;
+  status: PrayerRequestStatus;
+  is_public: boolean;
+  moderated_at: string | null;
+  moderated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrayerRequestPrayer {
+  prayer_request_id: string;
+  user_id: string;
+  prayed_at: string;
 }
 
 export interface Announcement {
-  id: string; // UUID
+  id: string;
+  title: string;
   message: string;
-  broadcast_date: string; // ISO Timestamp
-  expires_at: string; // ISO Timestamp
-  last_updated: string;
+  status: ContentStatus;
+  published_at: string | null;
+  expires_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LiveStream {
-  id: string; // UUID
-  platform: string; // e.g., 'TikTok'
+  id: string;
+  platform: string;
   stream_url: string;
   is_live: boolean;
-  last_updated: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PushToken {
+  id: string;
+  user_id: string;
+  token: string;
+  platform: string | null;
+  last_seen_at: string;
+  created_at: string;
+  updated_at: string;
 }
