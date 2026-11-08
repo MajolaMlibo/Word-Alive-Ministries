@@ -26,6 +26,9 @@ Editor and reported `Success. No rows returned`.
 - Authentication is bypassed in the current prototype.
 - Current study and accessibility queries do not match the prototype schema.
 - There are no automated application tests or CI workflows.
+- A root-level Node package and approximately 710 tracked `node_modules` files
+  are not used by the Expo app. Remove them in a dedicated cleanup branch; do
+  not mix that repository-hygiene change into an MVP feature.
 - The Android debug build did not complete during the audit; no Android or iOS
   device verification has been completed.
 
