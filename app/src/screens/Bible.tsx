@@ -213,7 +213,7 @@ export default function Bible() {
             </Text>
 
             <Text style={styles.scripture}>
-              {reading?.content ||
+              {reading?.reflection ||
                 'There is no scripture scheduled for today.'}
             </Text>
 

@@ -1,10 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://sb_publishable_ZY3xYN9IoLSdtI50mSLOGg_Z53mLJsg.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmeWRtaHBrZ3FpaG5lZm5xcnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2OTg4NDAsImV4cCI6MjEwNDI3NDg0MH0.emS6aINM30p_0UK4CK9aK9pA7H_OoDEtfw4PiqsYlzU';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+if (!supabaseUrl || !supabasePublishableKey) {
+  throw new Error(
+    'Missing Supabase configuration. Copy app/.env.example to app/.env and add the project URL and publishable key.'
+  );
+}
+
+export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -12,28 +18,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
-
-export interface PrayerRequest {
-  id: string; // UUID
-  user_id: string; // FK to Profiles
-  description: string;
-  status: 'Pending' | 'Reviewed';
-  sent_at: string; // ISO Timestamp
-  last_updated: string;
-}
-
-export interface Announcement {
-  id: string; // UUID
-  message: string;
-  broadcast_date: string; // ISO Timestamp
-  expires_at: string; // ISO Timestamp
-  last_updated: string;
-}
-
-export interface LiveStream {
-  id: string; // UUID
-  platform: string; // e.g., 'TikTok'
-  stream_url: string;
-  is_live: boolean;
-  last_updated: string;
-}
