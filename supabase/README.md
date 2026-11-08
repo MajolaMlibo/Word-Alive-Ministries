@@ -15,6 +15,19 @@ mobile client yet: allowing a content manager to edit this table would allow
 privilege escalation. No service-role key belongs in the mobile app or in an
 Expo public environment variable.
 
+## Local connection verification
+
+Create `app/.env` from `app/.env.example`, add the production project URL and
+publishable key, then run this command from the `app` directory:
+
+```powershell
+npm run verify:supabase
+```
+
+The expected result is `Supabase connection verified: Auth settings responded
+with HTTP 200.` The check uses only the public project URL and publishable key;
+it does not write data or expose a secret key.
+
 After the pastor has signed up, assign the role with their Auth user UUID:
 
 ```sql
