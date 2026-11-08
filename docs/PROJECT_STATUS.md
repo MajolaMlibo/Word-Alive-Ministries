@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Expo SDK 58 compatibility and Supabase production foundation
+Email and password authentication on the Expo SDK 58 foundation
 
 ## Verified on 2026-11-08
 
@@ -12,7 +12,10 @@ Expo SDK 58 compatibility and Supabase production foundation
 - `tsc --noEmit` passes after the upgrade.
 - `npx expo config --type public` reports `sdkVersion: 58.0.0`.
 - The Git `main` branch matched `origin/main` before this feature branch was created.
-- No user-facing feature has been verified on a physical device during this audit.
+- Physical iPhone / Expo Go verification completed for email-and-password
+  authentication: create account, receive the confirmation-email prompt, sign
+  in to Home after confirmation, sign out, and sign back in using the existing
+  account.
 
 ## Current work
 
@@ -23,20 +26,26 @@ On 2026-11-08, the project owner applied
 Editor and reported `Success. No rows returned`.
 - `npm run verify:supabase` was run successfully from `app` with the local,
   Git-ignored production `.env`; Supabase Auth settings responded with HTTP 200.
+- The email-and-password authentication implementation is verified on
+  `feature/authentication-lifecycle` and is ready for its pull request. Google
+  and Apple sign-in are deferred until their providers and platform-specific
+  redirect flows are configured.
 
 ## Known blockers
 
-- Authentication is bypassed in the current prototype.
 - Current study and accessibility queries do not match the prototype schema.
 - There are no automated application tests or CI workflows.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
   application has its own dependencies under `app/` and root `node_modules`
   is now ignored.
-- No Android or iOS device verification has been completed after the SDK 58
-  upgrade.
+- Expo Go cannot open the `wordalive-ministries://auth/callback` URL after
+  email confirmation because Expo Go does not register the app's custom URL
+  scheme. The confirmation can be completed in the browser and the member can
+  then sign in manually. Verify automatic return to the app in an Expo
+  development build before release.
 
-## Next feature after this foundation
+## Next feature after this authentication work
 
-Repair the authentication lifecycle and create the member profile automatically
-after sign-in, then verify the flow on a physical Android device.
+Repair the daily-reading completion flow so it uses the production database
+function and schema, then verify it on a physical Android device.

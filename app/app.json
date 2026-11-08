@@ -2,6 +2,7 @@
   "expo": {
     "name": "Word Alive Ministries",
     "slug": "word-alive-ministries",
+    "scheme": "wordalive-ministries",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
