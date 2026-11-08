@@ -2,12 +2,15 @@
 
 ## Current milestone
 
-Supabase production foundation
+Expo SDK 58 compatibility and Supabase production foundation
 
 ## Verified on 2026-11-08
 
-- The application is an Expo SDK 57 React Native TypeScript project.
-- `tsc --noEmit` passes for the current Supabase foundation branch.
+- The application is an Expo SDK 58 React Native TypeScript project. It was
+  upgraded from SDK 57 because current iOS Expo Go supports SDK 58 only.
+- `npx expo-doctor` completed with 20 of 20 checks passing after the upgrade.
+- `tsc --noEmit` passes after the upgrade.
+- `npx expo config --type public` reports `sdkVersion: 58.0.0`.
 - The Git `main` branch matched `origin/main` before this feature branch was created.
 - No user-facing feature has been verified on a physical device during this audit.
 
@@ -30,8 +33,8 @@ Editor and reported `Success. No rows returned`.
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
   application has its own dependencies under `app/` and root `node_modules`
   is now ignored.
-- The Android debug build did not complete during the audit; no Android or iOS
-  device verification has been completed.
+- No Android or iOS device verification has been completed after the SDK 58
+  upgrade.
 
 ## Next feature after this foundation
 
