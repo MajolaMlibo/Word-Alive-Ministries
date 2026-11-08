@@ -28,9 +28,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
-
     "extra": {
       "eas": {
         "projectId": "966c4966-bf09-4419-8652-2c5642b7503f"
