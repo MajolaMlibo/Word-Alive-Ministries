@@ -1,230 +1,309 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
-  View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Platform,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
-import { supabase } from "../services/supabase";
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-WebBrowser.maybeCompleteAuthSession();
-const redirectTo = Linking.createURL("auth/callback");
+import { supabase } from '../services/supabase';
 
+type AuthMode = 'signIn' | 'signUp';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const AUTH_CALLBACK_URL = 'wordalive-ministries://auth/callback';
 
 export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<AuthMode>('signIn');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectTo = Linking.createURL("/");
+  const isCreatingAccount = mode === 'signUp';
 
-  const signInWithEmail = async () => {
-    if (!email) {
-      Alert.alert("Enter your email");
+  function switchMode() {
+    setMode(isCreatingAccount ? 'signIn' : 'signUp');
+    setPassword('');
+    setConfirmPassword('');
+  }
+
+  async function submit() {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = fullName.trim();
+
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
+      Alert.alert('Enter a valid email address');
       return;
     }
 
-    setLoading(true);
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectTo,
-      },
-    });
-
-    setLoading(false);
-
-    if (error) {
-      Alert.alert("Error", error.message);
-    } else {
-      Alert.alert("Check your email", "We've sent you a secure sign-in link.");
+    if (password.length < 8) {
+      Alert.alert('Use a password with at least 8 characters');
+      return;
     }
-  };
 
-  const signInWithGoogle = async () => {
-  const redirectTo = Linking.createURL("auth/callback");
+    if (isCreatingAccount && normalizedName.length < 2) {
+      Alert.alert('Enter your full name');
+      return;
+    }
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-    },
-  });
+    if (isCreatingAccount && password !== confirmPassword) {
+      Alert.alert('Passwords do not match');
+      return;
+    }
 
-  if (error) {
-    Alert.alert("Error", error.message);
-    return;
+    setIsSubmitting(true);
+
+    try {
+      if (isCreatingAccount) {
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password,
+          options: {
+            data: { full_name: normalizedName },
+            emailRedirectTo: AUTH_CALLBACK_URL,
+          },
+        });
+
+        if (error) {
+          Alert.alert('Unable to create account', error.message);
+          return;
+        }
+
+        setPassword('');
+        setConfirmPassword('');
+
+        if (data.session) {
+          Alert.alert('Account created', 'Welcome to Word Alive Ministries.');
+        } else {
+          Alert.alert(
+            'Confirm your email',
+            'We sent a confirmation link to your email address. Open it, then return to the app and sign in.'
+          );
+          setMode('signIn');
+        }
+
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (error) {
+        Alert.alert('Unable to sign in', error.message);
+      }
+    } catch {
+      Alert.alert(
+        'Unable to connect',
+        'Check your internet connection and try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-
-  if (data?.url) {
-    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  }
-};
-
-  const signInWithApple = async () => {
-  const redirectTo = Linking.createURL("auth/callback");
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "apple",
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-    },
-  });
-
-  if (error) return Alert.alert("Error", error.message);
-
-  if (data?.url) {
-    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  }
-};
 
   return (
-    <View style={styles.container}>
-      <View style={styles.hero}>
-        <Ionicons name="book" size={56} color="#FDD835" />
-        <Text style={styles.title}>Word Alive</Text>
-        <Text style={styles.subtitle}>Ministries</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.heading}>Welcome</Text>
-        <Text style={styles.text}>
-          Sign in securely with your email or continue with Google.
-        </Text>
-
-        <TextInput
-          placeholder="Email address"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-        />
-
-        <TouchableOpacity
-          style={styles.primary}
-          onPress={signInWithEmail}
-          disabled={loading}
-        >
-          <Ionicons name="mail-outline" size={20} color="#FFF" />
-          <Text style={styles.primaryText}>
-            {loading ? "Sending..." : "Email me a sign-in link"}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.dividerRow}>
-          <View style={styles.line} />
-          <Text style={styles.or}>OR</Text>
-          <View style={styles.line} />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.hero}>
+          <Ionicons name="book" size={56} color="#FDD835" />
+          <Text style={styles.title}>Word Alive</Text>
+          <Text style={styles.subtitle}>Ministries</Text>
         </View>
 
-        <TouchableOpacity style={styles.oauth} onPress={signInWithGoogle}>
-          <Ionicons name="logo-google" size={22} color="#DB4437" />
-          <Text style={styles.oauthText}>Continue with Google</Text>
-        </TouchableOpacity>
+        <View style={styles.card}>
+          <Text style={styles.heading}>
+            {isCreatingAccount ? 'Create your account' : 'Welcome back'}
+          </Text>
+          <Text style={styles.text}>
+            {isCreatingAccount
+              ? 'Create an account to save your progress and receive church updates.'
+              : 'Sign in to continue your journey with Word Alive Ministries.'}
+          </Text>
 
-        {Platform.OS === "ios" && (
-          <TouchableOpacity style={styles.oauth} onPress={signInWithApple}>
-            <Ionicons name="logo-apple" size={22} color="#000" />
-            <Text style={styles.oauthText}>Continue with Apple</Text>
+          {isCreatingAccount ? (
+            <TextInput
+              accessibilityLabel="Full name"
+              autoCapitalize="words"
+              autoComplete="name"
+              onChangeText={setFullName}
+              placeholder="Full name"
+              returnKeyType="next"
+              style={styles.input}
+              textContentType="name"
+              value={fullName}
+            />
+          ) : null}
+
+          <TextInput
+            accessibilityLabel="Email address"
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            onChangeText={setEmail}
+            placeholder="Email address"
+            returnKeyType="next"
+            style={styles.input}
+            textContentType="emailAddress"
+            value={email}
+          />
+
+          <TextInput
+            accessibilityLabel="Password"
+            autoCapitalize="none"
+            autoComplete={isCreatingAccount ? 'new-password' : 'password'}
+            onChangeText={setPassword}
+            onSubmitEditing={isCreatingAccount ? undefined : submit}
+            placeholder="Password"
+            returnKeyType={isCreatingAccount ? 'next' : 'done'}
+            secureTextEntry
+            style={styles.input}
+            textContentType={isCreatingAccount ? 'newPassword' : 'password'}
+            value={password}
+          />
+
+          {isCreatingAccount ? (
+            <TextInput
+              accessibilityLabel="Confirm password"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              onChangeText={setConfirmPassword}
+              onSubmitEditing={submit}
+              placeholder="Confirm password"
+              returnKeyType="done"
+              secureTextEntry
+              style={styles.input}
+              textContentType="newPassword"
+              value={confirmPassword}
+            />
+          ) : null}
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            disabled={isSubmitting}
+            onPress={submit}
+            style={[styles.primary, isSubmitting && styles.disabledButton]}
+          >
+            <Ionicons
+              name={isCreatingAccount ? 'person-add-outline' : 'log-in-outline'}
+              size={20}
+              color="#FFFFFF"
+            />
+            <Text style={styles.primaryText}>
+              {isSubmitting
+                ? isCreatingAccount
+                  ? 'Creating account...'
+                  : 'Signing in...'
+                : isCreatingAccount
+                  ? 'Create account'
+                  : 'Sign in'}
+            </Text>
           </TouchableOpacity>
-        )}
-      </View>
-    </View>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            disabled={isSubmitting}
+            onPress={switchMode}
+            style={styles.modeSwitch}
+          >
+            <Text style={styles.modeSwitchText}>
+              {isCreatingAccount
+                ? 'Already have an account? Sign in'
+                : 'New to Word Alive? Create an account'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#044b04',
     flex: 1,
-    backgroundColor: "#044b04",
-    justifyContent: "center",
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
     padding: 24,
   },
   hero: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 36,
   },
   title: {
-    color: "#FFF",
+    color: '#FFFFFF',
     fontSize: 34,
-    fontWeight: "700",
+    fontWeight: '700',
     marginTop: 10,
   },
   subtitle: {
-    color: "#DDF4E6",
+    color: '#DDF4E6',
     fontSize: 18,
   },
   card: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFFFFF',
     borderRadius: 22,
     padding: 24,
   },
   heading: {
+    color: '#044b04',
     fontSize: 24,
-    fontWeight: "700",
-    color: "#044b04",
-    textAlign: "center",
+    fontWeight: '700',
+    textAlign: 'center',
   },
   text: {
-    textAlign: "center",
-    color: "#666",
+    color: '#666666',
     marginVertical: 14,
+    textAlign: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#DDD",
+    borderColor: '#DDDDDD',
     borderRadius: 12,
-    padding: 14,
+    borderWidth: 1,
     marginBottom: 14,
+    padding: 14,
   },
   primary: {
-    backgroundColor: "#044b04",
+    alignItems: 'center',
+    backgroundColor: '#044b04',
     borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     padding: 16,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   primaryText: {
-    color: "#FFF",
-    fontWeight: "700",
+    color: '#FFFFFF',
+    fontWeight: '700',
     marginLeft: 8,
   },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
+  modeSwitch: {
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 8,
   },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#DDD",
-  },
-  or: {
-    marginHorizontal: 10,
-    color: "#888",
-  },
-  oauth: {
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 12,
-    padding: 15,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  oauthText: {
-    fontWeight: "600",
-    marginLeft: 10,
+  modeSwitchText: {
+    color: '#044b04',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

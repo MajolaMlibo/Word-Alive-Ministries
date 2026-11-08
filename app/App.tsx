@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  AppState,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Session } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 
 import { supabase } from './src/services/supabase';
 import { AccessibilityProvider } from './src/theme/AccessibilityContext';
@@ -14,9 +21,6 @@ import Study from './src/screens/Study';
 import Profile from './src/screens/Profile';
 import SignIn from './src/screens/SignIn';
 
-import * as Linking from "expo-linking";
-
-const DEV_BYPASS_AUTH = true; //Set to false to view Sign In, Set true to disable sign in
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
@@ -26,16 +30,17 @@ function MainTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'calendar-outline';
 
-          if (route.name === 'Home')
+          if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Calendar')
+          } else if (route.name === 'Calendar') {
             iconName = focused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'Bible')
+          } else if (route.name === 'Bible') {
             iconName = focused ? 'book' : 'book-outline';
-          else if (route.name === 'Study')
+          } else if (route.name === 'Study') {
             iconName = focused ? 'school' : 'school-outline';
-          else if (route.name === 'Profile')
+          } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -61,44 +66,129 @@ function MainTabs() {
   );
 }
 
+function valueFromFragment(url: string, key: string) {
+  const fragment = url.split('#')[1];
+  if (!fragment) {
+    return null;
+  }
+
+  return new URLSearchParams(fragment).get(key);
+}
+
+async function establishSessionFromAuthUrl(url: string) {
+  const { queryParams } = Linking.parse(url);
+  const code = queryParams?.code;
+
+  if (typeof code === 'string') {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      console.warn('Unable to complete the email confirmation.', error.message);
+    }
+    return;
+  }
+
+  const accessToken = valueFromFragment(url, 'access_token');
+  const refreshToken = valueFromFragment(url, 'refresh_token');
+
+  if (accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (error) {
+      console.warn('Unable to restore the email-confirmed session.', error.message);
+    }
+  }
+}
+
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
     });
 
-  const sub = Linking.addEventListener("url", async ({ url }) => {
-    await supabase.auth.exchangeCodeForSession(url);
-  });
+    if (AppState.currentState === 'active') {
+      supabase.auth.startAutoRefresh();
+    }
 
-  return () => sub.remove();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => appStateSubscription.remove();
   }, []);
 
-  if (loading) return null;
+  useEffect(() => {
+    let isMounted = true;
+
+    async function restoreSession() {
+      const initialUrl = await Linking.getInitialURL();
+      if (initialUrl) {
+        await establishSessionFromAuthUrl(initialUrl);
+      }
+
+      const {
+        data: { session: restoredSession },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.warn('Unable to restore the saved session.', error.message);
+      }
+
+      if (isMounted) {
+        setSession(restoredSession);
+        setLoading(false);
+      }
+    }
+
+    void restoreSession();
+
+    const linkSubscription = Linking.addEventListener('url', ({ url }) => {
+      void establishSessionFromAuthUrl(url);
+    });
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (isMounted) {
+        setSession(nextSession);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      linkSubscription.remove();
+      authSubscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color="#044b04" />
+      </View>
+    );
+  }
 
   return (
-  <AccessibilityProvider>
-    <NavigationContainer>
-      {DEV_BYPASS_AUTH ? (
-        <MainTabs />
-      ) : session ? (
-        <MainTabs />
-      ) : (
-        <SignIn />
-      )}
-    </NavigationContainer>
-  </AccessibilityProvider>
-);
+    <AccessibilityProvider>
+      <NavigationContainer>
+        {session ? <MainTabs /> : <SignIn />}
+      </NavigationContainer>
+    </AccessibilityProvider>
+  );
 }
+
+const styles = StyleSheet.create({
+  loadingScreen: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    flex: 1,
+    justifyContent: 'center',
+  },
+});

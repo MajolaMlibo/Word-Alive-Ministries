@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Expo SDK 58 compatibility and Supabase production foundation
+Email and password authentication on the Expo SDK 58 foundation
 
 ## Verified on 2026-11-08
 
@@ -23,10 +23,12 @@ On 2026-11-08, the project owner applied
 Editor and reported `Success. No rows returned`.
 - `npm run verify:supabase` was run successfully from `app` with the local,
   Git-ignored production `.env`; Supabase Auth settings responded with HTTP 200.
+- The email-and-password authentication implementation is in progress on
+  `feature/authentication-lifecycle`. Google and Apple sign-in are deferred
+  until their providers and platform-specific redirect flows are configured.
 
 ## Known blockers
 
-- Authentication is bypassed in the current prototype.
 - Current study and accessibility queries do not match the prototype schema.
 - There are no automated application tests or CI workflows.
 - The unused root-level Node package and tracked dependency tree were removed
@@ -36,7 +38,7 @@ Editor and reported `Success. No rows returned`.
 - No Android or iOS device verification has been completed after the SDK 58
   upgrade.
 
-## Next feature after this foundation
+## Next feature after this authentication work
 
-Repair the authentication lifecycle and create the member profile automatically
-after sign-in, then verify the flow on a physical Android device.
+Repair the daily-reading completion flow so it uses the production database
+function and schema, then verify it on a physical Android device.

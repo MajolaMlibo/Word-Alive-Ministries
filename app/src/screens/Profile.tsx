@@ -6,7 +6,8 @@ import {
   Switch,
   TouchableOpacity,
   ScrollView,
-  Image, 
+  Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
@@ -75,6 +76,14 @@ async function loadProfile() {
     .single();
 
   setProfile(data);
+}
+
+async function handleSignOut() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    Alert.alert('Unable to sign out', error.message);
+  }
 }
 
   return (
@@ -174,7 +183,7 @@ async function loadProfile() {
 
 <TouchableOpacity
   style={styles.logout}
-  onPress={() => supabase.auth.signOut()}
+  onPress={handleSignOut}
 >
   <Ionicons name="log-out-outline" size={20} color="#FFF" />
   <Text style={styles.logoutText}>Sign Out</Text>
