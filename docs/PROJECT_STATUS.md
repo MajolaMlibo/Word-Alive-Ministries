@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Documentation baseline and MVP handover preparation
+Member-facing announcements
 
 ## Verified on 2026-11-08
 
@@ -45,6 +45,9 @@ Documentation baseline and MVP handover preparation
 - Physical iPhone / Expo Go verification completed for the KJV daily
   first-verse preview: Home shows the first verse from the first chapter of
   the day's scheduled range and labels the translation as KJV.
+- Physical iPhone / Expo Go verification completed for the announcement-card
+  controls and discoverability guidance: the active TikTok card shows its
+  external action, a visible read action, and the update-count/swipe hint.
 
 ## Current work
 
@@ -78,9 +81,14 @@ Editor and reported `Success. No rows returned`.
   cached KJV first-verse preview to Home and corrects the Bible-screen
   translation label from NIV to KJV. The preview was verified on a physical
   iPhone; Android verification remains pending.
-- The active branch is `docs/project-baseline`. It creates operational project
+- `docs/project-baseline` was merged to `main`. It creates operational project
   documentation, removes stale duplicate documentation, and records the
   project owner's decision to remove the `.env.example` template.
+- `feature/announcements-feed` is in progress. The Home screen has a
+  member-facing active-announcements feed with optional action links and
+  per-member read state. Its active-card controls and guidance are verified on
+  a physical iPhone. A natural two-card ordering check remains pending until
+  Spotify is published at 06:00 SAST on 2026-11-10.
 
 ## Known blockers
 
@@ -113,6 +121,7 @@ Editor and reported `Success. No rows returned`.
 - The production setup template has been intentionally removed. The root README
   contains the exact manual `.env` fields that a developer must create.
 
-## Next feature after the schema repair
+## Next work
 
-Add the member-facing announcements feed and enter confirmed church content.
+Complete announcements verification, then prioritise only pastor-confirmed MVP
+content and functions.

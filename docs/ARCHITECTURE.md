@@ -13,8 +13,8 @@ between `SignIn` and the authenticated bottom-tab application.
 
 Authenticated members use these tabs:
 
-- Home: greeting, current streak, today's scheduled reading, next study, and
-  the daily KJV first-verse preview when that feature is merged.
+- Home: greeting, current streak, today's scheduled reading, next study, the
+  daily KJV first-verse preview, and active church announcements.
 - Calendar: monthly view of published Bible studies.
 - Bible: daily-reading completion and the KJV reader.
 - Study: upcoming and previous published Bible studies.
@@ -65,6 +65,21 @@ does not make unread passages available offline.
 The `avatars` bucket is private. A member uploads within a folder named after
 their authenticated user ID. The profile stores only `avatar_path`; the app
 creates a time-limited signed URL for display. Public avatar URLs are not used.
+
+## Announcements flow
+
+Home requests up to three currently published announcements, newest first. A
+record is available to members only after `published_at` and before `expires_at`.
+Each record is displayed as a separate card. An announcement may include an
+optional `action_label` and HTTPS-only `action_url`; selecting its action button
+opens that destination outside the app. The app never constructs these links
+from user input.
+
+`announcement_reads` records one read timestamp per member and announcement.
+Home displays unread cards first, then read cards ordered by when that member
+read them. A member can mark an unread card as read with an accessible button
+or a left swipe; the status is stored in Supabase and is not shared with other
+members.
 
 ## Security boundaries
 
