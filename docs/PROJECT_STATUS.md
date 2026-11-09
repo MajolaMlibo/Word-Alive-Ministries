@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Home daily-reading message repair
+Documentation baseline and MVP handover preparation
 
 ## Verified on 2026-11-08
 
@@ -67,10 +67,17 @@ Editor and reported `Success. No rows returned`.
   `avatar_path` field and private `avatars` bucket. The changes pass
   TypeScript validation and were verified on a physical iPhone; Android
   verification remains pending.
-- The active branch is `fix/home-daily-reflection`. It removes the old
+- `fix/home-daily-reflection` was merged to `main`. It removed the old
   prototype `content` field lookup from the Home daily-reading card and uses
   the production `reflection` field with a clear Bible-tab fallback. The
   changes pass TypeScript validation and were verified on a physical iPhone.
+- `feature/daily-kjv-preview` adds a three-line, cached KJV first-verse
+  preview to Home and corrects the Bible-screen translation label from NIV to
+  KJV. The preview was verified on a physical iPhone and is awaiting its pull
+  request; Android verification remains pending.
+- The active branch is `docs/project-baseline`. It creates operational project
+  documentation, removes stale duplicate documentation, and records the
+  project owner's decision to remove the `.env.example` template.
 
 ## Known blockers
 
@@ -95,9 +102,15 @@ Editor and reported `Success. No rows returned`.
 - Remote push notifications through `expo-notifications` are not supported in
   Expo Go and have not been device-tested. Verify notifications in an Expo
   development build before release.
+- Bible text is fetched on demand from `bible-api.com` using its KJV
+  translation. Its service is free but rate-limited and has no availability
+  guarantee; the app caches requests and must not attempt bulk Bible downloads.
+  Reassess the provider and translation licensing before a global public
+  release.
+- The production setup template has been intentionally removed. The root README
+  contains the exact manual `.env` fields that a developer must create.
 
 ## Next feature after the schema repair
 
-Add a daily first-verse preview using the existing KJV provider or another
-translation that the project owner has approved and licensed. Then add the
-member-facing announcements feed and enter confirmed church content.
+Merge the verified KJV preview, then add the member-facing announcements feed
+and enter confirmed church content.
