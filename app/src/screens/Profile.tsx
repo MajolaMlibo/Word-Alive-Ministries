@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
 import { useAccessibility } from "../theme/AccessibilityContext";
-import { spacing, radii, TextScaleKey } from "../theme/theme";
-import { uploadAvatar, registerNotifications } from "../services/profileService";
-import { useNavigation } from "@react-navigation/native";
+import { spacing, TextScaleKey } from "../theme/theme";
+import {
+  getAvatarSignedUrl,
+  uploadAvatar,
+} from "../services/profileService";
+import { Profile } from "../services/database";
 
 
 const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
@@ -24,8 +28,6 @@ const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
 ];
 
 export default function ProfileScreen() {
-const navigation = useNavigation<any>();
-
 const {
   colors,
   fonts,
@@ -36,47 +38,90 @@ const {
 } = useAccessibility();
 
 const styles = makeStyles(colors, fonts);
-const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [avatarSaving, setAvatarSaving] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
+  const loadProfile = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const [profileResult, completionResult] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase
+        .from("reading_completions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+    ]);
+
+    if (profileResult.error) {
+      console.warn('Unable to load profile.', profileResult.error.message);
+    }
+
+    if (completionResult.error) {
+      console.warn(
+        'Unable to load completed-reading count.',
+        completionResult.error.message
+      );
+    }
+
+    const profileData = (profileResult.data as Profile | null) ?? null;
+    setProfile(profileData);
+    setCompletedCount(completionResult.count ?? 0);
+
+    if (profileData?.avatar_path) {
+      try {
+        setAvatarUrl(await getAvatarSignedUrl(profileData.avatar_path));
+      } catch (error) {
+        console.warn('Unable to load profile photo.', error);
+        setAvatarUrl(null);
+      }
+    } else {
+      setAvatarUrl(null);
+    }
   }, []);
 
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
   const handleAvatar = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) return;
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in before changing your photo.');
+      return;
+    }
 
-  const url = await uploadAvatar(user.id);
+    setAvatarSaving(true);
 
-  if (url) {
-    setProfile({
-      ...profile,
-      avatar_url: url,
-    });
-  }
-};
+    try {
+      const avatar = await uploadAvatar(user.id);
 
-async function loadProfile() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  setUser(user);
-
-  if (!user) return;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  setProfile(data);
-}
+      if (avatar) {
+        setProfile((currentProfile) =>
+          currentProfile
+            ? { ...currentProfile, avatar_path: avatar.path }
+            : currentProfile
+        );
+        setAvatarUrl(avatar.signedUrl);
+      }
+    } catch (error) {
+      console.warn('Unable to update profile photo.', error);
+      Alert.alert(
+        'Unable to update profile photo',
+        'Please check your connection and try again.'
+      );
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
 
 async function handleSignOut() {
   const { error } = await supabase.auth.signOut();
@@ -98,12 +143,20 @@ async function handleSignOut() {
           <Ionicons name="person" size={42} color="#FFF" />
         </View> */}
 
-        <TouchableOpacity onPress={handleAvatar}>
-          {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+        <TouchableOpacity
+          accessibilityLabel="Change profile photo"
+          disabled={avatarSaving}
+          onPress={handleAvatar}
+        >
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           ) : (
             <View style={styles.avatar}>
-              <Ionicons name="camera" size={28} color="#FFF" />
+              {avatarSaving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Ionicons name="camera" size={28} color="#FFF" />
+              )}
             </View>
           )}
         </TouchableOpacity>
@@ -122,7 +175,7 @@ async function handleSignOut() {
 
         <View style={styles.statCard}>
           <Ionicons name="book" size={22} color={colors.primary} />
-          <Text style={styles.statNumber}>{profile?.current_streak || 0}</Text>
+          <Text style={styles.statNumber}>{completedCount}</Text>
           <Text style={styles.statLabel}>Completed</Text>
         </View>
       </View>

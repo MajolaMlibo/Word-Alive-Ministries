@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Bible-study and Calendar production-schema repair
+Profile statistics and private-avatar storage repair
 
 ## Verified on 2026-11-08
 
@@ -35,6 +35,10 @@ Bible-study and Calendar production-schema repair
   repair: Study, Calendar, and Home show the correct empty state when there
   are no published Bible-study records, and no screen attempts to display the
   obsolete prototype `chapter` field.
+- Physical iPhone / Expo Go verification completed for the Profile repair:
+  the completed-reading total loaded separately from the streak, a profile
+  photo uploaded to the private `avatars` bucket, and the photo remained
+  visible after the app reloaded.
 
 ## Current work
 
@@ -50,10 +54,16 @@ Editor and reported `Success. No rows returned`.
   until their providers and platform-specific redirect flows are configured.
 - The verified daily-reading implementation was merged to `main` through
   `feature/daily-reading-completion`.
-- The active branch is `fix/study-calendar-production-schema`. It corrects
+- `fix/study-calendar-production-schema` was merged to `main`. It corrected
   Bible-study, Calendar, and Home dashboard fields from the old prototype
   schema to the production schema. The changes pass TypeScript validation and
   were verified on a physical iPhone; Android verification remains pending.
+- The active branch is `fix/profile-reading-statistics`. It replaces the
+  incorrect Profile completed-reading figure with a count from
+  `reading_completions` and aligns avatar handling with the production
+  `avatar_path` field and private `avatars` bucket. The changes pass
+  TypeScript validation and were verified on a physical iPhone; Android
+  verification remains pending.
 
 ## Known blockers
 
@@ -61,6 +71,10 @@ Editor and reported `Success. No rows returned`.
   production database. Church meeting dates, times, locations, and links must
   be supplied by the pastor or an authorised church representative; the app
   must not display invented event data.
+- The Profile avatar flow has not yet been verified in a production build.
+  The upload service was verified in Expo Go; the app-specific iOS
+  photo-permission wording takes effect when a new development or production
+  build is made.
 - There are no automated application tests or CI workflows.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
