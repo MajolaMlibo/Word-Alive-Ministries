@@ -60,6 +60,9 @@ Editor and reported `Success. No rows returned`.
   scheme. The confirmation can be completed in the browser and the member can
   then sign in manually. Verify automatic return to the app in an Expo
   development build before release.
+- Remote push notifications through `expo-notifications` are not supported in
+  Expo Go and have not been device-tested. Verify notifications in an Expo
+  development build before release.
 
 ## Next feature after daily readings
 
