@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Member-facing announcements
+Member care: prayer requests
 
 ## Verified on 2026-11-08
 
@@ -48,6 +48,10 @@ Member-facing announcements
 - Physical iPhone / Expo Go verification completed for the announcement-card
   controls and discoverability guidance: the active TikTok card shows its
   external action, a visible read action, and the update-count/swipe hint.
+- Physical iPhone / Expo Go verification completed for Prayer Requests: a
+  member created a private request, reloaded it, edited it, and deleted the
+  test request. More navigation and its evenly spaced five-item bottom bar
+  were also verified.
 
 ## Current work
 
@@ -89,6 +93,10 @@ Editor and reported `Success. No rows returned`.
   per-member read state. Its active-card controls and guidance are verified on
   a physical iPhone. A natural two-card ordering check remains pending until
   Spotify is published at 06:00 SAST on 2026-11-10.
+- `feature/prayer-requests` is in progress. It introduces a More area to keep
+  bottom navigation usable, plus a member-facing Prayer Requests screen backed
+  by the existing production schema. The feature is verified on a physical
+  iPhone and is ready for review.
 
 ## Known blockers
 
@@ -123,5 +131,5 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-Complete announcements verification, then prioritise only pastor-confirmed MVP
-content and functions.
+Implement the pastor/admin-only content-management area in a separate feature
+branch.

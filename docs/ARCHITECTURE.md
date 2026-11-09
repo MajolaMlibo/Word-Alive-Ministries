@@ -18,8 +18,11 @@ Authenticated members use these tabs:
 - Calendar: monthly view of published Bible studies.
 - Bible: daily-reading completion and the KJV reader.
 - Study: upcoming and previous published Bible studies.
+- More: a compact navigation area for Profile and Prayer Requests. This keeps
+  the primary bottom navigation at five items on small phone screens.
 - Profile: streak, total completed readings, accessibility settings, private
   profile picture, and sign-out.
+- Prayer Requests: members submit, edit, or delete their own pending requests.
 
 ## Backend
 
@@ -80,6 +83,14 @@ Home displays unread cards first, then read cards ordered by when that member
 read them. A member can mark an unread card as read with an accessible button
 or a left swipe; the status is stored in Supabase and is not shared with other
 members.
+
+## Prayer-request flow
+
+A signed-in member can create a private prayer request, optionally request
+public sharing, and edit or delete it while it is still pending. The database
+enforces ownership through Row Level Security. No other member can read a
+private request; pastoral handling and public approval are deferred to the
+separate Admin feature.
 
 ## Security boundaries
 

@@ -1,0 +1,182 @@
+import React, { useLayoutEffect, useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useAccessibility } from '../theme/AccessibilityContext';
+import { spacing } from '../theme/theme';
+import ProfileScreen from './Profile';
+import PrayerScreen from './Prayer';
+
+type MoreDestination = 'Profile' | 'Prayer';
+type MorePage = 'menu' | MoreDestination;
+
+const MORE_ITEMS: {
+  destination: MoreDestination;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+}[] = [
+  {
+    destination: 'Profile',
+    icon: 'person-outline',
+    title: 'Profile and settings',
+    description: 'Manage your profile photo and reading preferences.',
+  },
+  {
+    destination: 'Prayer',
+    icon: 'heart-outline',
+    title: 'Prayer requests',
+    description: 'Share a prayer request privately with the ministry team.',
+  },
+];
+
+export default function MoreScreen() {
+  const navigation = useNavigation<any>();
+  const { colors, fonts } = useAccessibility();
+  const styles = makeStyles(colors, fonts);
+  const [page, setPage] = useState<MorePage>('menu');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft:
+        page === 'menu'
+          ? undefined
+          : () => (
+              <TouchableOpacity
+                accessibilityLabel="Back to More"
+                onPress={() => setPage('menu')}
+                style={styles.headerBackButton}
+              >
+                <Ionicons color="#FDFCF0" name="chevron-back" size={28} />
+              </TouchableOpacity>
+            ),
+      title:
+        page === 'Profile'
+          ? 'Profile'
+          : page === 'Prayer'
+            ? 'Prayer requests'
+            : 'More',
+    });
+  }, [navigation, page, styles.headerBackButton]);
+
+  if (page === 'Profile') {
+    return <ProfileScreen />;
+  }
+
+  if (page === 'Prayer') {
+    return <PrayerScreen />;
+  }
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      style={styles.container}
+    >
+      <View style={styles.hero}>
+        <Ionicons color="#FFF" name="apps" size={32} />
+        <Text style={styles.heroTitle}>More</Text>
+        <Text style={styles.heroText}>
+          Your profile, preferences, and ministry care options.
+        </Text>
+      </View>
+
+      {MORE_ITEMS.map((item) => (
+        <TouchableOpacity
+          accessibilityHint={item.description}
+          accessibilityLabel={item.title}
+          accessibilityRole="button"
+          key={item.destination}
+          onPress={() => setPage(item.destination)}
+          style={styles.item}
+        >
+          <View style={styles.iconCircle}>
+            <Ionicons color={colors.primary} name={item.icon} size={24} />
+          </View>
+          <View style={styles.itemText}>
+            <Text style={styles.itemTitle}>{item.title}</Text>
+            <Text style={styles.itemDescription}>{item.description}</Text>
+          </View>
+          <Ionicons
+            color={colors.primary}
+            name="chevron-forward"
+            size={22}
+          />
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+}
+
+function makeStyles(colors: any, fonts: any) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xl,
+    },
+    hero: {
+      backgroundColor: colors.primary,
+      borderRadius: 22,
+      marginBottom: spacing.lg,
+      padding: spacing.lg,
+    },
+    heroTitle: {
+      color: '#FFF',
+      fontSize: fonts.display,
+      fontWeight: '700',
+      marginTop: spacing.sm,
+    },
+    heroText: {
+      color: '#DDF4E6',
+      fontSize: fonts.body,
+      lineHeight: fonts.body * 1.5,
+      marginTop: spacing.xs,
+    },
+    headerBackButton: {
+      marginLeft: 8,
+      padding: 4,
+    },
+    item: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      flexDirection: 'row',
+      marginBottom: spacing.md,
+      padding: spacing.md,
+    },
+    iconCircle: {
+      alignItems: 'center',
+      backgroundColor: colors.primaryMuted,
+      borderRadius: 24,
+      height: 48,
+      justifyContent: 'center',
+      marginRight: spacing.sm,
+      width: 48,
+    },
+    itemText: {
+      flex: 1,
+      paddingRight: spacing.sm,
+    },
+    itemTitle: {
+      color: colors.text,
+      fontSize: fonts.body,
+      fontWeight: '700',
+    },
+    itemDescription: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      lineHeight: fonts.caption * 1.45,
+      marginTop: 3,
+    },
+  });
+}
