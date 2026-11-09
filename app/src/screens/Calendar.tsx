@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
+import { BibleStudy } from '../services/database';
+import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { useAccessibility } from '../theme/AccessibilityContext';
-import { spacing, radii } from '../theme/theme';
+import { spacing } from '../theme/theme';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -40,18 +42,28 @@ function toISO(year: number, month: number, day: number) {
   )}`;
 }
 
+function dateFromISO(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatStudyTime(startTime: string) {
+  return startTime.slice(0, 5);
+}
+
 export default function CalendarScreen() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
-  const today = new Date();
+  const today = dateFromISO(getSouthAfricaDate());
 
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<BibleStudy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const weeks = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
@@ -62,23 +74,38 @@ export default function CalendarScreen() {
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
 
-    const start = toISO(year, month, 1);
-    const end = toISO(
-      year,
-      month,
-      new Date(year, month + 1, 0).getDate()
-    );
+    try {
+      const start = toISO(year, month, 1);
+      const end = toISO(
+        year,
+        month,
+        new Date(year, month + 1, 0).getDate()
+      );
 
-    const { data } = await supabase
-      .from('bible_studies')
-      .select('*')
-      .gte('study_date', start)
-      .lte('study_date', end)
-      .order('study_date', { ascending: true });
+      const { data, error } = await supabase
+        .from('bible_studies')
+        .select('*')
+        .gte('study_date', start)
+        .lte('study_date', end)
+        .order('study_date', { ascending: true });
 
-    setEvents(data || []);
-    setLoading(false);
+      if (error) {
+        console.warn('Unable to load calendar studies.', error.message);
+        setEvents([]);
+        setLoadError('We could not load the calendar. Please try again.');
+        return;
+      }
+
+      setEvents((data as BibleStudy[]) || []);
+    } catch (error) {
+      console.warn('Unexpected error while loading calendar studies.', error);
+      setEvents([]);
+      setLoadError('We could not load the calendar. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [year, month]);
 
   useEffect(() => {
@@ -226,6 +253,19 @@ export default function CalendarScreen() {
           color={colors.primary}
           style={{ marginTop: spacing.lg }}
         />
+      ) : loadError ? (
+        <View style={styles.emptyCard}>
+          <Ionicons
+            name="cloud-offline-outline"
+            size={42}
+            color={colors.textMuted}
+          />
+          <Text style={styles.emptyTitle}>Unable to load calendar</Text>
+          <Text style={styles.emptyText}>{loadError}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadEvents}>
+            <Text style={styles.retryButtonText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
       ) : dayEvents.length ? (
         dayEvents.map((event) => (
           <View key={event.id} style={styles.eventCard}>
@@ -237,9 +277,9 @@ export default function CalendarScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.eventTitle}>{event.study_name}</Text>
 
-                {event.chapter && (
+                {event.scripture_ref && (
                   <Text style={styles.eventSub}>
-                    Chapter {event.chapter}
+                    {event.scripture_ref}
                   </Text>
                 )}
               </View>
@@ -252,7 +292,20 @@ export default function CalendarScreen() {
                   size={16}
                   color={colors.textMuted}
                 />
-                <Text style={styles.infoText}>{event.start_time}</Text>
+                <Text style={styles.infoText}>
+                  {formatStudyTime(event.start_time)}
+                </Text>
+              </View>
+            )}
+
+            {event.location_or_url && (
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={16}
+                  color={colors.textMuted}
+                />
+                <Text style={styles.infoText}>{event.location_or_url}</Text>
               </View>
             )}
 
@@ -463,6 +516,21 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.textMuted,
       marginTop: 6,
       lineHeight: fonts.body * 1.5,
+    },
+
+    retryButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 12,
+      borderWidth: 1,
+      marginTop: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 10,
+    },
+
+    retryButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
     },
   });
 }

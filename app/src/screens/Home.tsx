@@ -15,6 +15,7 @@ import {
   getSouthAfricaDate,
   getTodaysDailyReading,
 } from '../services/dailyReadingService';
+import { BibleStudy } from '../services/database';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -23,7 +24,7 @@ export default function HomeScreen() {
   const { colors, fonts } = useAccessibility();
 
   const [reading, setReading] = useState<any>(null);
-  const [nextStudy, setNextStudy] = useState<any>(null);
+  const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -69,15 +70,19 @@ export default function HomeScreen() {
 
       setReading(readingData);
 
-      const { data: studyData } = await supabase
+      const { data: studyData, error: studyError } = await supabase
         .from('bible_studies')
         .select('*')
         .gte('study_date', today)
         .order('study_date', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      setNextStudy(studyData);
+      if (studyError) {
+        console.warn('Unable to load the next Bible study.', studyError.message);
+      }
+
+      setNextStudy((studyData as BibleStudy | null) || null);
     } catch (err) {
       console.log(err);
     } finally {
@@ -174,20 +179,24 @@ export default function HomeScreen() {
           {nextStudy?.study_name || 'No upcoming study'}
         </Text>
 
-        {nextStudy?.chapter ? (
-          <Text style={styles.studyMeta}>Chapter {nextStudy.chapter}</Text>
+        {nextStudy?.scripture_ref ? (
+          <Text style={styles.studyMeta}>{nextStudy.scripture_ref}</Text>
         ) : null}
 
         {nextStudy?.study_date ? (
           <View style={styles.studyRow}>
             <Ionicons name="time-outline" size={16} color={colors.textMuted} />
             <Text style={styles.studyMeta}>
-              {new Date(nextStudy.study_date).toLocaleDateString('en-GB', {
+              {new Date(
+                `${nextStudy.study_date}T00:00:00`
+              ).toLocaleDateString('en-GB', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
               })}
-              {nextStudy.start_time ? ` • ${nextStudy.start_time}` : ''}
+              {nextStudy.start_time
+                ? ` • ${nextStudy.start_time.slice(0, 5)}`
+                : ''}
             </Text>
           </View>
         ) : null}
