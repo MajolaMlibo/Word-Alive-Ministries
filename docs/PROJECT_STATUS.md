@@ -42,6 +42,9 @@ Documentation baseline and MVP handover preparation
 - Physical iPhone / Expo Go verification completed for the Home daily-reading
   message repair: the Home card correctly directs a member to the Bible tab
   when the scheduled reading has no optional reflection text.
+- Physical iPhone / Expo Go verification completed for the KJV daily
+  first-verse preview: Home shows the first verse from the first chapter of
+  the day's scheduled range and labels the translation as KJV.
 
 ## Current work
 
@@ -71,10 +74,10 @@ Editor and reported `Success. No rows returned`.
   prototype `content` field lookup from the Home daily-reading card and uses
   the production `reflection` field with a clear Bible-tab fallback. The
   changes pass TypeScript validation and were verified on a physical iPhone.
-- `feature/daily-kjv-preview` adds a three-line, cached KJV first-verse
-  preview to Home and corrects the Bible-screen translation label from NIV to
-  KJV. The preview was verified on a physical iPhone and is awaiting its pull
-  request; Android verification remains pending.
+- `feature/daily-kjv-preview` was merged to `main`. It adds a three-line,
+  cached KJV first-verse preview to Home and corrects the Bible-screen
+  translation label from NIV to KJV. The preview was verified on a physical
+  iPhone; Android verification remains pending.
 - The active branch is `docs/project-baseline`. It creates operational project
   documentation, removes stale duplicate documentation, and records the
   project owner's decision to remove the `.env.example` template.
@@ -112,5 +115,4 @@ Editor and reported `Success. No rows returned`.
 
 ## Next feature after the schema repair
 
-Merge the verified KJV preview, then add the member-facing announcements feed
-and enter confirmed church content.
+Add the member-facing announcements feed and enter confirmed church content.

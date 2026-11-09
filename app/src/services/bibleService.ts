@@ -3,9 +3,87 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const CACHE_PREFIX = '@word_alive_scripture_';
 export const LAST_POSITION_KEY = '@word_alive_last_position';
 
+export type DailyVersePreview = {
+  reference: string;
+  text: string;
+};
+
 
 function getCacheKey(reference: string) {
   return `${CACHE_PREFIX}${reference.replace(/\s+/g, '_').toLowerCase()}`;
+}
+
+function getFirstVerseReference(scriptureRef: string) {
+  const match = scriptureRef
+    .trim()
+    .match(/^(.+?)\s+(\d+)(?::\d+)?(?:[-;].*)?$/);
+
+  if (!match) return null;
+
+  return `${match[1]} ${match[2]}:1`;
+}
+
+export async function getDailyVersePreview(scriptureRef: string) {
+  const verseReference = getFirstVerseReference(scriptureRef);
+
+  if (!verseReference) {
+    return {
+      preview: null,
+      error: new Error('The scheduled reading could not be interpreted.'),
+    };
+  }
+
+  const cacheKey = getCacheKey(`kjv_preview_${verseReference}`);
+
+  try {
+    const response = await fetch(
+      `https://bible-api.com/${encodeURIComponent(verseReference)}?translation=kjv`
+    );
+
+    if (!response.ok) {
+      throw new Error('Unable to load the daily verse preview.');
+    }
+
+    const data = await response.json();
+    const text = typeof data.text === 'string' ? data.text.trim() : '';
+
+    if (!text) {
+      throw new Error('The daily verse preview was empty.');
+    }
+
+    const preview: DailyVersePreview = {
+      reference:
+        typeof data.reference === 'string' ? data.reference : verseReference,
+      text,
+    };
+
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(preview));
+
+    return { preview, error: null };
+  } catch (error) {
+    console.warn('Unable to load daily verse preview, checking cache:', error);
+
+    try {
+      const cachedPreview = await AsyncStorage.getItem(cacheKey);
+
+      if (cachedPreview) {
+        return {
+          preview: JSON.parse(cachedPreview) as DailyVersePreview,
+          error: null,
+        };
+      }
+    } catch (cacheError) {
+      console.warn('Unable to read daily verse preview cache:', cacheError);
+    }
+
+    return {
+      preview: null,
+      error:
+        error instanceof Error
+          ? error
+          : new Error('Unable to load the daily verse preview.'),
+    };
+  }
 }
 
 export async function fetchScripture(reference: string) {

@@ -15,6 +15,10 @@ import {
   getSouthAfricaDate,
   getTodaysDailyReading,
 } from '../services/dailyReadingService';
+import {
+  DailyVersePreview,
+  getDailyVersePreview,
+} from '../services/bibleService';
 import { BibleStudy, DailyReading } from '../services/database';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
@@ -24,6 +28,9 @@ export default function HomeScreen() {
   const { colors, fonts } = useAccessibility();
 
   const [reading, setReading] = useState<DailyReading | null>(null);
+  const [versePreview, setVersePreview] = useState<DailyVersePreview | null>(
+    null
+  );
   const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +76,20 @@ export default function HomeScreen() {
       }
 
       setReading(readingData);
+
+      if (readingData) {
+        const { preview, error: previewError } = await getDailyVersePreview(
+          readingData.scripture_ref
+        );
+
+        if (previewError) {
+          console.warn('Unable to load the daily verse preview.', previewError.message);
+        }
+
+        setVersePreview(preview);
+      } else {
+        setVersePreview(null);
+      }
 
       const { data: studyData, error: studyError } = await supabase
         .from('bible_studies')
@@ -154,11 +175,26 @@ export default function HomeScreen() {
           {reading?.scripture_ref || 'Daily Reading'}
         </Text>
 
-        <Text numberOfLines={5} style={styles.scripture}>
-          {reading
-            ? reading.reflection || 'Open the Bible tab to read today’s passage.'
-            : 'There is no scripture scheduled for today.'}
-        </Text>
+        {versePreview ? (
+          <>
+            <Text style={styles.previewReference}>
+              {versePreview.reference} (KJV)
+            </Text>
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={3}
+              style={styles.scripture}
+            >
+              {versePreview.text}
+            </Text>
+          </>
+        ) : (
+          <Text numberOfLines={5} style={styles.scripture}>
+            {reading
+              ? reading.reflection || 'Open the Bible tab to read today’s passage.'
+              : 'There is no scripture scheduled for today.'}
+          </Text>
+        )}
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -340,6 +376,13 @@ function makeStyles(
       color: colors.primary,
       fontWeight: '700',
       marginBottom: spacing.sm,
+    },
+
+    previewReference: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
     },
 
     scripture: {
