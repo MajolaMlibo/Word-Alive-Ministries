@@ -52,6 +52,8 @@ Member care: prayer requests
   member created a private request, reloaded it, edited it, and deleted the
   test request. More navigation and its evenly spaced five-item bottom bar
   were also verified.
+- The unnecessary introductory card was removed from More and the simplified
+  screen was verified on a physical iPhone.
 
 ## Current work
 
