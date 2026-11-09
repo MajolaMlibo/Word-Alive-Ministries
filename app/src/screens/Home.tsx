@@ -15,7 +15,7 @@ import {
   getSouthAfricaDate,
   getTodaysDailyReading,
 } from '../services/dailyReadingService';
-import { BibleStudy } from '../services/database';
+import { BibleStudy, DailyReading } from '../services/database';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -23,7 +23,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { colors, fonts } = useAccessibility();
 
-  const [reading, setReading] = useState<any>(null);
+  const [reading, setReading] = useState<DailyReading | null>(null);
   const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -155,8 +155,9 @@ export default function HomeScreen() {
         </Text>
 
         <Text numberOfLines={5} style={styles.scripture}>
-          {reading?.content ||
-            'Daily Scripture...'}
+          {reading
+            ? reading.reflection || 'Open the Bible tab to read today’s passage.'
+            : 'There is no scripture scheduled for today.'}
         </Text>
 
         <TouchableOpacity
