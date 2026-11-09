@@ -10,8 +10,8 @@
   iPhone.
 - [ ] Publish confirmed Bible-study events and verify populated views.
 - [ ] Publish confirmed announcements after the member feed is implemented.
-- [ ] Implement and verify prayer-request flow if it is part of the pastor's
-  MVP handover scope.
+- [x] Implement and verify the member Prayer Requests flow: create, edit,
+  delete, private submission, and reload persistence.
 - [ ] Create an authorised staff content-management process.
 
 ## Development-build readiness

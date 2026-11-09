@@ -18,7 +18,7 @@ import Home from './src/screens/Home';
 import Bible from './src/screens/Bible';
 import Calendar from './src/screens/Calendar';
 import Study from './src/screens/Study';
-import Profile from './src/screens/Profile';
+import More from './src/screens/More';
 import SignIn from './src/screens/SignIn';
 
 const Tab = createBottomTabNavigator();
@@ -38,8 +38,8 @@ function MainTabs() {
             iconName = focused ? 'book' : 'book-outline';
           } else if (route.name === 'Study') {
             iconName = focused ? 'school' : 'school-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'More') {
+            iconName = focused ? 'apps' : 'apps-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -61,7 +61,7 @@ function MainTabs() {
       <Tab.Screen name="Calendar" component={Calendar} />
       <Tab.Screen name="Bible" component={Bible} />
       <Tab.Screen name="Study" component={Study} />
-      <Tab.Screen name="Profile" component={Profile} />
+      <Tab.Screen name="More" component={More} />
     </Tab.Navigator>
   );
 }
