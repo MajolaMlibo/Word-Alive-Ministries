@@ -104,12 +104,20 @@ export interface Announcement {
   id: string;
   title: string;
   message: string;
+  action_label: string | null;
+  action_url: string | null;
   status: ContentStatus;
   published_at: string | null;
   expires_at: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AnnouncementRead {
+  announcement_id: string;
+  user_id: string;
+  read_at: string;
 }
 
 export interface LiveStream {
