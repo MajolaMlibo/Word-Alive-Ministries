@@ -12,6 +12,8 @@
 - [ ] Publish confirmed announcements after the member feed is implemented.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,
   delete, private submission, and reload persistence.
+- [ ] Verify pastor/admin-only access and content-management actions on a
+  physical device.
 - [ ] Create an authorised staff content-management process.
 
 ## Development-build readiness
@@ -40,6 +42,11 @@
 - [ ] Confirm the Bible-text provider and translation terms are suitable for
   the planned public distribution countries.
 - [ ] Define retention and moderation rules for prayer requests before launch.
+- [x] Repair the critical nested `shell-quote` advisory without changing the
+  Expo SDK.
+- [ ] Reassess the five remaining moderate Expo build-toolchain advisories with
+  a supported Expo update before public-store release; do not use `npm audit
+  fix --force` to downgrade the SDK.
 
 ## Store readiness
 

@@ -14,11 +14,17 @@ Run these commands from `C:\Dev\Word Alive Ministries\app`:
 npx tsc --noEmit
 npm run verify:supabase
 npx expo config --type public
+npx expo export --platform web
+npx expo export --platform ios
+npx expo export --platform android
 ```
 
 `verify:supabase` checks that the public Supabase URL and publishable key can
 reach Auth settings. It does not test member permissions or write database
 data.
+
+The web export is a bundling check only. It does not prove iOS or Android
+native behaviour.
 
 ## Verified iPhone checks
 
@@ -31,6 +37,7 @@ data.
 | Profile | Streak and completed total display separately; private photo upload survives reload | Verified in Expo Go |
 | Daily KJV preview | Home displays the first verse of the first scheduled chapter with a KJV label | Verified in Expo Go; pending merge at this documentation baseline |
 | Prayer Requests | Submit, edit, delete, private choice, reload persistence, and More navigation | Verified in Expo Go |
+| Admin content | Admin-only More item; Home encouragement; prayer moderation; create, edit, delete, and publish dynamic ministry content | Pending physical-device verification |
 
 ## Required Android checks
 

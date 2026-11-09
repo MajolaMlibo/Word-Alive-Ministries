@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Member care: prayer requests
+Pastor/admin content management
 
 ## Verified on 2026-11-08
 
@@ -54,6 +54,11 @@ Member care: prayer requests
   were also verified.
 - The unnecessary introductory card was removed from More and the simplified
   screen was verified on a physical iPhone.
+- The Admin Home-content flow was verified end-to-end on a physical iPhone:
+  an administrator saved a temporary encouragement, Home displayed it after
+  refresh, and the approved Psalm 119:105 message was restored.
+- Automated JavaScript bundle exports completed for iOS and Android after the
+  Admin implementation. These checks do not replace platform-device testing.
 
 ## Current work
 
@@ -90,12 +95,12 @@ Editor and reported `Success. No rows returned`.
 - `docs/project-baseline` was merged to `main`. It creates operational project
   documentation, removes stale duplicate documentation, and records the
   project owner's decision to remove the `.env.example` template.
-- `feature/announcements-feed` is in progress. The Home screen has a
+- `feature/announcements-feed` was merged to `main`. The Home screen has a
   member-facing active-announcements feed with optional action links and
   per-member read state. Its active-card controls and guidance are verified on
   a physical iPhone. A natural two-card ordering check remains pending until
   Spotify is published at 06:00 SAST on 2026-11-10.
-- `feature/prayer-requests` is in progress. It introduces a More area to keep
+- `feature/prayer-requests` was merged to `main`. It introduces a More area to keep
   bottom navigation usable, plus a member-facing Prayer Requests screen backed
   by the existing production schema. The feature is verified on a physical
   iPhone and is ready for review.
@@ -128,10 +133,17 @@ Editor and reported `Success. No rows returned`.
   guarantee; the app caches requests and must not attempt bulk Bible downloads.
   Reassess the provider and translation licensing before a global public
   release.
+- `npm audit` has five remaining moderate Expo toolchain findings. The critical
+  nested `shell-quote` finding was repaired on 2026-11-09 without changing
+  Expo. The only audit-proposed resolution for the remaining findings is an
+  incompatible forced Expo downgrade, so it must be reassessed with a supported
+  Expo update before public-store release.
 - The production setup template has been intentionally removed. The root README
   contains the exact manual `.env` fields that a developer must create.
 
 ## Next work
 
-Implement the pastor/admin-only content-management area in a separate feature
-branch.
+`feature/admin-content-management` is in progress. It adds a pastor/admin-only
+content-management area for prayer handling, announcements, Bible studies,
+reading plans, daily readings, livestream links, and the Home encouragement.
+Device verification is pending.
