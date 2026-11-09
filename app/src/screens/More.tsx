@@ -79,14 +79,6 @@ export default function MoreScreen() {
       showsVerticalScrollIndicator={false}
       style={styles.container}
     >
-      <View style={styles.hero}>
-        <Ionicons color="#FFF" name="apps" size={32} />
-        <Text style={styles.heroTitle}>More</Text>
-        <Text style={styles.heroText}>
-          Your profile, preferences, and ministry care options.
-        </Text>
-      </View>
-
       {MORE_ITEMS.map((item) => (
         <TouchableOpacity
           accessibilityHint={item.description}
@@ -123,24 +115,6 @@ function makeStyles(colors: any, fonts: any) {
     content: {
       padding: spacing.lg,
       paddingBottom: spacing.xl,
-    },
-    hero: {
-      backgroundColor: colors.primary,
-      borderRadius: 22,
-      marginBottom: spacing.lg,
-      padding: spacing.lg,
-    },
-    heroTitle: {
-      color: '#FFF',
-      fontSize: fonts.display,
-      fontWeight: '700',
-      marginTop: spacing.sm,
-    },
-    heroText: {
-      color: '#DDF4E6',
-      fontSize: fonts.body,
-      lineHeight: fonts.body * 1.5,
-      marginTop: spacing.xs,
     },
     headerBackButton: {
       marginLeft: 8,
