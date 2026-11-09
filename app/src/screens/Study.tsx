@@ -9,36 +9,67 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
+import { BibleStudy } from '../services/database';
+import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { useAccessibility } from '../theme/AccessibilityContext';
-import { spacing, radii } from '../theme/theme';
+import { spacing } from '../theme/theme';
 
 type StudyFilter = 'upcoming' | 'past';
+
+function formatStudyDate(studyDate: string) {
+  const [year, month, day] = studyDate.split('-').map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+function formatStudyTime(startTime: string) {
+  return startTime.slice(0, 5);
+}
 
 export default function StudyScreen() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
   const [filter, setFilter] = useState<StudyFilter>('upcoming');
-  const [studies, setStudies] = useState<any[]>([]);
+  const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadStudies = useCallback(async (which: StudyFilter) => {
     setLoading(true);
+    setLoadError(null);
 
-    const today = new Date().toISOString().split('T')[0];
+    try {
+      const today = getSouthAfricaDate();
+      let query = supabase.from('bible_studies').select('*');
 
-    let query = supabase.from('bible_studies').select('*');
+      query =
+        which === 'upcoming'
+          ? query.gte('study_date', today).order('study_date', { ascending: true })
+          : query.lt('study_date', today).order('study_date', { ascending: false });
 
-    query =
-      which === 'upcoming'
-        ? query.gte('study_date', today).order('study_date', { ascending: true })
-        : query.lt('study_date', today).order('study_date', { ascending: false });
+      const { data, error } = await query;
 
-    const { data } = await query;
+      if (error) {
+        console.warn('Unable to load Bible studies.', error.message);
+        setStudies([]);
+        setLoadError('We could not load Bible studies. Please try again.');
+        return;
+      }
 
-    setStudies(data || []);
-    setLoading(false);
+      setStudies((data as BibleStudy[]) || []);
+    } catch (error) {
+      console.warn('Unexpected error while loading Bible studies.', error);
+      setStudies([]);
+      setLoadError('We could not load Bible studies. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -97,6 +128,22 @@ export default function StudyScreen() {
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : loadError ? (
+        <View style={styles.center}>
+          <Ionicons
+            name="cloud-offline-outline"
+            size={46}
+            color={colors.textMuted}
+          />
+          <Text style={styles.emptyTitle}>Unable to load studies</Text>
+          <Text style={styles.emptyText}>{loadError}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => loadStudies(filter)}
+          >
+            <Text style={styles.retryButtonText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
       ) : studies.length === 0 ? (
         <View style={styles.center}>
           <Ionicons
@@ -140,9 +187,9 @@ export default function StudyScreen() {
                       {study.study_name}
                     </Text>
 
-                    {study.chapter ? (
-                      <Text style={styles.chapter}>
-                        Chapter {study.chapter}
+                    {study.scripture_ref ? (
+                      <Text style={styles.scriptureRef}>
+                        {study.scripture_ref}
                       </Text>
                     ) : null}
                   </View>
@@ -160,16 +207,7 @@ export default function StudyScreen() {
                     size={15}
                     color={colors.textMuted}
                   />
-                  <Text style={styles.meta}>
-                    {new Date(study.study_date).toLocaleDateString(
-                      'en-GB',
-                      {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                      }
-                    )}
-                  </Text>
+                  <Text style={styles.meta}>{formatStudyDate(study.study_date)}</Text>
 
                   {study.start_time ? (
                     <>
@@ -179,7 +217,9 @@ export default function StudyScreen() {
                         size={15}
                         color={colors.textMuted}
                       />
-                      <Text style={styles.meta}>{study.start_time}</Text>
+                      <Text style={styles.meta}>
+                        {formatStudyTime(study.start_time)}
+                      </Text>
                     </>
                   ) : null}
                 </View>
@@ -192,6 +232,19 @@ export default function StudyScreen() {
                       {study.description ||
                         'No additional notes have been provided for this Bible study.'}
                     </Text>
+
+                    {study.location_or_url ? (
+                      <View style={styles.locationRow}>
+                        <Ionicons
+                          name="location-outline"
+                          size={16}
+                          color={colors.textMuted}
+                        />
+                        <Text style={styles.locationText}>
+                          {study.location_or_url}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
                 )}
               </TouchableOpacity>
@@ -313,7 +366,7 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.text,
     },
 
-    chapter: {
+    scriptureRef: {
       color: colors.primary,
       marginTop: 2,
       fontWeight: '600',
@@ -353,6 +406,33 @@ function makeStyles(colors: any, fonts: any) {
     detailText: {
       color: colors.text,
       lineHeight: fonts.body * 1.6,
+    },
+
+    locationRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginTop: spacing.md,
+    },
+
+    locationText: {
+      color: colors.textMuted,
+      flex: 1,
+      marginLeft: spacing.xs,
+    },
+
+    retryButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 12,
+      borderWidth: 1,
+      marginTop: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 10,
+    },
+
+    retryButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
     },
   });
 }

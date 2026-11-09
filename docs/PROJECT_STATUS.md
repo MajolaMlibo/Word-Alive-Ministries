@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Daily-reading completion and the 2026 Bible study plan
+Bible-study and Calendar production-schema repair
 
 ## Verified on 2026-11-08
 
@@ -31,6 +31,10 @@ Daily-reading completion and the 2026 Bible study plan
   the first chapter while the reading is incomplete, completion updates the
   streak, the completed state survives an app reload, and the Read tab returns
   to the member's normal saved position after completion.
+- Physical iPhone / Expo Go verification completed for the Bible-study schema
+  repair: Study, Calendar, and Home show the correct empty state when there
+  are no published Bible-study records, and no screen attempts to display the
+  obsolete prototype `chapter` field.
 
 ## Current work
 
@@ -44,12 +48,19 @@ Editor and reported `Success. No rows returned`.
 - Email-and-password authentication was merged to `main` through
   `feature/authentication-lifecycle`. Google and Apple sign-in are deferred
   until their providers and platform-specific redirect flows are configured.
-- The verified daily-reading implementation is on
-  `feature/daily-reading-completion` and is ready for its pull request.
+- The verified daily-reading implementation was merged to `main` through
+  `feature/daily-reading-completion`.
+- The active branch is `fix/study-calendar-production-schema`. It corrects
+  Bible-study, Calendar, and Home dashboard fields from the old prototype
+  schema to the production schema. The changes pass TypeScript validation and
+  were verified on a physical iPhone; Android verification remains pending.
 
 ## Known blockers
 
-- Current study and accessibility queries do not match the prototype schema.
+- There are currently no confirmed, published Bible-study events in the
+  production database. Church meeting dates, times, locations, and links must
+  be supplied by the pastor or an authorised church representative; the app
+  must not display invented event data.
 - There are no automated application tests or CI workflows.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
@@ -64,7 +75,8 @@ Editor and reported `Success. No rows returned`.
   Expo Go and have not been device-tested. Verify notifications in an Expo
   development build before release.
 
-## Next feature after daily readings
+## Next feature after the schema repair
 
-Repair the Bible-study and Calendar queries so they match the production
-schema, then import and verify the church's upcoming study data.
+Enter and publish confirmed church Bible-study data, then verify its display
+on a physical iPhone and Android device. After that, repair the next highest
+value MVP flow identified from the production-schema audit.
