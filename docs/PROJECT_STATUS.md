@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Email and password authentication on the Expo SDK 58 foundation
+Daily-reading completion and the 2026 Bible study plan
 
 ## Verified on 2026-11-08
 
@@ -17,6 +17,21 @@ Email and password authentication on the Expo SDK 58 foundation
   in to Home after confirmation, sign out, and sign back in using the existing
   account.
 
+## Verified on 2026-11-09
+
+- The production database contains the 365 published readings from the
+  church-approved 2026 Bible study plan through
+  `202611080001_import_2026_reading_plan.sql`.
+- `202611090001_fix_daily_reading_completion.sql` was applied in the
+  production Supabase SQL Editor. It fixes the completion function and
+  restricts completion to the reading scheduled for the current South African
+  date.
+- Physical iPhone / Expo Go verification completed for the daily-reading
+  workflow: today's reading loads by South African date, the Read tab opens at
+  the first chapter while the reading is incomplete, completion updates the
+  streak, the completed state survives an app reload, and the Read tab returns
+  to the member's normal saved position after completion.
+
 ## Current work
 
 The prototype Supabase project contains development-only data. The production
@@ -26,10 +41,11 @@ On 2026-11-08, the project owner applied
 Editor and reported `Success. No rows returned`.
 - `npm run verify:supabase` was run successfully from `app` with the local,
   Git-ignored production `.env`; Supabase Auth settings responded with HTTP 200.
-- The email-and-password authentication implementation is verified on
-  `feature/authentication-lifecycle` and is ready for its pull request. Google
-  and Apple sign-in are deferred until their providers and platform-specific
-  redirect flows are configured.
+- Email-and-password authentication was merged to `main` through
+  `feature/authentication-lifecycle`. Google and Apple sign-in are deferred
+  until their providers and platform-specific redirect flows are configured.
+- The verified daily-reading implementation is on
+  `feature/daily-reading-completion` and is ready for its pull request.
 
 ## Known blockers
 
@@ -45,7 +61,7 @@ Editor and reported `Success. No rows returned`.
   then sign in manually. Verify automatic return to the app in an Expo
   development build before release.
 
-## Next feature after this authentication work
+## Next feature after daily readings
 
-Repair the daily-reading completion flow so it uses the production database
-function and schema, then verify it on a physical Android device.
+Repair the Bible-study and Calendar queries so they match the production
+schema, then import and verify the church's upcoming study data.

@@ -10,14 +10,18 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
-import { spacing, radii } from '../theme/theme';
+import { spacing } from '../theme/theme';
 import {
   fetchScripture,
   saveLastPosition,
   getLastPosition,
 } from '../services/bibleService';
+import {
+  completeDailyReading,
+  getDailyReadingCompletion,
+  getTodaysDailyReading,
+} from '../services/dailyReadingService';
 import { DailyReading } from '../services/database';
 
 type Tab = 'daily' | 'read';
@@ -55,6 +59,27 @@ function parseReference(input: string) {
   return { book: input.trim(), chapter: 1 };
 }
 
+function getFirstChapterFromReference(scriptureRef?: string) {
+  if (!scriptureRef) return null;
+
+  const match = scriptureRef
+    .trim()
+    .match(/^(.+?)\s+(\d+)(?::\d+)?(?:[-;].*)?$/);
+
+  if (!match) return null;
+
+  const matchingBook = BIBLE_BOOKS.find(
+    ([name]) => name.toLowerCase() === match[1].trim().toLowerCase()
+  );
+
+  if (!matchingBook) return null;
+
+  return {
+    book: matchingBook[0],
+    chapter: Math.min(Math.max(Number(match[2]), 1), matchingBook[1]),
+  };
+}
+
 export default function Bible() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
@@ -64,34 +89,53 @@ export default function Bible() {
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadReading = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0];
+    setLoading(true);
+    setLoadError(null);
 
-    const { data } = await supabase
-      .from('daily_readings')
-      .select('*')
-      .eq('scheduled_date', today)
-      .single();
+    try {
+      const { reading: todayReading, error: readingError } =
+        await getTodaysDailyReading();
 
-    setReading(data);
+      if (readingError) {
+        console.warn('Unable to load today\'s reading.', readingError.message);
+        setReading(null);
+        setCompleted(false);
+        setLoadError('We could not load today\'s reading. Please try again.');
+        return;
+      }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      setReading(todayReading);
 
-    if (user && data) {
-      const { data: progress } = await supabase
-        .from('user_progress')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('reading_id', data.id)
-        .maybeSingle();
+      if (!todayReading) {
+        setCompleted(false);
+        return;
+      }
 
-      setCompleted(!!progress);
+      const { completed: isCompleted, error: completionError } =
+        await getDailyReadingCompletion(todayReading.id);
+
+      if (completionError) {
+        console.warn(
+          'Unable to load the daily reading completion status.',
+          completionError.message
+        );
+        setCompleted(false);
+        setLoadError('We could not confirm your reading progress. Please try again.');
+        return;
+      }
+
+      setCompleted(isCompleted);
+    } catch (error) {
+      console.warn('Unexpected error while loading today\'s reading.', error);
+      setReading(null);
+      setCompleted(false);
+      setLoadError('We could not load today\'s reading. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -103,40 +147,33 @@ export default function Bible() {
 
     setSubmitting(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const { completion, error } = await completeDailyReading(reading.id);
 
-    if (!user) return;
+      if (error || !completion) {
+        console.warn('Unable to complete today\'s reading.', error?.message);
+        Alert.alert(
+          'Unable to mark complete',
+          'Please check your connection and try again.'
+        );
+        return;
+      }
 
-    const { error } = await supabase.from('user_progress').insert({
-      user_id: user.id,
-      reading_id: reading.id,
-      completed_at: new Date().toISOString(),
-    });
-
-    if (error) {
-      Alert.alert('Error', error.message);
+      setCompleted(true);
+      const dayLabel = completion.current_streak === 1 ? 'day' : 'days';
+      Alert.alert(
+        'Reading completed',
+        `Today’s reading has been saved. Your current streak is ${completion.current_streak} ${dayLabel}.`
+      );
+    } catch (error) {
+      console.warn('Unexpected error while completing today\'s reading.', error);
+      Alert.alert(
+        'Unable to mark complete',
+        'Please check your connection and try again.'
+      );
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('current_streak')
-      .eq('id', user.id)
-      .single();
-
-    await supabase
-      .from('profiles')
-      .update({
-        current_streak: (profile?.current_streak || 0) + 1,
-      })
-      .eq('id', user.id);
-
-    setCompleted(true);
-    setSubmitting(false);
-    Alert.alert('Well done!', 'Today’s reading has been completed.');
   }
 
   return (
@@ -191,7 +228,16 @@ export default function Bible() {
       </View>
 
       {tab === 'read' ? (
-        <BibleReader />
+        <BibleReader
+          key={
+            reading && !completed
+              ? `daily-reading-${reading.id}`
+              : 'personal-reading'
+          }
+          dailyReadingReference={
+            reading && !completed ? reading.scripture_ref : undefined
+          }
+        />
       ) : loading ? (
         <ActivityIndicator
           color={colors.primary}
@@ -213,31 +259,48 @@ export default function Bible() {
             </Text>
 
             <Text style={styles.scripture}>
-              {reading?.reflection ||
-                'There is no scripture scheduled for today.'}
+              {reading
+                ? reading.reflection ||
+                  'Open the Read tab to read today’s passage.'
+                : 'There is no scripture scheduled for today.'}
             </Text>
 
-            <TouchableOpacity
-              style={[
-                styles.completeBtn,
-                completed && { backgroundColor: '#2E7D32' },
-              ]}
-              disabled={completed || submitting}
-              onPress={markComplete}
-            >
-              <Ionicons
-                name={
-                  completed
-                    ? 'checkmark-circle'
-                    : 'checkmark-circle-outline'
-                }
-                size={20}
-                color="#FFF"
-              />
-              <Text style={styles.completeText}>
-                {completed ? 'Completed' : 'Mark Complete'}
-              </Text>
-            </TouchableOpacity>
+            {loadError ? (
+              <View style={styles.readingError}>
+                <Text style={styles.readingErrorText}>{loadError}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={loadReading}>
+                  <Text style={styles.retryButtonText}>Try again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.completeBtn,
+                  (completed || !reading) && styles.disabledCompleteBtn,
+                ]}
+                disabled={completed || submitting || !reading}
+                onPress={markComplete}
+              >
+                <Ionicons
+                  name={
+                    completed
+                      ? 'checkmark-circle'
+                      : 'checkmark-circle-outline'
+                  }
+                  size={20}
+                  color="#FFF"
+                />
+                <Text style={styles.completeText}>
+                  {!reading
+                    ? 'No reading scheduled'
+                    : completed
+                      ? 'Completed'
+                      : submitting
+                        ? 'Saving...'
+                        : 'Mark Complete'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       )}
@@ -245,14 +308,27 @@ export default function Bible() {
   );
 }
 
-function BibleReader() {
+function BibleReader({
+  dailyReadingReference,
+}: {
+  dailyReadingReference?: string;
+}) {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
+  const dailyReadingStart = getFirstChapterFromReference(dailyReadingReference);
+  const isGuidedDailyReading = Boolean(dailyReadingStart);
 
-  const [book, setBook] = useState('Genesis');
-  const [chapter, setChapter] = useState(1);
+  const [book, setBook] = useState<string>(
+    () => dailyReadingStart?.book ?? 'Genesis'
+  );
+  const [chapter, setChapter] = useState(() => dailyReadingStart?.chapter ?? 1);
   const [verse, setVerse] = useState<number | undefined>();
-  const [input, setInput] = useState('Genesis');
+  const [input, setInput] = useState(
+    () =>
+      dailyReadingStart
+        ? `${dailyReadingStart.book} ${dailyReadingStart.chapter}`
+        : 'Genesis'
+  );
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searchStep, setSearchStep] = useState<'book' | 'chapter' | 'verse' | null>(null);
@@ -260,6 +336,8 @@ function BibleReader() {
   const [highlightedVerses, setHighlightedVerses] = useState<number[]>([]);
 
   useEffect(() => {
+    if (isGuidedDailyReading) return;
+
     (async () => {
       const saved = await getLastPosition();
       if (saved?.book) {
@@ -275,7 +353,7 @@ function BibleReader() {
       }
       setVerse(saved?.verse);
     })();
-  }, []);
+  }, [isGuidedDailyReading]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -285,11 +363,13 @@ function BibleReader() {
       const ref = `${book} ${chapter}`;
       const data = await fetchScripture(ref);
       setPassage(data);
-      saveLastPosition(book, chapter, verse);
+      if (!isGuidedDailyReading) {
+        saveLastPosition(book, chapter, verse);
+      }
     } finally {
       setLoading(false);
     }
-  }, [book, chapter, verse]);
+  }, [book, chapter, isGuidedDailyReading, verse]);
 
   useEffect(() => {
     load();
@@ -613,10 +693,41 @@ function makeStyles(colors: any, fonts: any) {
       alignItems: 'center',
     },
 
+    disabledCompleteBtn: {
+      backgroundColor: '#8A8A8A',
+    },
+
     completeText: {
       color: '#FFF',
       fontWeight: '700',
       marginLeft: 8,
+    },
+
+    readingError: {
+      backgroundColor: colors.background,
+      borderRadius: 14,
+      marginTop: spacing.xl,
+      padding: spacing.md,
+    },
+
+    readingErrorText: {
+      color: colors.text,
+      lineHeight: fonts.body * 1.5,
+      textAlign: 'center',
+    },
+
+    retryButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 10,
+      borderWidth: 1,
+      marginTop: spacing.md,
+      paddingVertical: 10,
+    },
+
+    retryButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
     },
 
     searchCard: {
