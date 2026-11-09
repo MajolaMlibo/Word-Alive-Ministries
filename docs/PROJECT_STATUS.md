@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Profile statistics and private-avatar storage repair
+Home daily-reading message repair
 
 ## Verified on 2026-11-08
 
@@ -39,6 +39,9 @@ Profile statistics and private-avatar storage repair
   the completed-reading total loaded separately from the streak, a profile
   photo uploaded to the private `avatars` bucket, and the photo remained
   visible after the app reloaded.
+- Physical iPhone / Expo Go verification completed for the Home daily-reading
+  message repair: the Home card correctly directs a member to the Bible tab
+  when the scheduled reading has no optional reflection text.
 
 ## Current work
 
@@ -58,12 +61,16 @@ Editor and reported `Success. No rows returned`.
   Bible-study, Calendar, and Home dashboard fields from the old prototype
   schema to the production schema. The changes pass TypeScript validation and
   were verified on a physical iPhone; Android verification remains pending.
-- The active branch is `fix/profile-reading-statistics`. It replaces the
+- `fix/profile-reading-statistics` was merged to `main`. It replaced the
   incorrect Profile completed-reading figure with a count from
   `reading_completions` and aligns avatar handling with the production
   `avatar_path` field and private `avatars` bucket. The changes pass
   TypeScript validation and were verified on a physical iPhone; Android
   verification remains pending.
+- The active branch is `fix/home-daily-reflection`. It removes the old
+  prototype `content` field lookup from the Home daily-reading card and uses
+  the production `reflection` field with a clear Bible-tab fallback. The
+  changes pass TypeScript validation and were verified on a physical iPhone.
 
 ## Known blockers
 
@@ -91,6 +98,6 @@ Editor and reported `Success. No rows returned`.
 
 ## Next feature after the schema repair
 
-Enter and publish confirmed church Bible-study data, then verify its display
-on a physical iPhone and Android device. After that, repair the next highest
-value MVP flow identified from the production-schema audit.
+Add a daily first-verse preview using the existing KJV provider or another
+translation that the project owner has approved and licensed. Then add the
+member-facing announcements feed and enter confirmed church content.
