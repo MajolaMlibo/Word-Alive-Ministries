@@ -11,8 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import {
+  getSouthAfricaDate,
+  getTodaysDailyReading,
+} from '../services/dailyReadingService';
 import { useAccessibility } from '../theme/AccessibilityContext';
-import { spacing, radii } from '../theme/theme';
+import { spacing } from '../theme/theme';
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -40,7 +44,7 @@ export default function HomeScreen() {
 
   const loadDashboardData = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getSouthAfricaDate();
 
       const {
         data: { user },
@@ -56,11 +60,12 @@ export default function HomeScreen() {
         setProfile(profileData);
       }
 
-      const { data: readingData } = await supabase
-        .from('daily_readings')
-        .select('*')
-        .eq('scheduled_date', today)
-        .single();
+      const { reading: readingData, error: readingError } =
+        await getTodaysDailyReading();
+
+      if (readingError) {
+        console.warn('Unable to load today\'s reading.', readingError.message);
+      }
 
       setReading(readingData);
 
