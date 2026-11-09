@@ -182,7 +182,7 @@ export default function Bible() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Holy Bible</Text>
           <Text style={styles.heroSub}>
-            Read daily devotionals or explore the full NIV Bible.
+            Read daily devotionals or explore the full KJV Bible.
           </Text>
         </View>
       )}

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Home daily-reading message repair
+KJV daily first-verse preview
 
 ## Verified on 2026-11-08
 
@@ -42,6 +42,9 @@ Home daily-reading message repair
 - Physical iPhone / Expo Go verification completed for the Home daily-reading
   message repair: the Home card correctly directs a member to the Bible tab
   when the scheduled reading has no optional reflection text.
+- Physical iPhone / Expo Go verification completed for the KJV daily
+  first-verse preview: Home shows the first verse from the first chapter of
+  the day's scheduled range and labels the translation as KJV.
 
 ## Current work
 
@@ -67,10 +70,14 @@ Editor and reported `Success. No rows returned`.
   `avatar_path` field and private `avatars` bucket. The changes pass
   TypeScript validation and were verified on a physical iPhone; Android
   verification remains pending.
-- The active branch is `fix/home-daily-reflection`. It removes the old
+- `fix/home-daily-reflection` was merged to `main`. It removed the old
   prototype `content` field lookup from the Home daily-reading card and uses
   the production `reflection` field with a clear Bible-tab fallback. The
   changes pass TypeScript validation and were verified on a physical iPhone.
+- The active branch is `feature/daily-kjv-preview`. It adds a three-line,
+  cached KJV first-verse preview to Home and corrects the Bible-screen
+  translation label from NIV to KJV. The preview was verified on a physical
+  iPhone; Android verification remains pending.
 
 ## Known blockers
 
@@ -82,6 +89,13 @@ Editor and reported `Success. No rows returned`.
   The upload service was verified in Expo Go; the app-specific iOS
   photo-permission wording takes effect when a new development or production
   build is made.
+- Bible text is fetched on demand from `bible-api.com` using its KJV
+  translation. Its service is free but rate-limited and has no availability
+  guarantee; the app caches requests and must not attempt bulk Bible
+  downloads. Reassess the provider and translation licensing before a global
+  public release.
+- The repository has no root `README.md`. Create one in a dedicated
+  documentation branch before handover.
 - There are no automated application tests or CI workflows.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
@@ -98,6 +112,5 @@ Editor and reported `Success. No rows returned`.
 
 ## Next feature after the schema repair
 
-Add a daily first-verse preview using the existing KJV provider or another
-translation that the project owner has approved and licensed. Then add the
-member-facing announcements feed and enter confirmed church content.
+Create the root project README, then add the member-facing announcements feed
+and enter confirmed church content.
