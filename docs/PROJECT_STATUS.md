@@ -159,9 +159,16 @@ Editor and reported `Success. No rows returned`.
   supplied adaptive foreground, background, and monochrome icon layers; the
   supplied splash image uses its intended black background. Visual verification
   remains pending until an installed preview build is available.
-- An Android internal preview APK was submitted to Expo on 2026-11-10 from
-  `main` commit `611a3713`. Expo created and is managing the Android signing
-  key. The APK is not yet available for installation or device verification.
+- Android preview builds need the two `EXPO_PUBLIC_SUPABASE_*` values in Expo's
+  remote `preview` environment because the deliberately ignored local `.env`
+  file is not available to a cloud build. On 2026-11-10 those two values were
+  added as project-scoped sensitive preview variables; no Supabase secret key
+  was added. The `preview` EAS profile explicitly selects that environment.
+- Two Android preview submissions from `main` commit `611a3713` were cancelled
+  before distribution: the second was an identical duplicate caused by a
+  delayed build-status response, and the first lacked the remote preview
+  environment configuration. Expo created and is managing the Android signing
+  key. A correctly configured replacement APK is still required.
 
 ## Known blockers
 
@@ -201,9 +208,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Wait for the submitted Android internal preview APK, then install it on the
-   Android emulator and a physical Android device before sharing its direct
-   installation link with the pastor's small tester group.
+1. Submit the correctly configured Android internal preview APK, then install
+   it on the Android emulator and a physical Android device before sharing its
+   direct installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
 3. Obtain approved Bible-study events and verify populated Study, Calendar,
