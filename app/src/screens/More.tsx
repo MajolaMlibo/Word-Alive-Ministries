@@ -1,5 +1,7 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
+  Alert,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +16,8 @@ import ProfileScreen from './Profile';
 import PrayerScreen from './Prayer';
 import AdminScreen from './Admin';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
+import { getVisibleMinistryLinks } from '../services/ministryLinkService';
+import { MinistryLink } from '../services/database';
 
 type MoreDestination = 'Profile' | 'Prayer' | 'Admin';
 type MorePage = 'menu' | MoreDestination;
@@ -45,12 +49,44 @@ const ADMIN_ITEM: (typeof MORE_ITEMS)[number] = {
   description: 'Manage ministry content and prayer-request handling.',
 };
 
+function channelIcon(label: string): keyof typeof Ionicons.glyphMap {
+  switch (label.toLowerCase()) {
+    case 'tiktok':
+      return 'logo-tiktok';
+    case 'youtube':
+      return 'logo-youtube';
+    case 'whatsapp channel':
+    case 'whatsapp':
+      return 'logo-whatsapp';
+    case 'spotify':
+      return 'headset-outline';
+    default:
+      return 'link-outline';
+  }
+}
+
 export default function MoreScreen() {
   const navigation = useNavigation<any>();
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [page, setPage] = useState<MorePage>('menu');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [links, setLinks] = useState<MinistryLink[]>([]);
+  const [linksError, setLinksError] = useState(false);
+
+  const loadMinistryLinks = useCallback(async () => {
+    const { links: loadedLinks, error } = await getVisibleMinistryLinks();
+
+    if (error) {
+      console.warn('Unable to load ministry links.', error.message);
+      setLinks([]);
+      setLinksError(true);
+      return;
+    }
+
+    setLinks(loadedLinks);
+    setLinksError(false);
+  }, []);
 
   useEffect(() => {
     async function loadAdminAccess() {
@@ -64,6 +100,24 @@ export default function MoreScreen() {
     }
 
     void loadAdminAccess();
+  }, []);
+
+  useEffect(() => {
+    if (page === 'menu') {
+      void loadMinistryLinks();
+    }
+  }, [loadMinistryLinks, page]);
+
+  const openMinistryLink = useCallback(async (link: MinistryLink) => {
+    try {
+      await Linking.openURL(link.url);
+    } catch (error) {
+      console.warn('Unable to open ministry link.', error);
+      Alert.alert(
+        'Unable to open link',
+        'Please check your connection and try again.'
+      );
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -134,6 +188,59 @@ export default function MoreScreen() {
           />
         </TouchableOpacity>
       ))}
+
+      {links.length ? (
+        <View style={styles.connectSection}>
+          <View style={styles.connectHeader}>
+            <Ionicons color={colors.primary} name="share-social-outline" size={21} />
+            <Text style={styles.connectTitle}>Connect with us</Text>
+          </View>
+          <Text style={styles.connectHint}>
+            Follow Word Alive Ministries on our official channels.
+          </Text>
+          <View style={styles.connectCard}>
+            {links.map((link, index) => (
+              <TouchableOpacity
+                accessibilityHint="Opens an external channel"
+                accessibilityLabel={`Open ${link.label}`}
+                accessibilityRole="link"
+                key={link.id}
+                onPress={() => void openMinistryLink(link)}
+                style={[
+                  styles.connectRow,
+                  index < links.length - 1 && styles.connectRowBorder,
+                ]}
+              >
+                <View style={styles.connectIcon}>
+                  <Ionicons
+                    color={colors.primary}
+                    name={channelIcon(link.label)}
+                    size={22}
+                  />
+                </View>
+                <Text style={styles.connectLabel}>{link.label}</Text>
+                <Ionicons
+                  color={colors.primary}
+                  name="open-outline"
+                  size={20}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      {linksError ? (
+        <TouchableOpacity
+          accessibilityLabel="Retry loading ministry links"
+          accessibilityRole="button"
+          onPress={() => void loadMinistryLinks()}
+          style={styles.linkRetry}
+        >
+          <Ionicons color={colors.primary} name="reload-outline" size={19} />
+          <Text style={styles.linkRetryText}>Unable to load ministry links. Try again.</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }
@@ -183,6 +290,68 @@ function makeStyles(colors: any, fonts: any) {
       fontSize: fonts.caption,
       lineHeight: fonts.caption * 1.45,
       marginTop: 3,
+    },
+    connectSection: {
+      marginTop: spacing.lg,
+    },
+    connectHeader: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    connectTitle: {
+      color: colors.text,
+      fontSize: fonts.subtitle,
+      fontWeight: '700',
+      marginLeft: spacing.xs,
+    },
+    connectHint: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      lineHeight: fonts.caption * 1.45,
+      marginTop: 3,
+    },
+    connectCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      marginTop: spacing.sm,
+      overflow: 'hidden',
+    },
+    connectRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      padding: spacing.md,
+    },
+    connectRowBorder: {
+      borderBottomColor: colors.borderSoft,
+      borderBottomWidth: 1,
+    },
+    connectIcon: {
+      alignItems: 'center',
+      backgroundColor: colors.primaryMuted,
+      borderRadius: 20,
+      height: 40,
+      justifyContent: 'center',
+      marginRight: spacing.sm,
+      width: 40,
+    },
+    connectLabel: {
+      color: colors.text,
+      flex: 1,
+      fontSize: fonts.body,
+      fontWeight: '700',
+    },
+    linkRetry: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: spacing.lg,
+      padding: spacing.sm,
+    },
+    linkRetryText: {
+      color: colors.primary,
+      fontSize: fonts.caption,
+      fontWeight: '700',
+      marginLeft: spacing.xs,
     },
   });
 }

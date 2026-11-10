@@ -112,6 +112,11 @@ Editor and reported `Success. No rows returned`.
 - `feature/admin-content-management` was merged to `main`. It adds
   role-gated pastor/admin tools for dynamic ministry content while keeping role
   assignment outside the mobile app and under Supabase administration.
+- `feature/ministry-links` is in progress. It adds a permanent Connect with us
+  area in More and an Admin Links manager, backed by a new RLS-protected
+  `ministry_links` table seeded with the church's approved TikTok, Spotify,
+  WhatsApp Channel, and YouTube destinations. The production migration and
+  device verification remain pending.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.

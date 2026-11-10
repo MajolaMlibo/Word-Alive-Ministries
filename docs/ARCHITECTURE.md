@@ -18,9 +18,10 @@ Authenticated members use these tabs:
 - Calendar: monthly view of published Bible studies.
 - Bible: daily-reading completion and the KJV reader.
 - Study: upcoming and previous published Bible studies.
-- More: a compact navigation area for Profile and Prayer Requests. Approved
-  `pastor` and `admin` users also see the Admin destination. This keeps the
-  primary bottom navigation at five items on small phone screens.
+- More: a compact navigation area for Profile, Prayer Requests, and visible
+  ministry channels. Approved `pastor` and `admin` users also see the Admin
+  destination. This keeps the primary bottom navigation at five items on small
+  phone screens.
 - Profile: streak, total completed readings, accessibility settings, private
   profile picture, and sign-out.
 - Prayer Requests: members submit, edit, or delete their own pending requests.
@@ -37,6 +38,7 @@ Core tables are:
 - `reading_plans`, `daily_readings`, and `reading_completions`
 - `bible_studies`
 - `announcements`
+- `ministry_links`
 - `prayer_requests` and `prayer_request_prayers`
 - `live_streams` and `push_tokens`
 
@@ -85,6 +87,15 @@ read them. A member can mark an unread card as read with an accessible button
 or a left swipe; the status is stored in Supabase and is not shared with other
 members.
 
+## Ministry-links flow
+
+More reads visible `ministry_links` rows in their administrator-defined display
+order and opens the stored HTTPS destination with the device's external-link
+handler. Links are permanent channel destinations, not announcements: they are
+not marked read and do not expire. Content managers can create, edit, hide,
+reorder, or delete them in the Links section of Admin. Members can read only
+visible links; Row Level Security prevents members from changing any link.
+
 ## Prayer-request flow
 
 A signed-in member can create a private prayer request, optionally request
@@ -100,6 +111,7 @@ or `admin` application role. The screen checks that role again before loading
 content tools. It supports content-management roles already authorised by the
 database to manage the Home encouragement, prayer-request moderation,
 announcements, Bible studies, scheduled daily readings, and livestream links.
+It also manages permanent ministry links.
 Prayer-request removal is available only to authorised Admin users.
 Role assignment is deliberately excluded from the mobile app.
 
