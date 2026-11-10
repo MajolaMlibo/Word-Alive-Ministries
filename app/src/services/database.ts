@@ -114,13 +114,6 @@ export interface Announcement {
   updated_at: string;
 }
 
-export interface HomeEncouragement {
-  id: boolean;
-  message: string;
-  scripture_ref: string;
-  updated_at: string;
-}
-
 export interface AnnouncementRead {
   announcement_id: string;
   user_id: string;

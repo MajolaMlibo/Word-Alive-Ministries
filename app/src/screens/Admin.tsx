@@ -47,15 +47,11 @@ import {
   saveReadingPlan,
 } from '../services/adminService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
-import {
-  getHomeEncouragement,
-  saveHomeEncouragement,
-} from '../services/homeContentService';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-type AdminSection = 'home' | 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links';
+type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const PRAYER_STATUSES: PrayerRequestStatus[] = [
@@ -66,7 +62,6 @@ const PRAYER_STATUSES: PrayerRequestStatus[] = [
 ];
 
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'home', label: 'Home', icon: 'home-outline' },
   { key: 'prayer', label: 'Prayer', icon: 'heart-outline' },
   { key: 'announcements', label: 'Notices', icon: 'megaphone-outline' },
   { key: 'studies', label: 'Studies', icon: 'school-outline' },
@@ -295,63 +290,6 @@ function ContentActions({
       ) : null}
     </>
   );
-}
-
-function HomeManager({ styles }: { styles: any }) {
-  const [message, setMessage] = useState('');
-  const [scriptureRef, setScriptureRef] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { encouragement, error } = await getHomeEncouragement();
-    if (error || !encouragement) {
-      Alert.alert('Unable to load Home encouragement', 'Please refresh and try again.');
-    } else {
-      setMessage(encouragement.message);
-      setScriptureRef(encouragement.scripture_ref);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  const save = async () => {
-    if (!message.trim() || !scriptureRef.trim()) {
-      Alert.alert('Message and reference required', 'Add both fields before saving.');
-      return;
-    }
-    if (message.trim().length > 1000 || scriptureRef.trim().length > 160) {
-      Alert.alert('Home message is too long', 'Use 1,000 characters or fewer for the message and 160 or fewer for the reference.');
-      return;
-    }
-    setSaving(true);
-    const { encouragement, error } = await saveHomeEncouragement(message, scriptureRef);
-    setSaving(false);
-    if (error || !encouragement) {
-      Alert.alert('Unable to save Home encouragement', 'Please check your connection and try again.');
-      return;
-    }
-    setMessage(encouragement.message);
-    setScriptureRef(encouragement.scripture_ref);
-    Alert.alert('Home encouragement updated', 'Members will see this message after refreshing Home.');
-  };
-
-  if (loading) return <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} />;
-
-  return <EditorCard title="Stay Encouraged card" styles={styles}>
-    <Text style={styles.panelHint}>This message is shown on the Home screen for every signed-in member.</Text>
-    <Field label="Encouragement message" value={message} onChangeText={setMessage} multiline styles={styles} />
-    <Field label="Scripture reference" value={scriptureRef} onChangeText={setScriptureRef} placeholder="Psalm 119:105" styles={styles} />
-    <TouchableOpacity disabled={saving} onPress={() => void save()} style={[styles.primaryButton, saving && styles.disabledButton]}>
-      {saving ? <ActivityIndicator color="#FFF" /> : null}
-      <Text style={styles.primaryButtonText}>{saving ? 'Saving...' : 'Save changes'}</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => void load()} style={styles.cancelButton}>
-      <Text style={styles.cancelButtonText}>Reset to saved message</Text>
-    </TouchableOpacity>
-  </EditorCard>;
 }
 
 function PrayerManager({ administratorId, styles }: { administratorId: string; styles: any }) {
@@ -874,7 +812,6 @@ export default function AdminScreen() {
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
       {SECTIONS.map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
     </ScrollView>
-    {section === 'home' ? <HomeManager styles={styles} /> : null}
     {section === 'prayer' ? <PrayerManager administratorId={administratorId} styles={styles} /> : null}
     {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
     {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}

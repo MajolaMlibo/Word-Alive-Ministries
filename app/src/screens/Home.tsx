@@ -29,11 +29,7 @@ import {
   getAnnouncementReads,
   markAnnouncementAsRead,
 } from '../services/announcementService';
-import {
-  DEFAULT_HOME_ENCOURAGEMENT,
-  getHomeEncouragement,
-} from '../services/homeContentService';
-import { Announcement, BibleStudy, DailyReading, HomeEncouragement, Profile } from '../services/database';
+import { Announcement, BibleStudy, DailyReading, Profile } from '../services/database';
 import { getAvatarSignedUrl } from '../services/profileService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
@@ -250,9 +246,6 @@ export default function HomeScreen() {
     string | null
   >(null);
   const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
-  const [encouragement, setEncouragement] = useState<
-    Pick<HomeEncouragement, 'message' | 'scripture_ref'>
-  >(DEFAULT_HOME_ENCOURAGEMENT);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -385,17 +378,6 @@ export default function HomeScreen() {
 
       setNextStudy((studyData as BibleStudy | null) || null);
 
-      const { encouragement: encouragementData, error: encouragementError } =
-        await getHomeEncouragement();
-
-      if (encouragementError) {
-        console.warn(
-          'Unable to load the Home encouragement.',
-          encouragementError.message
-        );
-      }
-
-      setEncouragement(encouragementData || DEFAULT_HOME_ENCOURAGEMENT);
     } catch (err) {
       console.log(err);
     } finally {
@@ -692,15 +674,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ENCOURAGEMENT */}
-      <View style={styles.encourageCard}>
-        <Ionicons name="heart" size={22} color="#FDD835" />
-        <Text style={styles.encourageTitle}>Stay Encouraged</Text>
-        <Text style={styles.encourageText}>
-          {encouragement.message}
-        </Text>
-        <Text style={styles.encourageRef}>{encouragement.scripture_ref}</Text>
-      </View>
     </ScrollView>
   );
 }
@@ -1069,33 +1042,5 @@ function makeStyles(
       fontWeight: '700',
     },
 
-    encourageCard: {
-      marginTop: spacing.lg,
-      backgroundColor: '#0E5C38',
-      borderRadius: 20,
-      padding: spacing.lg,
-      alignItems: 'center',
-    },
-
-    encourageTitle: {
-      color: '#FFF',
-      fontWeight: '700',
-      fontSize: fonts.subtitle,
-      marginTop: spacing.sm,
-    },
-
-    encourageText: {
-      color: '#FFF',
-      textAlign: 'center',
-      fontStyle: 'italic',
-      lineHeight: fonts.body * 1.6,
-      marginTop: spacing.sm,
-    },
-
-    encourageRef: {
-      color: '#FDD835',
-      fontWeight: '700',
-      marginTop: spacing.sm,
-    },
   });
 }
