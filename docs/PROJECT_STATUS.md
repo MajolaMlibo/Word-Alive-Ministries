@@ -137,8 +137,9 @@ Editor and reported `Success. No rows returned`.
   unchanged but is no longer read or written by the mobile app. The Home
   navigation colours and Profile control removal were verified on a physical
   iPhone in Expo Go on 2026-11-10.
-- `refactor/bible-reader-text-size` is in progress. It removes the global
-  Profile text-size controls and adds the approved reader-only `Aa` text-size
+- `refactor/bible-reader-text-size` was merged to `main` through pull request
+  #24. It removes the global Profile text-size controls and adds the approved
+  reader-only `Aa` text-size
   setting. It also adds the approved Calendar reading-plan and expandable
   study-notes model, and corrects related app and setup documentation. The
   existing `profiles.text_scale` column is retained unchanged but is no longer
@@ -158,6 +159,22 @@ Editor and reported `Success. No rows returned`.
   supplied adaptive foreground, background, and monochrome icon layers; the
   supplied splash image uses its intended black background. Visual verification
   remains pending until an installed preview build is available.
+- Android preview builds need the two `EXPO_PUBLIC_SUPABASE_*` values in Expo's
+  remote `preview` environment because the deliberately ignored local `.env`
+  file is not available to a cloud build. On 2026-11-10 those two values were
+  added as project-scoped sensitive preview variables; no Supabase secret key
+  was added. The `preview` EAS profile explicitly selects that environment.
+- Two Android preview submissions from `main` commit `611a3713` were cancelled
+  before distribution: the second was an identical duplicate caused by a
+  delayed build-status response, and the first lacked the remote preview
+  environment configuration. Expo created and is managing the Android signing
+  key. A correctly configured replacement APK finished on 2026-11-10 from
+  commit `a356c7ee`.
+- The signed Android internal preview APK was installed on the `Mlibo_AP1`
+  Android virtual device on 2026-11-10. It launched the standalone
+  `com.wordaliveministries.app` MainActivity and showed the application's
+  native sign-in screen, not Expo Go. This is a smoke test only; signed-in
+  member journeys and physical Android-device verification remain pending.
 
 ## Known blockers
 
@@ -197,8 +214,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Create an Android internal preview build first, then give the pastor a
-   direct installation link for a small tester group.
+1. Complete the signed-in Android member journey on the installed preview APK,
+   then verify it on a physical Android device before sharing its direct
+   installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
 3. Obtain approved Bible-study events and verify populated Study, Calendar,

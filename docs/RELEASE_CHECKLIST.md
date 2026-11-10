@@ -33,8 +33,9 @@
   align the configured project owner.
 - [x] Configure the approved Android package name and iOS bundle identifier:
   `com.wordaliveministries.app`.
-- [ ] Create and install the Android preview APK through EAS internal
-  distribution.
+- [x] Create and install the Android preview APK through EAS internal
+  distribution on the `Mlibo_AP1` Android virtual device. Complete physical
+  Android-device verification remains required.
 - [ ] Register authorised iPhone tester devices and create an iOS ad hoc
   preview build, or use TestFlight after Apple Developer access is available.
 - [ ] Verify automatic email-confirmation deep linking.
