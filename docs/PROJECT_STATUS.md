@@ -168,7 +168,8 @@ Editor and reported `Success. No rows returned`.
   before distribution: the second was an identical duplicate caused by a
   delayed build-status response, and the first lacked the remote preview
   environment configuration. Expo created and is managing the Android signing
-  key. A correctly configured replacement APK is still required.
+  key. A correctly configured replacement APK was submitted on 2026-11-10 from
+  commit `a356c7ee` and is awaiting Expo build completion.
 
 ## Known blockers
 
@@ -208,9 +209,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Submit the correctly configured Android internal preview APK, then install
-   it on the Android emulator and a physical Android device before sharing its
-   direct installation link with the pastor's small tester group.
+1. When the submitted Android internal preview APK completes, install it on the
+   Android emulator and a physical Android device before sharing its direct
+   installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
 3. Obtain approved Bible-study events and verify populated Study, Calendar,
