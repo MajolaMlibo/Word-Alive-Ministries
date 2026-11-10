@@ -46,12 +46,14 @@ native behaviour.
 | Ministry links | More shows TikTok, Spotify, WhatsApp Channel, and YouTube in the configured order; each opens its exact destination | Verified on iPhone in Expo Go, 2026-11-10 |
 | Ministry-link administration | An admin creates, edits, hides, reorders, and deletes a link; hidden links do not appear to a member | Hide and restore verified on iPhone in Expo Go, 2026-11-10; create, reorder, and delete remain pending |
 | More navigation reset | Open Profile or Prayer Requests from More, then tap More again and confirm its menu is restored | Verified manually, 2026-11-10 |
+| System light and dark appearance | Switch the phone appearance between Light and Dark. Screens use the matching ministry palette without unreadable text or invisible controls. | Android virtual-device Expo Go check passed, 2026-11-10; signed-build and physical-device checks pending |
 
 ## Required Android checks
 
 | Test | Expected result | Current evidence |
 |---|---|---|
 | Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-10 |
+| Android sign-in legibility | In Light and Dark appearance, every Sign In and Sign Up field placeholder is readable. A mixed-case email is visibly converted to lowercase; names and passwords retain their typed casing. | Code reviewed and light/dark Expo Go check completed on `Mlibo_AP1`, 2026-11-10; signed APK and physical Android checks pending |
 
 - Sign up, sign in, sign out, and session restoration.
 - Daily-reading completion, streak refresh, and completed reload state.
@@ -59,6 +61,7 @@ native behaviour.
 - Photo-library selection, upload, and reload persistence.
 - KJV preview rendering, cache fallback, and line truncation.
 - Ministry colour palette and the removed High Contrast Profile control.
+- System Light and Dark appearance, including Sign In and Sign Up placeholders.
 - Bible reader text-size controls on small and large devices.
 
 ## Required development-build checks

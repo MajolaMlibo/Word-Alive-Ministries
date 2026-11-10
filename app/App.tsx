@@ -5,15 +5,22 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 
 import { supabase } from './src/services/supabase';
-import { AccessibilityProvider } from './src/theme/AccessibilityContext';
-import { palette } from './src/theme/theme';
+import {
+  AccessibilityProvider,
+  useAccessibility,
+} from './src/theme/AccessibilityContext';
+import { AppColors } from './src/theme/theme';
 
 import Home from './src/screens/Home';
 import Bible from './src/screens/Bible';
@@ -23,9 +30,10 @@ import More from './src/screens/More';
 import SignIn from './src/screens/SignIn';
 
 const Tab = createBottomTabNavigator();
-const brandColors = palette.standard;
 
 function MainTabs() {
+  const { colors } = useAccessibility();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -46,17 +54,17 @@ function MainTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: brandColors.accent,
-        tabBarInactiveTintColor: brandColors.background,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: '#FFFFFF',
         tabBarStyle: {
-          backgroundColor: brandColors.primary,
+          backgroundColor: colors.primary,
           height: 60,
           paddingBottom: 5,
         },
         headerStyle: {
-          backgroundColor: brandColors.primary,
+          backgroundColor: colors.primary,
         },
-        headerTintColor: brandColors.background,
+        headerTintColor: '#FFFFFF',
       })}
     >
       <Tab.Screen name="Home" component={Home} />
@@ -169,28 +177,58 @@ export default function App() {
     };
   }, []);
 
+  return (
+    <AccessibilityProvider>
+      <AppContent loading={loading} session={session} />
+    </AccessibilityProvider>
+  );
+}
+
+function AppContent({
+  loading,
+  session,
+}: {
+  loading: boolean;
+  session: Session | null;
+}) {
+  const { colors, colorScheme } = useAccessibility();
+  const styles = makeStyles(colors);
+  const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      background: colors.background,
+      border: colors.borderSoft,
+      card: colors.primary,
+      notification: colors.accent,
+      primary: colors.primary,
+      text: colors.text,
+    },
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={brandColors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <AccessibilityProvider>
-      <NavigationContainer>
-        {session ? <MainTabs /> : <SignIn />}
-      </NavigationContainer>
-    </AccessibilityProvider>
+    <NavigationContainer theme={navigationTheme}>
+      {session ? <MainTabs /> : <SignIn />}
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  loadingScreen: {
-    alignItems: 'center',
-    backgroundColor: brandColors.surface,
-    flex: 1,
-    justifyContent: 'center',
-  },
-});
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+    loadingScreen: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      flex: 1,
+      justifyContent: 'center',
+    },
+  });
+}

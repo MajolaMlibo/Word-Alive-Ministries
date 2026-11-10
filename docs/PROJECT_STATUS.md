@@ -137,6 +137,15 @@ Editor and reported `Success. No rows returned`.
   unchanged but is no longer read or written by the mobile app. The Home
   navigation colours and Profile control removal were verified on a physical
   iPhone in Expo Go on 2026-11-10.
+- `fix/android-auth-and-system-theme` is in review. It makes every Sign In and
+  Sign Up placeholder explicitly use a readable theme colour on Android,
+  normalises email addresses to lowercase while preserving name and password
+  casing, and replaces the first-time `Welcome back` heading with `Welcome to
+  Word Alive`. It also adds a dark palette driven by the device's system
+  appearance setting. TypeScript and Expo configuration validation passed, and
+  the light-to-dark transition was checked in Expo Go on the `Mlibo_AP1`
+  Android virtual device on 2026-11-10. A new signed preview APK and physical
+  Android retest are still required before this is treated as release-ready.
 - `refactor/bible-reader-text-size` was merged to `main` through pull request
   #24. It removes the global Profile text-size controls and adds the approved
   reader-only `Aa` text-size
