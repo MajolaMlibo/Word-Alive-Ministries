@@ -38,9 +38,7 @@ export const radii = {
   lg: 20,
 };
 
-// Base font sizes at 1x scale. Every screen should read from these
-// instead of hardcoding numbers, so the text-size control on Profile
-// affects the whole app.
+// Base font sizes. React Native keeps normal device font scaling enabled.
 export const baseFontSizes = {
   caption: 13,
   body: 17,
@@ -49,17 +47,3 @@ export const baseFontSizes = {
   title: 26,
   display: 30,
 };
-
-// Three-step scale is enough to matter without breaking layout.
-// Stored as a plain multiplier so it is trivial to persist as a number.
-export const TEXT_SCALES = {
-  standard: 1,
-  large: 1.15,
-  extraLarge: 1.3,
-} as const;
-
-export type TextScaleKey = keyof typeof TEXT_SCALES;
-
-export function scaledFont(base: number, scaleValue: number) {
-  return Math.round(base * scaleValue);
-}

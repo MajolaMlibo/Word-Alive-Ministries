@@ -131,12 +131,22 @@ Editor and reported `Success. No rows returned`.
   The existing `home_encouragement` table, migration, and content are retained
   unchanged for a possible later release. The removal was verified on a
   physical iPhone in Expo Go on 2026-11-10.
-- `refactor/ministry-color-system` is in progress. It introduces the approved
-  ministry green and gold palette and removes the broken member-facing High
+- `refactor/ministry-color-system` was merged to `main`. It introduced the approved
+  ministry green and gold palette and removed the broken member-facing High
   Contrast control. The existing `profiles.high_contrast` column is retained
   unchanged but is no longer read or written by the mobile app. The Home
   navigation colours and Profile control removal were verified on a physical
   iPhone in Expo Go on 2026-11-10.
+- `refactor/bible-reader-text-size` is in progress. It removes the global
+  Profile text-size controls and adds the approved reader-only `Aa` text-size
+  setting. It also adds the approved Calendar reading-plan and expandable
+  study-notes model, and corrects related app and setup documentation. The
+  existing `profiles.text_scale` column is retained unchanged but is no longer
+  read or written by the mobile app. On 2026-11-10, a physical iPhone in Expo
+  Go verified the removed Profile controls, Extra large Bible text after an app
+  restart, Calendar reading-plan markers, and selected-day chapters. Published
+  study-note verification remains pending until the church supplies a real
+  study or event.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.

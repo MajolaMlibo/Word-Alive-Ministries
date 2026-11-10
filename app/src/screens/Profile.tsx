@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
 import { useAccessibility } from "../theme/AccessibilityContext";
-import { spacing, TextScaleKey } from "../theme/theme";
+import { spacing } from "../theme/theme";
 import {
   getAvatarSignedUrl,
   uploadAvatar,
@@ -20,18 +20,10 @@ import {
 import { Profile } from "../services/database";
 
 
-const TEXT_OPTIONS: { key: TextScaleKey; label: string; size: number }[] = [
-  { key: "standard", label: "A", size: 16 },
-  { key: "large", label: "A", size: 22 },
-  { key: "extraLarge", label: "A", size: 28 },
-];
-
 export default function ProfileScreen() {
 const {
   colors,
   fonts,
-  textScaleKey,
-  setTextScaleKey,
 } = useAccessibility();
 
 const styles = makeStyles(colors, fonts);
@@ -200,38 +192,6 @@ const styles = makeStyles(colors, fonts);
         </View>
       </View>
 
-      {/* SETTINGS */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Display Settings</Text>
-
-        <Text style={styles.settingLabel}>Text Size</Text>
-
-        <View style={styles.textRow}>
-          {TEXT_OPTIONS.map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              style={[
-                styles.textBtn,
-                textScaleKey === item.key && styles.textBtnActive,
-              ]}
-              onPress={() => setTextScaleKey(item.key)}
-            >
-              <Text
-                style={[
-                  {
-                    fontSize: item.size,
-                    fontWeight: "700",
-                    color: textScaleKey === item.key ? "#FFF" : colors.primary,
-                  },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
       {/* ACHIEVEMENT */}
       <View style={styles.achievement}>
         <Ionicons name="trophy" size={28} color={colors.accent} />
@@ -316,47 +276,6 @@ function makeStyles(colors: any, fonts: any) {
     statLabel: {
       color: colors.textMuted,
       marginTop: 4,
-    },
-
-    section: {
-      backgroundColor: colors.surface,
-      borderRadius: 20,
-      padding: spacing.lg,
-      marginBottom: spacing.lg,
-    },
-
-    sectionTitle: {
-      color: colors.primary,
-      fontWeight: "700",
-      fontSize: fonts.subtitle,
-      marginBottom: spacing.md,
-    },
-
-    settingLabel: {
-      fontSize: fonts.body,
-      fontWeight: "600",
-      color: colors.text,
-    },
-
-    textRow: {
-      flexDirection: "row",
-      marginTop: spacing.sm,
-    },
-
-    textBtn: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      borderRadius: 14,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 12,
-      marginRight: spacing.sm,
-    },
-
-    textBtnActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
     },
 
     achievement: {

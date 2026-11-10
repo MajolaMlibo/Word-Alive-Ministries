@@ -2,16 +2,16 @@
 
 Word Alive Ministries is an Expo React Native mobile app for Android and iOS.
 It gives church members daily Bible-reading guidance, reading-progress tracking,
-a Bible-study calendar, Bible-study details, accessibility preferences, and a
-private profile photo.
+a reading-plan and ministry-events calendar, Bible-study details, reader-only
+text-size controls, and a private profile photo.
 
 ## Current MVP status
 
 The production Supabase project is connected. Email-and-password sign-in,
-daily reading completion and streaks, the 2026 reading plan, Study, Calendar,
-and Profile are connected and verified on a physical iPhone. The detailed
-verified record and remaining release work are in
-[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
+daily reading completion and streaks, the 2026 reading plan, and the original
+Study, Calendar, and Profile production-schema repairs are verified on a
+physical iPhone. The detailed verification record, including newer work that
+is awaiting device tests, is in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
 ## Repository layout
 
@@ -86,9 +86,8 @@ Do not give the mobile app the service-role key.
 
 ## Bible text
 
-The reader uses the King James Version (KJV) from `bible-api.com`. A verified
-daily first-verse preview is on its own feature branch and will use the same
-KJV provider when merged. The app labels this text as KJV and caches passage
+The reader uses the King James Version (KJV) from `bible-api.com`. The app
+labels this text as KJV, shows a daily first-verse preview, and caches passage
 requests on the device. The provider is free but rate-limited and does not
 guarantee availability; do not use it to bulk-download the Bible. Reassess
 Bible-text rights and provider reliability before a worldwide public release.

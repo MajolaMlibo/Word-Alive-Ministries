@@ -367,6 +367,7 @@ export default function HomeScreen() {
       const { data: studyData, error: studyError } = await supabase
         .from('bible_studies')
         .select('*')
+        .eq('status', 'published')
         .gte('study_date', today)
         .order('study_date', { ascending: true })
         .limit(1)

@@ -32,7 +32,7 @@ const MORE_ITEMS: {
     destination: 'Profile',
     icon: 'person-outline',
     title: 'Profile and settings',
-    description: 'Manage your profile photo and reading preferences.',
+    description: 'Manage your profile photo and account.',
   },
   {
     destination: 'Prayer',

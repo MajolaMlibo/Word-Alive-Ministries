@@ -14,8 +14,11 @@ import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 import {
   fetchScripture,
+  getBibleReaderTextSize,
   saveLastPosition,
+  saveBibleReaderTextSize,
   getLastPosition,
+  type BibleReaderTextSize,
 } from '../services/bibleService';
 import {
   completeDailyReading,
@@ -25,6 +28,21 @@ import {
 import { DailyReading } from '../services/database';
 
 type Tab = 'daily' | 'read';
+
+const BIBLE_READER_TEXT_SCALE: Record<BibleReaderTextSize, number> = {
+  standard: 1,
+  large: 1.15,
+  extraLarge: 1.3,
+};
+
+const BIBLE_READER_TEXT_SIZE_OPTIONS: {
+  key: BibleReaderTextSize;
+  label: string;
+}[] = [
+  { key: 'standard', label: 'Standard' },
+  { key: 'large', label: 'Large' },
+  { key: 'extraLarge', label: 'Extra large' },
+];
 
 const BIBLE_BOOKS = [
   ['Genesis', 50], ['Exodus', 40], ['Leviticus', 27], ['Numbers', 36], ['Deuteronomy', 34],
@@ -314,7 +332,6 @@ function BibleReader({
   dailyReadingReference?: string;
 }) {
   const { colors, fonts } = useAccessibility();
-  const styles = makeStyles(colors, fonts);
   const dailyReadingStart = getFirstChapterFromReference(dailyReadingReference);
   const isGuidedDailyReading = Boolean(dailyReadingStart);
 
@@ -334,6 +351,26 @@ function BibleReader({
   const [searchStep, setSearchStep] = useState<'book' | 'chapter' | 'verse' | null>(null);
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
   const [highlightedVerses, setHighlightedVerses] = useState<number[]>([]);
+  const [readerTextSize, setReaderTextSize] = useState<BibleReaderTextSize>(
+    'standard'
+  );
+  const [isTextSizeMenuOpen, setIsTextSizeMenuOpen] = useState(false);
+  const readerTextScale = BIBLE_READER_TEXT_SCALE[readerTextSize];
+  const styles = makeStyles(colors, fonts, readerTextScale);
+
+  useEffect(() => {
+    let isActive = true;
+
+    void getBibleReaderTextSize().then((savedTextSize) => {
+      if (isActive) {
+        setReaderTextSize(savedTextSize);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (isGuidedDailyReading) return;
@@ -441,6 +478,12 @@ function BibleReader({
       `${book} ${chapter}:${selectedVerses.join(', ')}`,
       'More verse actions such as notes, sharing, and bookmarks can be added here.'
     );
+  }
+
+  function selectReaderTextSize(textSize: BibleReaderTextSize) {
+    setReaderTextSize(textSize);
+    setIsTextSizeMenuOpen(false);
+    void saveBibleReaderTextSize(textSize);
   }
 
   return (
@@ -563,10 +606,49 @@ function BibleReader({
           style={styles.reader}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.readerTitle}>
-            {book} {chapter}
-            {verse ? `:${verse}` : ''}
-          </Text>
+          <View style={styles.readerHeading}>
+            <Text style={styles.readerTitle}>
+              {book} {chapter}
+              {verse ? `:${verse}` : ''}
+            </Text>
+            <TouchableOpacity
+              accessibilityLabel="Choose Bible text size"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: isTextSizeMenuOpen }}
+              onPress={() => setIsTextSizeMenuOpen((isOpen) => !isOpen)}
+              style={styles.readerTextSizeButton}
+            >
+              <Text style={styles.readerTextSizeButtonText}>Aa</Text>
+            </TouchableOpacity>
+          </View>
+
+          {isTextSizeMenuOpen ? (
+            <View style={styles.readerTextSizeMenu}>
+              {BIBLE_READER_TEXT_SIZE_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  accessibilityLabel={`${option.label} Bible text size`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: readerTextSize === option.key }}
+                  key={option.key}
+                  onPress={() => selectReaderTextSize(option.key)}
+                  style={[
+                    styles.readerTextSizeOption,
+                    readerTextSize === option.key && styles.readerTextSizeOptionActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.readerTextSizeOptionText,
+                      readerTextSize === option.key &&
+                        styles.readerTextSizeOptionTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
 
           {selectedVerses.length > 0 && (
             <View style={styles.verseTools}>
@@ -605,7 +687,12 @@ function BibleReader({
   );
 }
 
-function makeStyles(colors: any, fonts: any) {
+function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
+  const readerVerseFontSize = Math.round(
+    fonts.bodyLarge * readerTextScale
+  );
+  const readerVerseLineHeight = Math.round(readerVerseFontSize * 1.9);
+
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -840,7 +927,61 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.primary,
       fontSize: fonts.title,
       fontWeight: '700',
-      marginBottom: spacing.lg,
+    },
+
+    readerHeading: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+    },
+
+    readerTextSizeButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 10,
+      borderWidth: 1,
+      justifyContent: 'center',
+      minHeight: 44,
+      minWidth: 44,
+      paddingHorizontal: spacing.xs,
+    },
+
+    readerTextSizeButtonText: {
+      color: colors.primary,
+      fontSize: fonts.body,
+      fontWeight: '700',
+    },
+
+    readerTextSizeMenu: {
+      backgroundColor: colors.background,
+      borderRadius: 12,
+      flexDirection: 'row',
+      marginBottom: spacing.md,
+      padding: 4,
+    },
+
+    readerTextSizeOption: {
+      alignItems: 'center',
+      borderRadius: 9,
+      flex: 1,
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+
+    readerTextSizeOptionActive: {
+      backgroundColor: colors.primary,
+    },
+
+    readerTextSizeOptionText: {
+      color: colors.primary,
+      fontSize: fonts.caption,
+      fontWeight: '700',
+    },
+
+    readerTextSizeOptionTextActive: {
+      color: '#FFF',
     },
 
     verseTools: {
@@ -890,8 +1031,8 @@ function makeStyles(colors: any, fonts: any) {
     },
 
     verse: {
-      fontSize: fonts.bodyLarge,
-      lineHeight: fonts.bodyLarge * 1.9,
+      fontSize: readerVerseFontSize,
+      lineHeight: readerVerseLineHeight,
       color: colors.text,
       borderRadius: 8,
       marginBottom: spacing.sm,
@@ -901,8 +1042,8 @@ function makeStyles(colors: any, fonts: any) {
 
     verseText: {
       color: colors.text,
-      fontSize: fonts.bodyLarge,
-      lineHeight: fonts.bodyLarge * 1.9,
+      fontSize: readerVerseFontSize,
+      lineHeight: readerVerseLineHeight,
     },
 
     selectedVerse: {

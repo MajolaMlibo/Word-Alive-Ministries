@@ -17,8 +17,8 @@ Expo public environment variable.
 
 ## Local connection verification
 
-Create `app/.env` from `app/.env.example`, add the production project URL and
-publishable key, then run this command from the `app` directory:
+Create `app/.env` manually, add the production project URL and publishable key,
+then run this command from the `app` directory:
 
 ```powershell
 npm run verify:supabase

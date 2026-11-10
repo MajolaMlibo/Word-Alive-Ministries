@@ -6,7 +6,7 @@ const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error(
-    'Missing Supabase configuration. Copy app/.env.example to app/.env and add the project URL and publishable key.'
+    'Missing Supabase configuration. Create app/.env and add the project URL and publishable key.'
   );
 }
 

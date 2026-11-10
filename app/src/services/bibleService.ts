@@ -2,6 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CACHE_PREFIX = '@word_alive_scripture_';
 export const LAST_POSITION_KEY = '@word_alive_last_position';
+const READER_TEXT_SIZE_KEY = '@word_alive_bible_reader_text_size';
+
+export type BibleReaderTextSize = 'standard' | 'large' | 'extraLarge';
+
+const BIBLE_READER_TEXT_SIZES: BibleReaderTextSize[] = [
+  'standard',
+  'large',
+  'extraLarge',
+];
 
 export type DailyVersePreview = {
   reference: string;
@@ -90,8 +99,7 @@ export async function fetchScripture(reference: string) {
   const cacheKey = getCacheKey(reference);
 
   try {
-    // 1. Always try the network first so the user gets fresh scripture
-    console.log('Fetching scripture...');
+    // Always try the network first so the user gets fresh scripture.
     const response = await fetch(
       `https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`
     );
@@ -107,17 +115,16 @@ export async function fetchScripture(reference: string) {
 
     return data;
   } catch (error) {
-    console.error('Error fetching scripture, checking local cache:', error);
+    console.warn('Unable to fetch scripture, checking cache:', error);
 
     // 3. Network failed (offline, timeout, bad reference, etc) — fall back to cache
     try {
       const cachedData = await AsyncStorage.getItem(cacheKey);
       if (cachedData) {
-        console.log('Loaded scripture from local cache');
         return JSON.parse(cachedData);
       }
     } catch (cacheError) {
-      console.error('Error reading scripture cache:', cacheError);
+      console.warn('Unable to read scripture cache:', cacheError);
     }
 
     // 4. Nothing cached either — return a clear fallback structure
@@ -134,7 +141,7 @@ export async function saveLastPosition(book: string, chapter: number, verse?: nu
   try {
     await AsyncStorage.setItem(LAST_POSITION_KEY, JSON.stringify({ book, chapter, verse }));
   } catch (error) {
-    console.error('Error saving last read position:', error);
+    console.warn('Unable to save last read position:', error);
   }
 }
 
@@ -143,7 +150,30 @@ export async function getLastPosition(): Promise<{ book: string; chapter: number
     const saved = await AsyncStorage.getItem(LAST_POSITION_KEY);
     return saved ? JSON.parse(saved) : null;
   } catch (error) {
-    console.error('Error reading last read position:', error);
+    console.warn('Unable to read last position:', error);
     return null;
+  }
+}
+
+export async function getBibleReaderTextSize(): Promise<BibleReaderTextSize> {
+  try {
+    const saved = await AsyncStorage.getItem(READER_TEXT_SIZE_KEY);
+
+    return BIBLE_READER_TEXT_SIZES.includes(saved as BibleReaderTextSize)
+      ? (saved as BibleReaderTextSize)
+      : 'standard';
+  } catch (error) {
+    console.warn('Unable to load Bible reader text size.', error);
+    return 'standard';
+  }
+}
+
+export async function saveBibleReaderTextSize(
+  textSize: BibleReaderTextSize
+) {
+  try {
+    await AsyncStorage.setItem(READER_TEXT_SIZE_KEY, textSize);
+  } catch (error) {
+    console.warn('Unable to save Bible reader text size.', error);
   }
 }
