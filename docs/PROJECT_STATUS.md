@@ -122,6 +122,8 @@ Editor and reported `Success. No rows returned`.
   WhatsApp Channel, and YouTube destinations. The production migration, all
   four external destinations, and the administrator hide-and-restore flow were
   verified on a physical iPhone in Expo Go on 2026-11-10.
+- `fix/more-tab-reset` is in progress. It resets the local More destination to
+  its menu when the More tab is selected again or regains focus.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.
