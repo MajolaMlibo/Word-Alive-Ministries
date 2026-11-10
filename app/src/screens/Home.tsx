@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,13 @@ import {
   ScrollView,
   RefreshControl,
   Alert,
+  Image,
   Linking,
   Animated,
   PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import {
   getSouthAfricaDate,
@@ -32,7 +33,8 @@ import {
   DEFAULT_HOME_ENCOURAGEMENT,
   getHomeEncouragement,
 } from '../services/homeContentService';
-import { Announcement, BibleStudy, DailyReading, HomeEncouragement } from '../services/database';
+import { Announcement, BibleStudy, DailyReading, HomeEncouragement, Profile } from '../services/database';
+import { getAvatarSignedUrl } from '../services/profileService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -251,7 +253,8 @@ export default function HomeScreen() {
   const [encouragement, setEncouragement] = useState<
     Pick<HomeEncouragement, 'message' | 'scripture_ref'>
   >(DEFAULT_HOME_ENCOURAGEMENT);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -278,13 +281,29 @@ export default function HomeScreen() {
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        setProfile(profileData);
+        if (profileError) {
+          console.warn('Unable to load the Home profile.', profileError.message);
+        }
+
+        const nextProfile = (profileData as Profile | null) || null;
+        setProfile(nextProfile);
+
+        if (nextProfile?.avatar_path) {
+          try {
+            setAvatarUrl(await getAvatarSignedUrl(nextProfile.avatar_path));
+          } catch (avatarError) {
+            console.warn('Unable to load the Home profile photo.', avatarError);
+            setAvatarUrl(null);
+          }
+        } else {
+          setAvatarUrl(null);
+        }
       }
 
       const { reading: readingData, error: readingError } =
@@ -385,9 +404,11 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadDashboardData();
+    }, [loadDashboardData])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -500,9 +521,17 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={26} color="#FFF" />
-          </View>
+          {avatarUrl ? (
+            <Image
+              accessibilityLabel="Your profile photo"
+              source={{ uri: avatarUrl }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={26} color="#FFF" />
+            </View>
+          )}
         </View>
 
         <View style={styles.streakCard}>
@@ -727,6 +756,7 @@ function makeStyles(
       backgroundColor: 'rgba(255,255,255,0.15)',
       justifyContent: 'center',
       alignItems: 'center',
+      overflow: 'hidden',
     },
 
     streakCard: {
