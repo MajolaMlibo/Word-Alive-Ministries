@@ -54,9 +54,10 @@ Internal tester-release readiness
   were also verified.
 - The unnecessary introductory card was removed from More and the simplified
   screen was verified on a physical iPhone.
-- The Admin Home-content flow was verified end-to-end on a physical iPhone:
-  an administrator saved a temporary encouragement, Home displayed it after
-  refresh, and the approved Psalm 119:105 message was restored.
+- Before the feature was removed from the current MVP, the Admin Home-content
+  flow was verified end-to-end on a physical iPhone: an administrator saved a
+  temporary encouragement, Home displayed it after refresh, and the approved
+  Psalm 119:105 message was restored.
 - Automated JavaScript bundle exports completed for iOS and Android after the
   Admin implementation. These checks do not replace platform-device testing.
 - The role-gated Admin area was verified on a physical iPhone for access
@@ -109,22 +110,27 @@ Editor and reported `Success. No rows returned`.
   bottom navigation usable, plus a member-facing Prayer Requests screen backed
   by the existing production schema. The feature is verified on a physical
   iPhone and is ready for review.
-- `fix/profile-session-home-avatar` is in progress. It makes sign-out an
+- `fix/profile-session-home-avatar` was merged to `main`. It makes sign-out an
   explicit local-device action with confirmation and displays the member's
   private profile photo in Home through a time-limited signed URL. Physical
   verification remains pending.
 - `feature/admin-content-management` was merged to `main`. It adds
   role-gated pastor/admin tools for dynamic ministry content while keeping role
   assignment outside the mobile app and under Supabase administration.
-- `feature/ministry-links` is awaiting merge. It adds a permanent Connect with
+- `feature/ministry-links` was merged to `main`. It adds a permanent Connect with
   us area in More and an Admin Links manager, backed by a new RLS-protected
   `ministry_links` table seeded with the church's approved TikTok, Spotify,
   WhatsApp Channel, and YouTube destinations. The production migration, all
   four external destinations, and the administrator hide-and-restore flow were
   verified on a physical iPhone in Expo Go on 2026-11-10.
-- `fix/more-tab-reset` is awaiting merge. It resets the local More destination
+- `fix/more-tab-reset` was merged to `main`. It resets the local More destination
   to its menu when the More tab is selected again or regains focus. Manual
   verification completed on 2026-11-10.
+- `refactor/home-encouragement-removal` is in progress. It removes the
+  non-essential Stay Encouraged card and its Admin editor from the current MVP.
+  The existing `home_encouragement` table, migration, and content are retained
+  unchanged for a possible later release. The removal was verified on a
+  physical iPhone in Expo Go on 2026-11-10.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.

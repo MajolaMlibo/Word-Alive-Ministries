@@ -109,11 +109,15 @@ separate Admin feature.
 The Admin destination is hidden unless the signed-in member has the `pastor`
 or `admin` application role. The screen checks that role again before loading
 content tools. It supports content-management roles already authorised by the
-database to manage the Home encouragement, prayer-request moderation,
-announcements, Bible studies, scheduled daily readings, and livestream links.
+database to manage prayer-request moderation, announcements, Bible studies,
+scheduled daily readings, and livestream links.
 It also manages permanent ministry links.
 Prayer-request removal is available only to authorised Admin users.
 Role assignment is deliberately excluded from the mobile app.
+
+The prior `home_encouragement` database table and its content are intentionally
+retained for a possible future release, but no member or Admin screen currently
+reads or changes that data.
 
 ## Security boundaries
 
@@ -129,6 +133,7 @@ Role assignment is deliberately excluded from the mobile app.
 
 - Application-role assignment is deliberately not available in the mobile app;
   it must be performed by an authorised operator in Supabase.
-- The Admin content-management flow is awaiting physical-device verification.
+- The Admin Reading Plan and Daily Reading edit-and-save workflows remain
+  pending physical-device verification.
 - Push notifications and automatic auth deep links require a development or
   production build; Expo Go cannot fully verify them.

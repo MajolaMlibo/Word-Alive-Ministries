@@ -12,8 +12,8 @@
 - [x] Publish approved announcements and verify the member announcement feed.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,
   delete, private submission, and reload persistence.
-- [x] Verify role-gated Admin access and the Home encouragement update on a
-  physical iPhone.
+- [x] Verify role-gated Admin access on a physical iPhone. The legacy Home
+  encouragement flow was verified before it was removed from the current MVP.
 - [ ] Verify the Admin Reading Plan and Daily Reading edit-and-save actions on
   a physical device without changing the approved 2026 plan content.
 - [ ] Create an authorised staff content-management process.
