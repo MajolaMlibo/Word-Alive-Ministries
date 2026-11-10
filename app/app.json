@@ -8,13 +8,16 @@
     "icon": "./assets/icon.png",
 
     "ios": {
+      "bundleIdentifier": "com.wordaliveministries.app",
       "supportsTablet": true
     },
 
     "android": {
+      "package": "com.wordaliveministries.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#004d00"
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
 
@@ -34,7 +37,7 @@
           "image": "./assets/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+            "backgroundColor": "#000000"
         }
       ],
       "expo-status-bar",
