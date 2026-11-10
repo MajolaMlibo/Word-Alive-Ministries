@@ -142,7 +142,11 @@ Editor and reported `Success. No rows returned`.
   setting. It also adds the approved Calendar reading-plan and expandable
   study-notes model, and corrects related app and setup documentation. The
   existing `profiles.text_scale` column is retained unchanged but is no longer
-  read or written by the mobile app.
+  read or written by the mobile app. On 2026-11-10, a physical iPhone in Expo
+  Go verified the removed Profile controls, Extra large Bible text after an app
+  restart, Calendar reading-plan markers, and selected-day chapters. Published
+  study-note verification remains pending until the church supplies a real
+  study or event.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.
