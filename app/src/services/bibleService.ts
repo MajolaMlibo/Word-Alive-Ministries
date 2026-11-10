@@ -2,6 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CACHE_PREFIX = '@word_alive_scripture_';
 export const LAST_POSITION_KEY = '@word_alive_last_position';
+const READER_TEXT_SIZE_KEY = '@word_alive_bible_reader_text_size';
+
+export type BibleReaderTextSize = 'standard' | 'large' | 'extraLarge';
+
+const BIBLE_READER_TEXT_SIZES: BibleReaderTextSize[] = [
+  'standard',
+  'large',
+  'extraLarge',
+];
 
 export type DailyVersePreview = {
   reference: string;
@@ -145,5 +154,28 @@ export async function getLastPosition(): Promise<{ book: string; chapter: number
   } catch (error) {
     console.error('Error reading last read position:', error);
     return null;
+  }
+}
+
+export async function getBibleReaderTextSize(): Promise<BibleReaderTextSize> {
+  try {
+    const saved = await AsyncStorage.getItem(READER_TEXT_SIZE_KEY);
+
+    return BIBLE_READER_TEXT_SIZES.includes(saved as BibleReaderTextSize)
+      ? (saved as BibleReaderTextSize)
+      : 'standard';
+  } catch (error) {
+    console.warn('Unable to load Bible reader text size.', error);
+    return 'standard';
+  }
+}
+
+export async function saveBibleReaderTextSize(
+  textSize: BibleReaderTextSize
+) {
+  try {
+    await AsyncStorage.setItem(READER_TEXT_SIZE_KEY, textSize);
+  } catch (error) {
+    console.warn('Unable to save Bible reader text size.', error);
   }
 }

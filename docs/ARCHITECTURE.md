@@ -16,14 +16,15 @@ Authenticated members use these tabs:
 - Home: greeting, current streak, today's scheduled reading, next study, the
   daily KJV first-verse preview, and active church announcements.
 - Calendar: monthly view of published Bible studies.
-- Bible: daily-reading completion and the KJV reader.
+- Bible: daily-reading completion and the KJV reader, including a local
+  reader-only text-size control.
 - Study: upcoming and previous published Bible studies.
 - More: a compact navigation area for Profile, Prayer Requests, and visible
   ministry channels. Approved `pastor` and `admin` users also see the Admin
   destination. This keeps the primary bottom navigation at five items on small
   phone screens.
-- Profile: streak, total completed readings, accessibility settings, private
-  profile picture, and sign-out.
+- Profile: streak, total completed readings, private profile picture, and
+  sign-out.
 - Prayer Requests: members submit, edit, or delete their own pending requests.
 
 ## Backend
@@ -65,6 +66,10 @@ only the first verse of the first chapter in the scheduled range. For example,
 This is an external best-effort service, not a guaranteed production API. The
 cache makes previously opened passages available when the network fails, but it
 does not make unread passages available offline.
+
+The reader's `Aa` control changes only Bible-passage text between Standard,
+Large, and Extra Large. The selection is stored locally on that device with
+AsyncStorage; it is not written to a profile or shared with other devices.
 
 ## Profile-photo flow
 
