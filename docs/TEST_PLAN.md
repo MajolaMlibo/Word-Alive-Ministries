@@ -35,6 +35,7 @@ native behaviour.
 | Guided reading | Incomplete daily reading opens the Read tab at the scheduled first chapter; completion restores the saved personal position | Verified in Expo Go |
 | Study and Calendar | Correct empty states when no published studies exist; no old `chapter` field is displayed | Verified in Expo Go |
 | Profile | Streak and completed total display separately; private photo upload survives reload | Verified in Expo Go |
+| Profile/Home handoff | Confirm sign-out, confirm local session clears, sign back in, then confirm the private profile photo appears in Home after navigating from Profile | Pending device verification |
 | Daily KJV preview | Home displays the first verse of the first scheduled chapter with a KJV label | Verified in Expo Go; pending merge at this documentation baseline |
 | Prayer Requests | Submit, edit, delete, private choice, reload persistence, and More navigation | Verified in Expo Go |
 | Admin content | Admin-only More item; Home encouragement; prayer moderation; create, edit, delete, and publish dynamic ministry content | Pending physical-device verification |

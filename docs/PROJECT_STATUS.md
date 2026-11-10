@@ -109,6 +109,10 @@ Editor and reported `Success. No rows returned`.
   bottom navigation usable, plus a member-facing Prayer Requests screen backed
   by the existing production schema. The feature is verified on a physical
   iPhone and is ready for review.
+- `fix/profile-session-home-avatar` is in progress. It makes sign-out an
+  explicit local-device action with confirmation and displays the member's
+  private profile photo in Home through a time-limited signed URL. Physical
+  verification remains pending.
 - `feature/admin-content-management` was merged to `main`. It adds
   role-gated pastor/admin tools for dynamic ministry content while keeping role
   assignment outside the mobile app and under Supabase administration.
