@@ -1,9 +1,8 @@
 // AccessibilityContext.tsx
 // Wrap the app (in App.tsx, inside your auth/navigation provider) with
 // <AccessibilityProvider>. Every screen then reads colors and font
-// sizes from useAccessibility() instead of hardcoding them, so the
-// text-size and high-contrast controls on the Profile screen apply
-// everywhere at once.
+// sizes from useAccessibility() instead of hardcoding them, so the current
+// Profile text-size control applies everywhere at once.
 
 import React, {
   createContext,
@@ -24,11 +23,9 @@ import {
 
 type AccessibilityState = {
   loading: boolean;
-  highContrast: boolean;
   textScaleKey: TextScaleKey;
   colors: ReturnType<typeof getColors>;
   fonts: Record<keyof typeof baseFontSizes, number>;
-  setHighContrast: (value: boolean) => void;
   setTextScaleKey: (key: TextScaleKey) => void;
 };
 
@@ -41,7 +38,6 @@ export function AccessibilityProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [highContrast, setHighContrastState] = useState(false);
   const [textScaleKey, setTextScaleKeyState] = useState<TextScaleKey>(
     'standard'
   );
@@ -58,11 +54,10 @@ export function AccessibilityProvider({
       }
       const { data } = await supabase
         .from('profiles')
-        .select('high_contrast, text_scale')
+        .select('text_scale')
         .eq('id', user.id)
         .single();
 
-      if (data?.high_contrast) setHighContrastState(true);
       if (data?.text_scale && data.text_scale in TEXT_SCALES) {
         setTextScaleKeyState(data.text_scale as TextScaleKey);
       }
@@ -71,7 +66,7 @@ export function AccessibilityProvider({
   }, []);
 
   const persist = useCallback(
-    async (patch: { high_contrast?: boolean; text_scale?: TextScaleKey }) => {
+    async (patch: { text_scale?: TextScaleKey }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -79,14 +74,6 @@ export function AccessibilityProvider({
       await supabase.from('profiles').update(patch).eq('id', user.id);
     },
     []
-  );
-
-  const setHighContrast = useCallback(
-    (value: boolean) => {
-      setHighContrastState(value);
-      persist({ high_contrast: value });
-    },
-    [persist]
   );
 
   const setTextScaleKey = useCallback(
@@ -97,7 +84,7 @@ export function AccessibilityProvider({
     [persist]
   );
 
-  const colors = useMemo(() => getColors(highContrast), [highContrast]);
+  const colors = useMemo(() => getColors(), []);
 
   const fonts = useMemo(() => {
     const scaleValue = TEXT_SCALES[textScaleKey];
@@ -115,11 +102,9 @@ export function AccessibilityProvider({
     <AccessibilityContext.Provider
       value={{
         loading,
-        highContrast,
         textScaleKey,
         colors,
         fonts,
-        setHighContrast,
         setTextScaleKey,
       }}
     >

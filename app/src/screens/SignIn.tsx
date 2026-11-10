@@ -13,11 +13,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { supabase } from '../services/supabase';
+import { palette } from '../theme/theme';
 
 type AuthMode = 'signIn' | 'signUp';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const AUTH_CALLBACK_URL = 'wordalive-ministries://auth/callback';
+const brandColors = palette.standard;
 
 export default function SignIn() {
   const [mode, setMode] = useState<AuthMode>('signIn');
@@ -121,7 +123,7 @@ export default function SignIn() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.hero}>
-          <Ionicons name="book" size={56} color="#FDD835" />
+          <Ionicons name="book" size={56} color={brandColors.accent} />
           <Text style={styles.title}>Word Alive</Text>
           <Text style={styles.subtitle}>Ministries</Text>
         </View>
@@ -235,7 +237,7 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#044b04',
+    backgroundColor: brandColors.primary,
     flex: 1,
   },
   content: {
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   subtitle: {
-    color: '#DDF4E6',
+    color: brandColors.primaryMuted,
     fontSize: 18,
   },
   card: {
@@ -263,7 +265,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   heading: {
-    color: '#044b04',
+    color: brandColors.primary,
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
   },
   primary: {
     alignItems: 'center',
-    backgroundColor: '#044b04',
+    backgroundColor: brandColors.primary,
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   modeSwitchText: {
-    color: '#044b04',
+    color: brandColors.primary,
     fontWeight: '600',
     textAlign: 'center',
   },

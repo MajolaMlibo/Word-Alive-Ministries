@@ -126,11 +126,15 @@ Editor and reported `Success. No rows returned`.
 - `fix/more-tab-reset` was merged to `main`. It resets the local More destination
   to its menu when the More tab is selected again or regains focus. Manual
   verification completed on 2026-11-10.
-- `refactor/home-encouragement-removal` is in progress. It removes the
+- `refactor/home-encouragement-removal` was merged to `main`. It removed the
   non-essential Stay Encouraged card and its Admin editor from the current MVP.
   The existing `home_encouragement` table, migration, and content are retained
   unchanged for a possible later release. The removal was verified on a
   physical iPhone in Expo Go on 2026-11-10.
+- `refactor/ministry-color-system` is in progress. It introduces the approved
+  ministry green and gold palette and removes the broken member-facing High
+  Contrast control. The existing `profiles.high_contrast` column is retained
+  unchanged but is no longer read or written by the mobile app.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.
