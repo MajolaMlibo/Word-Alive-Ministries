@@ -134,7 +134,9 @@ Editor and reported `Success. No rows returned`.
 - `refactor/ministry-color-system` is in progress. It introduces the approved
   ministry green and gold palette and removes the broken member-facing High
   Contrast control. The existing `profiles.high_contrast` column is retained
-  unchanged but is no longer read or written by the mobile app.
+  unchanged but is no longer read or written by the mobile app. The Home
+  navigation colours and Profile control removal were verified on a physical
+  iPhone in Expo Go on 2026-11-10.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.
