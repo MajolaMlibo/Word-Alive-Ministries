@@ -168,8 +168,13 @@ Editor and reported `Success. No rows returned`.
   before distribution: the second was an identical duplicate caused by a
   delayed build-status response, and the first lacked the remote preview
   environment configuration. Expo created and is managing the Android signing
-  key. A correctly configured replacement APK was submitted on 2026-11-10 from
-  commit `a356c7ee` and is awaiting Expo build completion.
+  key. A correctly configured replacement APK finished on 2026-11-10 from
+  commit `a356c7ee`.
+- The signed Android internal preview APK was installed on the `Mlibo_AP1`
+  Android virtual device on 2026-11-10. It launched the standalone
+  `com.wordaliveministries.app` MainActivity and showed the application's
+  native sign-in screen, not Expo Go. This is a smoke test only; signed-in
+  member journeys and physical Android-device verification remain pending.
 
 ## Known blockers
 
@@ -209,8 +214,8 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. When the submitted Android internal preview APK completes, install it on the
-   Android emulator and a physical Android device before sharing its direct
+1. Complete the signed-in Android member journey on the installed preview APK,
+   then verify it on a physical Android device before sharing its direct
    installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.

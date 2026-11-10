@@ -49,6 +49,10 @@ native behaviour.
 
 ## Required Android checks
 
+| Test | Expected result | Current evidence |
+|---|---|---|
+| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-10 |
+
 - Sign up, sign in, sign out, and session restoration.
 - Daily-reading completion, streak refresh, and completed reload state.
 - Study, Calendar, and Profile empty states.
