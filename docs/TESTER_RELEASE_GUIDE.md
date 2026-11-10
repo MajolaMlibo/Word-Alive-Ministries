@@ -24,8 +24,9 @@ Expo Go.
 1. The existing EAS project belongs to Expo account `mlibo`. Its `owner` value
    in `app/app.json` must continue to match that account unless the project is
    deliberately transferred to an Expo organisation.
-2. Approve a final, unique Android package name and iOS bundle identifier.
-   Recommended starting value: `com.wordaliveministries.app`.
+2. The approved Android package name and iOS bundle identifier are both
+   `com.wordaliveministries.app`. Do not change them after builds have been
+   shared or submitted to a store.
 3. Confirm whether the first tester group has Android devices, iPhones, or
    both. Build Android first if an Android test device is available.
 

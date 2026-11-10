@@ -23,9 +23,8 @@
 - [x] Add the `preview` EAS profile for internal tester distribution.
 - [x] Confirm the existing EAS project belongs to Expo account `mlibo` and
   align the configured project owner.
-- [ ] Register final Android package name and iOS bundle identifier before a
-  cloud build. Recommended: `com.wordaliveministries.app`, subject to owner
-  approval and availability.
+- [x] Configure the approved Android package name and iOS bundle identifier:
+  `com.wordaliveministries.app`.
 - [ ] Create and install the Android preview APK through EAS internal
   distribution.
 - [ ] Register authorised iPhone tester devices and create an iOS ad hoc
@@ -63,6 +62,8 @@
 
 - [ ] Finalise icons, splash screen, screenshots, privacy policy, support
   email, and store descriptions.
+- [ ] Visually verify the supplied Android adaptive icon and black-background
+  splash screen in an installed Android preview build.
 - [ ] Obtain required Google Play Console and Apple Developer access.
 - [ ] Create signed Android App Bundle and iOS store builds.
 - [ ] Obtain pastor acceptance after a documented stakeholder test session.
