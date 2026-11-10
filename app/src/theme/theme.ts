@@ -7,38 +7,21 @@ export const palette = {
   standard: {
     background: '#FDFCF0',
     surface: '#FFFFFF',
-    primary: '#004D00',       // deep green - headings, primary actions
-    primaryMuted: '#E6F0E6',
-    accent: '#E6C200',        // gold - primary CTA fills
-    accentDeep: '#B8860B',    // darker gold - badges, secondary emphasis
-    accentSoft: '#F5DEB3',    // pale gold - secondary buttons
+    primary: '#0B641A',       // ministry green - headings, primary actions
+    primaryMuted: '#E7F3E8',
+    accent: '#D4AF37',        // ministry gold - selected and celebratory accents
+    accentDeep: '#9B7A13',
+    accentSoft: '#F7EBC2',
     text: '#1A1A1A',
     textMuted: '#5A5A5A',
-    border: '#004D00',
+    border: '#0B641A',
     borderSoft: '#E3E0CE',
     danger: '#B22222',
   },
-  // High contrast is not "dark mode" - it is the same palette pushed to
-  // stronger separation between text/background/borders, which is what
-  // actually helps low-vision and older readers.
-  highContrast: {
-    background: '#FFFFFF',
-    surface: '#FFFFFF',
-    primary: '#00330A',
-    primaryMuted: '#D7E8D9',
-    accent: '#8A6A00',
-    accentDeep: '#7A5300',
-    accentSoft: '#EDEDED',
-    text: '#000000',
-    textMuted: '#2B2B2B',
-    border: '#000000',
-    borderSoft: '#000000',
-    danger: '#8B0000',
-  },
 };
 
-export function getColors(highContrast: boolean) {
-  return highContrast ? palette.highContrast : palette.standard;
+export function getColors() {
+  return palette.standard;
 }
 
 export const spacing = {

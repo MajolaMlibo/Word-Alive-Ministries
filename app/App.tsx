@@ -13,6 +13,7 @@ import * as Linking from 'expo-linking';
 
 import { supabase } from './src/services/supabase';
 import { AccessibilityProvider } from './src/theme/AccessibilityContext';
+import { palette } from './src/theme/theme';
 
 import Home from './src/screens/Home';
 import Bible from './src/screens/Bible';
@@ -22,6 +23,7 @@ import More from './src/screens/More';
 import SignIn from './src/screens/SignIn';
 
 const Tab = createBottomTabNavigator();
+const brandColors = palette.standard;
 
 function MainTabs() {
   return (
@@ -44,17 +46,17 @@ function MainTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#fedd21',
-        tabBarInactiveTintColor: '#Fdfcf0',
+        tabBarActiveTintColor: brandColors.accent,
+        tabBarInactiveTintColor: brandColors.background,
         tabBarStyle: {
-          backgroundColor: '#044b04',
+          backgroundColor: brandColors.primary,
           height: 60,
           paddingBottom: 5,
         },
         headerStyle: {
-          backgroundColor: '#044b04',
+          backgroundColor: brandColors.primary,
         },
-        headerTintColor: '#Fdfcf0',
+        headerTintColor: brandColors.background,
       })}
     >
       <Tab.Screen name="Home" component={Home} />
@@ -170,7 +172,7 @@ export default function App() {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#044b04" />
+        <ActivityIndicator size="large" color={brandColors.primary} />
       </View>
     );
   }
@@ -187,7 +189,7 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingScreen: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: brandColors.surface,
     flex: 1,
     justifyContent: 'center',
   },

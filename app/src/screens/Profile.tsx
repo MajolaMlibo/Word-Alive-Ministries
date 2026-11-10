@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Switch,
   TouchableOpacity,
   ScrollView,
   Image,
@@ -31,8 +30,6 @@ export default function ProfileScreen() {
 const {
   colors,
   fonts,
-  highContrast,
-  setHighContrast,
   textScaleKey,
   setTextScaleKey,
 } = useAccessibility();
@@ -191,7 +188,7 @@ const styles = makeStyles(colors, fonts);
       {/* STATS */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Ionicons name="flame" size={22} color="#F9A825" />
+          <Ionicons name="flame" size={22} color={colors.accent} />
           <Text style={styles.statNumber}>{profile?.current_streak || 0}</Text>
           <Text style={styles.statLabel}>Day Streak</Text>
         </View>
@@ -206,19 +203,6 @@ const styles = makeStyles(colors, fonts);
       {/* SETTINGS */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Display Settings</Text>
-
-        <View style={styles.settingRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.settingLabel}>High Contrast</Text>
-            <Text style={styles.settingHint}>
-              Improve readability across the app
-            </Text>
-          </View>
-
-          <Switch value={highContrast} onValueChange={setHighContrast} />
-        </View>
-
-        <View style={styles.divider} />
 
         <Text style={styles.settingLabel}>Text Size</Text>
 
@@ -250,7 +234,7 @@ const styles = makeStyles(colors, fonts);
 
       {/* ACHIEVEMENT */}
       <View style={styles.achievement}>
-        <Ionicons name="trophy" size={28} color="#FDD835" />
+        <Ionicons name="trophy" size={28} color={colors.accent} />
         <Text style={styles.achievementTitle}>Keep Going!</Text>
         <Text style={styles.achievementText}>
           Every completed reading strengthens your daily walk with God.
@@ -348,27 +332,10 @@ function makeStyles(colors: any, fonts: any) {
       marginBottom: spacing.md,
     },
 
-    settingRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-
     settingLabel: {
       fontSize: fonts.body,
       fontWeight: "600",
       color: colors.text,
-    },
-
-    settingHint: {
-      color: colors.textMuted,
-      marginTop: 2,
-      fontSize: fonts.caption,
-    },
-
-    divider: {
-      height: 1,
-      backgroundColor: colors.borderSoft,
-      marginVertical: spacing.lg,
     },
 
     textRow: {
@@ -393,7 +360,7 @@ function makeStyles(colors: any, fonts: any) {
     },
 
     achievement: {
-      backgroundColor: "#0E5C38",
+      backgroundColor: colors.primary,
       borderRadius: 20,
       padding: spacing.lg,
       alignItems: "center",
@@ -432,7 +399,7 @@ function makeStyles(colors: any, fonts: any) {
     },
 
     login: {
-      backgroundColor: "#0b530b",
+      backgroundColor: colors.primary,
       borderRadius: 16,
       paddingVertical: 15,
       flexDirection: "row",

@@ -517,7 +517,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.streakCard}>
-          <Ionicons name="flame" size={20} color="#FDD835" />
+          <Ionicons name="flame" size={20} color={colors.accent} />
           <Text style={styles.streakNumber}>
             {profile?.current_streak || 0}
           </Text>
