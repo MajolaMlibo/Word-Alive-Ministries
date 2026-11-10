@@ -19,6 +19,7 @@ import {
   ContentStatus,
   DailyReading,
   LiveStream,
+  MinistryLink,
   PrayerRequest,
   PrayerRequestStatus,
   ReadingPlan,
@@ -28,11 +29,13 @@ import {
   deleteBibleStudy,
   deleteDailyReading,
   deleteLiveStream,
+  deleteMinistryLink,
   deletePrayerRequest,
   getAdminAnnouncements,
   getAdminBibleStudies,
   getAdminDailyReadings,
   getAdminLiveStreams,
+  getAdminMinistryLinks,
   getAdminPrayerRequests,
   getAdminReadingPlans,
   moderatePrayerRequest,
@@ -40,6 +43,7 @@ import {
   saveBibleStudy,
   saveDailyReading,
   saveLiveStream,
+  saveMinistryLink,
   saveReadingPlan,
 } from '../services/adminService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
@@ -51,7 +55,7 @@ import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-type AdminSection = 'home' | 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams';
+type AdminSection = 'home' | 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const PRAYER_STATUSES: PrayerRequestStatus[] = [
@@ -69,6 +73,7 @@ const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.
   { key: 'plans', label: 'Plans', icon: 'list-outline' },
   { key: 'readings', label: 'Readings', icon: 'book-outline' },
   { key: 'streams', label: 'Streams', icon: 'videocam-outline' },
+  { key: 'links', label: 'Links', icon: 'link-outline' },
 ];
 
 function titleCase(value: string) {
@@ -733,6 +738,57 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
   </View>;
 }
 
+function LinksManager({ administratorId, styles }: { administratorId: string; styles: any }) {
+  const blank = () => ({ label: '', url: '', sortOrder: '50', isVisible: true });
+  const [links, setLinks] = useState<MinistryLink[]>([]);
+  const [form, setForm] = useState(blank);
+  const [editing, setEditing] = useState<MinistryLink | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { links: loadedLinks, error } = await getAdminMinistryLinks();
+    if (error) Alert.alert('Unable to load ministry links', 'Please refresh and try again.'); else setLinks(loadedLinks);
+    setLoading(false);
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const reset = () => { setEditing(null); setForm(blank()); };
+  const edit = (link: MinistryLink) => {
+    setEditing(link);
+    setForm({ label: link.label, url: link.url, sortOrder: String(link.sort_order), isVisible: link.is_visible });
+  };
+  const save = async () => {
+    const sortOrder = Number(form.sortOrder);
+    if (!form.label.trim() || form.label.trim().length > 80 || !form.url.trim() || !isHttpsUrl(form.url)) {
+      Alert.alert('Check link details', 'Use a channel name of 80 characters or fewer and a valid HTTPS link.'); return;
+    }
+    if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 9999) {
+      Alert.alert('Check display order', 'Use a whole number from 0 to 9,999. Lower numbers appear first.'); return;
+    }
+    setSaving(true);
+    const { link, error } = await saveMinistryLink({ label: form.label, url: form.url, sortOrder, isVisible: form.isVisible }, administratorId, editing?.id);
+    setSaving(false);
+    if (error || !link) {
+      Alert.alert('Unable to save ministry link', 'Channel names must be unique. Please check the details and try again.'); return;
+    }
+    setLinks((current) => [...current.filter((item) => item.id !== link.id), link].sort((first, second) => first.sort_order - second.sort_order || first.label.localeCompare(second.label)));
+    reset();
+  };
+  const remove = (link: MinistryLink) => Alert.alert('Delete ministry link?', 'Members will no longer see this channel link.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteMinistryLink(link.id); if (error) Alert.alert('Unable to delete ministry link', 'Please try again.'); else { setLinks((current) => current.filter((item) => item.id !== link.id)); if (editing?.id === link.id) reset(); } } }]);
+  return <View>
+    <Text style={styles.panelHint}>Visible links appear in More under Connect with us. Lower display-order numbers appear first.</Text>
+    <EditorCard title={editing ? 'Edit ministry link' : 'New ministry link'} styles={styles}>
+      <Field label="Channel name" value={form.label} onChangeText={(label) => setForm({ ...form, label })} placeholder="WhatsApp Channel" styles={styles} />
+      <Field label="HTTPS link" value={form.url} onChangeText={(url) => setForm({ ...form, url })} keyboardType="url" placeholder="https://" styles={styles} />
+      <Field label="Display order (lower appears first)" value={form.sortOrder} onChangeText={(sortOrder) => setForm({ ...form, sortOrder })} keyboardType="numeric" styles={styles} />
+      <View style={styles.switchRow}><Text style={styles.switchLabel}>Visible to members</Text><Switch value={form.isVisible} onValueChange={(isVisible) => setForm({ ...form, isVisible })} /></View>
+      <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
+    </EditorCard>
+    <Text style={styles.listTitle}>Ministry links</Text>
+    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : links.length ? links.map((link) => <ContentListCard key={link.id} title={link.label} subtitle={`${link.is_visible ? 'Visible' : 'Hidden'} • Position ${link.sort_order}`} onEdit={() => edit(link)} onDelete={() => remove(link)} styles={styles} />) : <EmptyState icon="link-outline" message="No ministry links yet." styles={styles} />}
+  </View>;
+}
+
 function StreamsManager({ administratorId, styles }: { administratorId: string; styles: any }) {
   const blank = () => ({ platform: '', url: '', isLive: false });
   const [streams, setStreams] = useState<LiveStream[]>([]);
@@ -825,6 +881,7 @@ export default function AdminScreen() {
     {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
     {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} /> : null}
     {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
+    {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
   </ScrollView>;
 }
 

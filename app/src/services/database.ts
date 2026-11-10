@@ -137,6 +137,17 @@ export interface LiveStream {
   updated_at: string;
 }
 
+export interface MinistryLink {
+  id: string;
+  label: string;
+  url: string;
+  sort_order: number;
+  is_visible: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PushToken {
   id: string;
   user_id: string;

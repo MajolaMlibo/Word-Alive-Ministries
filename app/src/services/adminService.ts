@@ -4,6 +4,7 @@ import {
   ContentStatus,
   DailyReading,
   LiveStream,
+  MinistryLink,
   PrayerRequest,
   PrayerRequestStatus,
   ReadingPlan,
@@ -53,6 +54,13 @@ export type LiveStreamInput = {
   platform: string;
   streamUrl: string;
   isLive: boolean;
+};
+
+export type MinistryLinkInput = {
+  label: string;
+  url: string;
+  sortOrder: number;
+  isVisible: boolean;
 };
 
 function publishedAtForStatus(status: ContentStatus, publishedAt: string | null) {
@@ -308,4 +316,46 @@ export async function saveLiveStream(
 
 export async function deleteLiveStream(streamId: string) {
   return supabase.from('live_streams').delete().eq('id', streamId);
+}
+
+export async function getAdminMinistryLinks() {
+  const { data, error } = await supabase
+    .from('ministry_links')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .order('label', { ascending: true });
+
+  return { links: (data as MinistryLink[]) || [], error };
+}
+
+export async function saveMinistryLink(
+  input: MinistryLinkInput,
+  administratorId: string,
+  linkId?: string
+) {
+  const payload = {
+    label: input.label.trim(),
+    url: input.url.trim(),
+    sort_order: input.sortOrder,
+    is_visible: input.isVisible,
+  };
+
+  const result = linkId
+    ? await supabase
+        .from('ministry_links')
+        .update(payload)
+        .eq('id', linkId)
+        .select('*')
+        .single()
+    : await supabase
+        .from('ministry_links')
+        .insert({ ...payload, created_by: administratorId })
+        .select('*')
+        .single();
+
+  return { link: (result.data as MinistryLink | null) || null, error: result.error };
+}
+
+export async function deleteMinistryLink(linkId: string) {
+  return supabase.from('ministry_links').delete().eq('id', linkId);
 }
