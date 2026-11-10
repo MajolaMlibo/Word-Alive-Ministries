@@ -13,15 +13,17 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { supabase } from '../services/supabase';
-import { palette } from '../theme/theme';
+import { useAccessibility } from '../theme/AccessibilityContext';
+import { AppColors } from '../theme/theme';
 
 type AuthMode = 'signIn' | 'signUp';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const AUTH_CALLBACK_URL = 'wordalive-ministries://auth/callback';
-const brandColors = palette.standard;
 
 export default function SignIn() {
+  const { colors } = useAccessibility();
+  const styles = makeStyles(colors);
   const [mode, setMode] = useState<AuthMode>('signIn');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -123,14 +125,14 @@ export default function SignIn() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.hero}>
-          <Ionicons name="book" size={56} color={brandColors.accent} />
+          <Ionicons name="book" size={56} color={colors.accent} />
           <Text style={styles.title}>Word Alive</Text>
           <Text style={styles.subtitle}>Ministries</Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.heading}>
-            {isCreatingAccount ? 'Create your account' : 'Welcome back'}
+            {isCreatingAccount ? 'Create your account' : 'Welcome to Word Alive'}
           </Text>
           <Text style={styles.text}>
             {isCreatingAccount
@@ -145,6 +147,7 @@ export default function SignIn() {
               autoComplete="name"
               onChangeText={setFullName}
               placeholder="Full name"
+              placeholderTextColor={colors.textMuted}
               returnKeyType="next"
               style={styles.input}
               textContentType="name"
@@ -157,8 +160,9 @@ export default function SignIn() {
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
-            onChangeText={setEmail}
+            onChangeText={(value) => setEmail(value.toLowerCase())}
             placeholder="Email address"
+            placeholderTextColor={colors.textMuted}
             returnKeyType="next"
             style={styles.input}
             textContentType="emailAddress"
@@ -172,6 +176,7 @@ export default function SignIn() {
             onChangeText={setPassword}
             onSubmitEditing={isCreatingAccount ? undefined : submit}
             placeholder="Password"
+            placeholderTextColor={colors.textMuted}
             returnKeyType={isCreatingAccount ? 'next' : 'done'}
             secureTextEntry
             style={styles.input}
@@ -187,6 +192,7 @@ export default function SignIn() {
               onChangeText={setConfirmPassword}
               onSubmitEditing={submit}
               placeholder="Confirm password"
+              placeholderTextColor={colors.textMuted}
               returnKeyType="done"
               secureTextEntry
               style={styles.input}
@@ -235,77 +241,81 @@ export default function SignIn() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: brandColors.primary,
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  hero: {
-    alignItems: 'center',
-    marginBottom: 36,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 34,
-    fontWeight: '700',
-    marginTop: 10,
-  },
-  subtitle: {
-    color: brandColors.primaryMuted,
-    fontSize: 18,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 24,
-  },
-  heading: {
-    color: brandColors.primary,
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  text: {
-    color: '#666666',
-    marginVertical: 14,
-    textAlign: 'center',
-  },
-  input: {
-    borderColor: '#DDDDDD',
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 14,
-    padding: 14,
-  },
-  primary: {
-    alignItems: 'center',
-    backgroundColor: brandColors.primary,
-    borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  primaryText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-  modeSwitch: {
-    alignItems: 'center',
-    marginTop: 20,
-    padding: 8,
-  },
-  modeSwitchText: {
-    color: brandColors.primary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: colors.primary,
+      flex: 1,
+    },
+    content: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: 24,
+    },
+    hero: {
+      alignItems: 'center',
+      marginBottom: 36,
+    },
+    title: {
+      color: '#FFFFFF',
+      fontSize: 34,
+      fontWeight: '700',
+      marginTop: 10,
+    },
+    subtitle: {
+      color: '#DDF4E6',
+      fontSize: 18,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 22,
+      padding: 24,
+    },
+    heading: {
+      color: colors.primary,
+      fontSize: 24,
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    text: {
+      color: colors.textMuted,
+      marginVertical: 14,
+      textAlign: 'center',
+    },
+    input: {
+      backgroundColor: colors.background,
+      borderColor: colors.borderSoft,
+      borderRadius: 12,
+      borderWidth: 1,
+      color: colors.text,
+      marginBottom: 14,
+      padding: 14,
+    },
+    primary: {
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      padding: 16,
+    },
+    disabledButton: {
+      opacity: 0.6,
+    },
+    primaryText: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      marginLeft: 8,
+    },
+    modeSwitch: {
+      alignItems: 'center',
+      marginTop: 20,
+      padding: 8,
+    },
+    modeSwitchText: {
+      color: colors.primary,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+  });
+}

@@ -18,10 +18,27 @@ export const palette = {
     borderSoft: '#E3E0CE',
     danger: '#B22222',
   },
+  dark: {
+    background: '#101713',
+    surface: '#1B2820',
+    primary: '#169136',
+    primaryMuted: '#23442D',
+    accent: '#E1BC45',
+    accentDeep: '#F3D270',
+    accentSoft: '#4A3D17',
+    text: '#F6F8F3',
+    textMuted: '#C2CCC4',
+    border: '#46B964',
+    borderSoft: '#405549',
+    danger: '#FF8A80',
+  },
 };
 
-export function getColors() {
-  return palette.standard;
+export type ColorScheme = 'light' | 'dark';
+export type AppColors = (typeof palette)[keyof typeof palette];
+
+export function getColors(colorScheme: ColorScheme = 'light'): AppColors {
+  return colorScheme === 'dark' ? palette.dark : palette.standard;
 }
 
 export const spacing = {

@@ -36,6 +36,9 @@
 - [x] Create and install the Android preview APK through EAS internal
   distribution on the `Mlibo_AP1` Android virtual device. Complete physical
   Android-device verification remains required.
+- [ ] After merging `fix/android-auth-and-system-theme`, create a replacement
+  Android preview APK. On a physical Android device, verify readable Sign In
+  and Sign Up placeholders plus system Light and Dark appearance.
 - [ ] Register authorised iPhone tester devices and create an iOS ad hoc
   preview build, or use TestFlight after Apple Developer access is available.
 - [ ] Verify automatic email-confirmation deep linking.
