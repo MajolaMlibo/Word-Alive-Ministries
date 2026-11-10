@@ -74,6 +74,20 @@ export default function MoreScreen() {
   const [links, setLinks] = useState<MinistryLink[]>([]);
   const [linksError, setLinksError] = useState(false);
 
+  useEffect(() => {
+    const resetToMenu = () => setPage('menu');
+    const removeFocusListener = navigation.addListener('focus', resetToMenu);
+    const removeTabPressListener = navigation.addListener(
+      'tabPress',
+      resetToMenu
+    );
+
+    return () => {
+      removeFocusListener();
+      removeTabPressListener();
+    };
+  }, [navigation]);
+
   const loadMinistryLinks = useCallback(async () => {
     const { links: loadedLinks, error } = await getVisibleMinistryLinks();
 
