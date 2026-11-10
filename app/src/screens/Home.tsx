@@ -28,7 +28,11 @@ import {
   getAnnouncementReads,
   markAnnouncementAsRead,
 } from '../services/announcementService';
-import { Announcement, BibleStudy, DailyReading } from '../services/database';
+import {
+  DEFAULT_HOME_ENCOURAGEMENT,
+  getHomeEncouragement,
+} from '../services/homeContentService';
+import { Announcement, BibleStudy, DailyReading, HomeEncouragement } from '../services/database';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -244,6 +248,9 @@ export default function HomeScreen() {
     string | null
   >(null);
   const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
+  const [encouragement, setEncouragement] = useState<
+    Pick<HomeEncouragement, 'message' | 'scripture_ref'>
+  >(DEFAULT_HOME_ENCOURAGEMENT);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -358,6 +365,18 @@ export default function HomeScreen() {
       }
 
       setNextStudy((studyData as BibleStudy | null) || null);
+
+      const { encouragement: encouragementData, error: encouragementError } =
+        await getHomeEncouragement();
+
+      if (encouragementError) {
+        console.warn(
+          'Unable to load the Home encouragement.',
+          encouragementError.message
+        );
+      }
+
+      setEncouragement(encouragementData || DEFAULT_HOME_ENCOURAGEMENT);
     } catch (err) {
       console.log(err);
     } finally {
@@ -649,9 +668,9 @@ export default function HomeScreen() {
         <Ionicons name="heart" size={22} color="#FDD835" />
         <Text style={styles.encourageTitle}>Stay Encouraged</Text>
         <Text style={styles.encourageText}>
-          “Your word is a lamp to my feet and a light to my path.”
+          {encouragement.message}
         </Text>
-        <Text style={styles.encourageRef}>Psalm 119:105</Text>
+        <Text style={styles.encourageRef}>{encouragement.scripture_ref}</Text>
       </View>
     </ScrollView>
   );

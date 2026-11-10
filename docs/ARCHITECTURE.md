@@ -18,8 +18,9 @@ Authenticated members use these tabs:
 - Calendar: monthly view of published Bible studies.
 - Bible: daily-reading completion and the KJV reader.
 - Study: upcoming and previous published Bible studies.
-- More: a compact navigation area for Profile and Prayer Requests. This keeps
-  the primary bottom navigation at five items on small phone screens.
+- More: a compact navigation area for Profile and Prayer Requests. Approved
+  `pastor` and `admin` users also see the Admin destination. This keeps the
+  primary bottom navigation at five items on small phone screens.
 - Profile: streak, total completed readings, accessibility settings, private
   profile picture, and sign-out.
 - Prayer Requests: members submit, edit, or delete their own pending requests.
@@ -92,6 +93,16 @@ enforces ownership through Row Level Security. No other member can read a
 private request; pastoral handling and public approval are deferred to the
 separate Admin feature.
 
+## Admin-content flow
+
+The Admin destination is hidden unless the signed-in member has the `pastor`
+or `admin` application role. The screen checks that role again before loading
+content tools. It supports content-management roles already authorised by the
+database to manage the Home encouragement, prayer-request moderation,
+announcements, Bible studies, scheduled daily readings, and livestream links.
+Prayer-request removal is available only to authorised Admin users.
+Role assignment is deliberately excluded from the mobile app.
+
 ## Security boundaries
 
 - Only `EXPO_PUBLIC_SUPABASE_URL` and
@@ -104,8 +115,8 @@ separate Admin feature.
 
 ## Known architecture limits
 
-- The app has no built-in content-management screen yet.
-- Announcements and prayer requests exist in the database but not yet in the
-  member-facing navigation.
+- Application-role assignment is deliberately not available in the mobile app;
+  it must be performed by an authorised operator in Supabase.
+- The Admin content-management flow is awaiting physical-device verification.
 - Push notifications and automatic auth deep links require a development or
   production build; Expo Go cannot fully verify them.

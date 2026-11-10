@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -12,8 +12,10 @@ import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 import ProfileScreen from './Profile';
 import PrayerScreen from './Prayer';
+import AdminScreen from './Admin';
+import { getCurrentUserRole, isAdminRole } from '../services/roleService';
 
-type MoreDestination = 'Profile' | 'Prayer';
+type MoreDestination = 'Profile' | 'Prayer' | 'Admin';
 type MorePage = 'menu' | MoreDestination;
 
 const MORE_ITEMS: {
@@ -36,11 +38,33 @@ const MORE_ITEMS: {
   },
 ];
 
+const ADMIN_ITEM: (typeof MORE_ITEMS)[number] = {
+  destination: 'Admin',
+  icon: 'shield-checkmark-outline',
+  title: 'Admin',
+  description: 'Manage ministry content and prayer-request handling.',
+};
+
 export default function MoreScreen() {
   const navigation = useNavigation<any>();
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [page, setPage] = useState<MorePage>('menu');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function loadAdminAccess() {
+      const { role, error } = await getCurrentUserRole();
+
+      if (error) {
+        console.warn('Unable to load admin access.', error.message);
+      }
+
+      setIsAdmin(isAdminRole(role));
+    }
+
+    void loadAdminAccess();
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -61,6 +85,8 @@ export default function MoreScreen() {
           ? 'Profile'
           : page === 'Prayer'
             ? 'Prayer requests'
+            : page === 'Admin'
+              ? 'Admin'
             : 'More',
     });
   }, [navigation, page, styles.headerBackButton]);
@@ -73,13 +99,19 @@ export default function MoreScreen() {
     return <PrayerScreen />;
   }
 
+  if (page === 'Admin') {
+    return <AdminScreen />;
+  }
+
+  const menuItems = isAdmin ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS;
+
   return (
     <ScrollView
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       style={styles.container}
     >
-      {MORE_ITEMS.map((item) => (
+      {menuItems.map((item) => (
         <TouchableOpacity
           accessibilityHint={item.description}
           accessibilityLabel={item.title}
