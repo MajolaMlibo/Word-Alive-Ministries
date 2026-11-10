@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Pastor/admin content management
+Internal tester-release readiness
 
 ## Verified on 2026-11-08
 
@@ -59,6 +59,11 @@ Pastor/admin content management
   refresh, and the approved Psalm 119:105 message was restored.
 - Automated JavaScript bundle exports completed for iOS and Android after the
   Admin implementation. These checks do not replace platform-device testing.
+- The role-gated Admin area was verified on a physical iPhone for access
+  control, Home encouragement updates, announcement draft management,
+  Bible-study draft management, livestream management, and private prayer
+  request moderation. The Reading Plan and Daily Reading edit-and-save paths
+  remain explicitly pending physical-device verification.
 
 ## Current work
 
@@ -104,6 +109,15 @@ Editor and reported `Success. No rows returned`.
   bottom navigation usable, plus a member-facing Prayer Requests screen backed
   by the existing production schema. The feature is verified on a physical
   iPhone and is ready for review.
+- `feature/admin-content-management` was merged to `main`. It adds
+  role-gated pastor/admin tools for dynamic ministry content while keeping role
+  assignment outside the mobile app and under Supabase administration.
+- `feature/release-readiness` is configuring an internal tester-build baseline.
+  Its `preview` EAS profile is for shareable tester builds; it is not a store
+  release and does not publish the application.
+- The existing EAS project link was verified as belonging to Expo account
+  `mlibo`; `app/app.json` now uses that exact owner so EAS commands can resolve
+  the linked project.
 
 ## Known blockers
 
@@ -143,7 +157,10 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-`feature/admin-content-management` is in progress. It adds a pastor/admin-only
-content-management area for prayer handling, announcements, Bible studies,
-reading plans, daily readings, livestream links, and the Home encouragement.
-Device verification is pending.
+1. Choose the final mobile application identifier before the first cloud build.
+2. Create an Android internal preview build first, then give the pastor a
+   direct installation link for a small tester group.
+3. Complete the two remaining Admin device checks: Reading Plan edit/save and
+   Daily Reading edit/save without changing the pastor-approved plan content.
+4. Obtain approved Bible-study events and verify populated Study, Calendar,
+   and Home views.
