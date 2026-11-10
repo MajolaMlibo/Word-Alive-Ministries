@@ -129,7 +129,8 @@ Editor and reported `Success. No rows returned`.
 - `refactor/home-encouragement-removal` is in progress. It removes the
   non-essential Stay Encouraged card and its Admin editor from the current MVP.
   The existing `home_encouragement` table, migration, and content are retained
-  unchanged for a possible later release.
+  unchanged for a possible later release. The removal was verified on a
+  physical iPhone in Expo Go on 2026-11-10.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.

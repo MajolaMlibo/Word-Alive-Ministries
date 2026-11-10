@@ -133,6 +133,7 @@ reads or changes that data.
 
 - Application-role assignment is deliberately not available in the mobile app;
   it must be performed by an authorised operator in Supabase.
-- The Admin content-management flow is awaiting physical-device verification.
+- The Admin Reading Plan and Daily Reading edit-and-save workflows remain
+  pending physical-device verification.
 - Push notifications and automatic auth deep links require a development or
   production build; Expo Go cannot fully verify them.
