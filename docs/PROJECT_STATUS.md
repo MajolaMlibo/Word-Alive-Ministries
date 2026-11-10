@@ -139,8 +139,10 @@ Editor and reported `Success. No rows returned`.
   iPhone in Expo Go on 2026-11-10.
 - `refactor/bible-reader-text-size` is in progress. It removes the global
   Profile text-size controls and adds the approved reader-only `Aa` text-size
-  setting. The existing `profiles.text_scale` column is retained unchanged but
-  is no longer read or written by the mobile app.
+  setting. It also adds the approved Calendar reading-plan and expandable
+  study-notes model, and corrects related app and setup documentation. The
+  existing `profiles.text_scale` column is retained unchanged but is no longer
+  read or written by the mobile app.
 - `feature/release-readiness` is configuring an internal tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.

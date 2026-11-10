@@ -549,18 +549,18 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
   };
   const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Unable to delete study', 'Please try again.'); else { setStudies((current) => current.filter((item) => item.id !== study.id)); if (editing?.id === study.id) reset(); } } }]);
   return <View>
-    <EditorCard title={editing ? 'Edit Bible study' : 'New Bible study'} styles={styles}>
-      <Field label="Study name" value={form.name} onChangeText={(name) => setForm({ ...form, name })} styles={styles} />
-      <Field label="Scripture reference (optional)" value={form.scripture} onChangeText={(scripture) => setForm({ ...form, scripture })} styles={styles} />
+    <EditorCard title={editing ? 'Edit study or event' : 'New study or event'} styles={styles}>
+      <Field label="Study or event title" value={form.name} onChangeText={(name) => setForm({ ...form, name })} styles={styles} />
+      <Field label="Specific sermon verses (optional)" value={form.scripture} onChangeText={(scripture) => setForm({ ...form, scripture })} styles={styles} />
       <DateTimeField label="Study date" value={form.date} onChange={(date) => setForm({ ...form, date })} mode="date" styles={styles} />
       <DateTimeField label="Start time (optional)" value={form.start} onChange={(start) => setForm({ ...form, start })} mode="time" optional styles={styles} />
       <DateTimeField label="End time (optional)" value={form.end} onChange={(end) => setForm({ ...form, end })} mode="time" optional styles={styles} />
       <Field label="Location or HTTPS link (optional)" value={form.location} onChangeText={(location) => setForm({ ...form, location })} styles={styles} />
-      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline styles={styles} />
+      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
-    <Text style={styles.listTitle}>Scheduled studies</Text>
+    <Text style={styles.listTitle}>Scheduled studies and events</Text>
     {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : studies.length ? studies.map((study) => <ContentListCard key={study.id} title={study.study_name} subtitle={`${study.study_date} • ${titleCase(study.status)}`} onEdit={() => edit(study)} onDelete={() => remove(study)} styles={styles} />) : <EmptyState icon="school-outline" message="No Bible studies yet." styles={styles} />}
   </View>;
 }

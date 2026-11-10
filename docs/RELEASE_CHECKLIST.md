@@ -8,6 +8,8 @@
 - [x] Daily-reading completion and profile streak verified on an iPhone.
 - [x] Study, Calendar, and Profile production-schema repairs verified on an
   iPhone.
+- [ ] Verify the Calendar reading-plan markers, selected-day chapters, and
+  expandable published study notes on a physical device.
 - [ ] Publish confirmed Bible-study events and verify populated views.
 - [x] Publish approved announcements and verify the member announcement feed.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,

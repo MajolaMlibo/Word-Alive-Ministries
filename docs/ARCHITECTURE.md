@@ -15,7 +15,9 @@ Authenticated members use these tabs:
 
 - Home: greeting, current streak, today's scheduled reading, next study, the
   daily KJV first-verse preview, and active church announcements.
-- Calendar: monthly view of published Bible studies.
+- Calendar: monthly view of the published daily reading plan and published
+  studies or events. Selecting a date shows its scheduled chapters and any
+  separately expandable study notes.
 - Bible: daily-reading completion and the KJV reader, including a local
   reader-only text-size control.
 - Study: upcoming and previous published Bible studies.

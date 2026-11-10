@@ -46,7 +46,7 @@ export default function StudyScreen() {
 
     try {
       const today = getSouthAfricaDate();
-      let query = supabase.from('bible_studies').select('*');
+      let query = supabase.from('bible_studies').select('*').eq('status', 'published');
 
       query =
         which === 'upcoming'
