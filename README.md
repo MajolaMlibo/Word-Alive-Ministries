@@ -18,7 +18,7 @@ verified record and remaining release work are in
 ```text
 app/        Expo React Native application
 supabase/   Versioned Supabase SQL migrations and database notes
-docs/       Project status, architecture, test plan, release checklist, and plan
+docs/       Project status, architecture, test plan, release checklist, tester-release guide, and plan
 ```
 
 ## Requirements

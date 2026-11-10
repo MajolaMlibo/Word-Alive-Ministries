@@ -1,6 +1,6 @@
 # Release Checklist
 
-## Internal MVP handover
+## MVP functionality
 
 - [x] Production Supabase project created.
 - [x] Initial schema and approved 2026 reading-plan migrations applied.
@@ -9,16 +9,27 @@
 - [x] Study, Calendar, and Profile production-schema repairs verified on an
   iPhone.
 - [ ] Publish confirmed Bible-study events and verify populated views.
-- [ ] Publish confirmed announcements after the member feed is implemented.
+- [x] Publish approved announcements and verify the member announcement feed.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,
   delete, private submission, and reload persistence.
-- [ ] Verify pastor/admin-only access and content-management actions on a
-  physical device.
+- [x] Verify role-gated Admin access and the Home encouragement update on a
+  physical iPhone.
+- [ ] Verify the Admin Reading Plan and Daily Reading edit-and-save actions on
+  a physical device without changing the approved 2026 plan content.
 - [ ] Create an authorised staff content-management process.
 
-## Development-build readiness
+## Internal tester-build readiness
 
-- [ ] Create an Expo development build for iOS and Android.
+- [x] Add the `preview` EAS profile for internal tester distribution.
+- [x] Confirm the existing EAS project belongs to Expo account `mlibo` and
+  align the configured project owner.
+- [ ] Register final Android package name and iOS bundle identifier before a
+  cloud build. Recommended: `com.wordaliveministries.app`, subject to owner
+  approval and availability.
+- [ ] Create and install the Android preview APK through EAS internal
+  distribution.
+- [ ] Register authorised iPhone tester devices and create an iOS ad hoc
+  preview build, or use TestFlight after Apple Developer access is available.
 - [ ] Verify automatic email-confirmation deep linking.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
@@ -50,9 +61,8 @@
 
 ## Store readiness
 
-- [ ] Register final Android package name and iOS bundle identifier.
 - [ ] Finalise icons, splash screen, screenshots, privacy policy, support
   email, and store descriptions.
 - [ ] Obtain required Google Play Console and Apple Developer access.
-- [ ] Build internal Android and iOS test releases.
+- [ ] Create signed Android App Bundle and iOS store builds.
 - [ ] Obtain pastor acceptance after a documented stakeholder test session.
