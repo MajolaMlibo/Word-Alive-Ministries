@@ -137,8 +137,9 @@ Editor and reported `Success. No rows returned`.
   unchanged but is no longer read or written by the mobile app. The Home
   navigation colours and Profile control removal were verified on a physical
   iPhone in Expo Go on 2026-11-10.
-- `refactor/bible-reader-text-size` is in progress. It removes the global
-  Profile text-size controls and adds the approved reader-only `Aa` text-size
+- `refactor/bible-reader-text-size` was merged to `main` through pull request
+  #24. It removes the global Profile text-size controls and adds the approved
+  reader-only `Aa` text-size
   setting. It also adds the approved Calendar reading-plan and expandable
   study-notes model, and corrects related app and setup documentation. The
   existing `profiles.text_scale` column is retained unchanged but is no longer
@@ -158,6 +159,9 @@ Editor and reported `Success. No rows returned`.
   supplied adaptive foreground, background, and monochrome icon layers; the
   supplied splash image uses its intended black background. Visual verification
   remains pending until an installed preview build is available.
+- An Android internal preview APK was submitted to Expo on 2026-11-10 from
+  `main` commit `611a3713`. Expo created and is managing the Android signing
+  key. The APK is not yet available for installation or device verification.
 
 ## Known blockers
 
@@ -197,8 +201,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Create an Android internal preview build first, then give the pastor a
-   direct installation link for a small tester group.
+1. Wait for the submitted Android internal preview APK, then install it on the
+   Android emulator and a physical Android device before sharing its direct
+   installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
 3. Obtain approved Bible-study events and verify populated Study, Calendar,
