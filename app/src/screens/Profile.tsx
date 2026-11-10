@@ -123,13 +123,36 @@ const styles = makeStyles(colors, fonts);
     }
   };
 
-async function handleSignOut() {
-  const { error } = await supabase.auth.signOut();
+  function handleSignOut() {
+    Alert.alert(
+      'Sign out?',
+      'You will need your email address and password to sign in again on this device.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                // Local sign-out clears this device even when the network is unavailable.
+                const { error } = await supabase.auth.signOut({ scope: 'local' });
 
-  if (error) {
-    Alert.alert('Unable to sign out', error.message);
+                if (error) {
+                  Alert.alert('Unable to sign out', error.message);
+                }
+              } catch {
+                Alert.alert(
+                  'Unable to sign out',
+                  'Please try again when your connection is available.'
+                );
+              }
+            })();
+          },
+        },
+      ]
+    );
   }
-}
 
   return (
     <ScrollView
@@ -235,6 +258,8 @@ async function handleSignOut() {
       </View>
 
 <TouchableOpacity
+  accessibilityLabel="Sign out of Word Alive Ministries"
+  accessibilityRole="button"
   style={styles.logout}
   onPress={handleSignOut}
 >

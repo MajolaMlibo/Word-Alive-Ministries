@@ -109,6 +109,10 @@ Editor and reported `Success. No rows returned`.
   bottom navigation usable, plus a member-facing Prayer Requests screen backed
   by the existing production schema. The feature is verified on a physical
   iPhone and is ready for review.
+- `fix/profile-session-home-avatar` is in progress. It makes sign-out an
+  explicit local-device action with confirmation and displays the member's
+  private profile photo in Home through a time-limited signed URL. Physical
+  verification remains pending.
 - `feature/admin-content-management` was merged to `main`. It adds
   role-gated pastor/admin tools for dynamic ministry content while keeping role
   assignment outside the mobile app and under Supabase administration.
@@ -123,6 +127,11 @@ Editor and reported `Success. No rows returned`.
 - The existing EAS project link was verified as belonging to Expo account
   `mlibo`; `app/app.json` now uses that exact owner so EAS commands can resolve
   the linked project.
+- The approved mobile application identifier is
+  `com.wordaliveministries.app` for both Android and iOS. Android now uses the
+  supplied adaptive foreground, background, and monochrome icon layers; the
+  supplied splash image uses its intended black background. Visual verification
+  remains pending until an installed preview build is available.
 
 ## Known blockers
 
@@ -162,10 +171,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Choose the final mobile application identifier before the first cloud build.
-2. Create an Android internal preview build first, then give the pastor a
+1. Create an Android internal preview build first, then give the pastor a
    direct installation link for a small tester group.
-3. Complete the two remaining Admin device checks: Reading Plan edit/save and
+2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-4. Obtain approved Bible-study events and verify populated Study, Calendar,
+3. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
