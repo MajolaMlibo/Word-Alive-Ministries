@@ -17,7 +17,7 @@
 - [ ] Verify the Admin Reading Plan and Daily Reading edit-and-save actions on
   a physical device without changing the approved 2026 plan content.
 - [ ] Create an authorised staff content-management process.
-- [ ] Apply and verify the `ministry_links` migration, including the four
+- [x] Apply and verify the `ministry_links` migration, including the four
   approved official channel links.
 - [ ] Verify each visible ministry link opens its intended external channel on
   an installed Android preview build.

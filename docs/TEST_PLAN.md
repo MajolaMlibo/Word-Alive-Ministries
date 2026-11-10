@@ -39,8 +39,8 @@ native behaviour.
 | Daily KJV preview | Home displays the first verse of the first scheduled chapter with a KJV label | Verified in Expo Go; pending merge at this documentation baseline |
 | Prayer Requests | Submit, edit, delete, private choice, reload persistence, and More navigation | Verified in Expo Go |
 | Admin content | Admin-only More item; Home encouragement; prayer moderation; create, edit, delete, and publish dynamic ministry content | Pending physical-device verification |
-| Ministry links | More shows TikTok, Spotify, WhatsApp Channel, and YouTube in the configured order; each opens its exact destination | Pending migration and device verification |
-| Ministry-link administration | An admin creates, edits, hides, reorders, and deletes a link; hidden links do not appear to a member | Pending migration and device verification |
+| Ministry links | More shows TikTok, Spotify, WhatsApp Channel, and YouTube in the configured order; each opens its exact destination | Verified on iPhone in Expo Go, 2026-11-10 |
+| Ministry-link administration | An admin creates, edits, hides, reorders, and deletes a link; hidden links do not appear to a member | Hide and restore verified on iPhone in Expo Go, 2026-11-10; create, reorder, and delete remain pending |
 
 ## Required Android checks
 
