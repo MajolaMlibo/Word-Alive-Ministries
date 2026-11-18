@@ -58,8 +58,6 @@ function MainTabs() {
         tabBarInactiveTintColor: '#FFFFFF',
         tabBarStyle: {
           backgroundColor: colors.primary,
-          height: 60,
-          paddingBottom: 5,
         },
         headerStyle: {
           backgroundColor: colors.primary,
@@ -71,7 +69,11 @@ function MainTabs() {
       <Tab.Screen name="Calendar" component={Calendar} />
       <Tab.Screen name="Bible" component={Bible} />
       <Tab.Screen name="Study" component={Study} />
-      <Tab.Screen name="More" component={More} />
+      <Tab.Screen
+        name="More"
+        component={More}
+        options={{ tabBarLabel: 'More' }}
+      />
     </Tab.Navigator>
   );
 }
