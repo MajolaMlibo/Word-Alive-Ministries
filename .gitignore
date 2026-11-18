@@ -1,3 +1,7 @@
 # Dependency directories are reproducible from the package lockfile and must
 # never be committed.
 node_modules/
+
+# Local build copies and private working notes must never be committed.
+/builds/
+/SensetiveInfoIgnore.txt
