@@ -31,6 +31,7 @@ native behaviour.
 | Area | Verified behaviour | Status |
 |---|---|---|
 | Authentication | Sign up, email confirmation in browser, sign in, sign out, and existing-account sign in | Verified in Expo Go |
+| Account form flow | Sign Up labels First name and Surname; each Enter key moves to the next field; final Enter creates the account; Sign In password Enter signs in; Bible Search Enter searches the selected reference | Implementation pending production-migration and device verification |
 | Daily reading | Today's South African-date reading loads, completion updates the streak, completed state survives reload | Verified in Expo Go |
 | Guided reading | Incomplete daily reading opens the Read tab at the scheduled first chapter; completion restores the saved personal position | Verified in Expo Go |
 | Study and Calendar | Correct empty states when no published studies exist; no old `chapter` field is displayed | Verified in Expo Go |

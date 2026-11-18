@@ -262,3 +262,6 @@ Editor and reported `Success. No rows returned`.
    Daily Reading edit/save without changing the pastor-approved plan content.
 5. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
+6. Apply the account-form migration, then verify a new account saves separate
+   First name and Surname values and that keyboard Enter keys follow the
+   documented form flow.
