@@ -36,9 +36,9 @@ native behaviour.
 | Study and Calendar | Correct empty states when no published studies exist; no old `chapter` field is displayed | Verified in Expo Go |
 | Profile | Streak and completed total display separately; private photo upload survives reload | Verified in Expo Go |
 | Profile/Home handoff | Confirm sign-out, confirm local session clears, sign back in, then confirm the private profile photo appears in Home after navigating from Profile | Pending device verification |
-| Daily KJV preview | Home displays the first verse of the first scheduled chapter with a KJV label | Verified in Expo Go; pending merge at this documentation baseline |
+| Daily KJV preview | Home displays the first verse of the first scheduled chapter with a KJV label | Verified in Expo Go on a physical iPhone, 2026-11-09 |
 | Prayer Requests | Submit, edit, delete, private choice, reload persistence, and More navigation | Verified in Expo Go |
-| Admin content | Admin-only More item; prayer moderation; create, edit, delete, and publish dynamic ministry content | Pending physical-device verification |
+| Admin content | Admin-only More item; prayer moderation; create, edit, delete, and publish dynamic ministry content | Core role-gated flow verified on a physical iPhone; Reading Plan and Daily Reading edit/save remain pending |
 | Home MVP cleanup | Home does not show Stay Encouraged; Admin does not show a Home editor; preserved database data is not changed | Verified on iPhone in Expo Go, 2026-11-10 |
 | Ministry colour system | Home navigation uses the standard ministry green and gold; High Contrast is not present in Profile | Verified on iPhone in Expo Go, 2026-11-10 |
 | Bible reader text size | Profile has no A/A/A text controls; Bible `Aa` control changes verse text and is retained after reopening the app | Verified on iPhone in Expo Go, 2026-11-10 |
@@ -47,6 +47,7 @@ native behaviour.
 | Ministry-link administration | An admin creates, edits, hides, reorders, and deletes a link; hidden links do not appear to a member | Hide and restore verified on iPhone in Expo Go, 2026-11-10; create, reorder, and delete remain pending |
 | More navigation reset | Open Profile or Prayer Requests from More, then tap More again and confirm its menu is restored | Verified manually, 2026-11-10 |
 | System light and dark appearance | Switch the phone appearance between Light and Dark. Screens use the matching ministry palette without unreadable text or invisible controls. | Android virtual-device Expo Go check passed, 2026-11-10; signed-build and physical-device checks pending |
+| Android bottom navigation inset | App-tab labels remain above Android system navigation. The More label remains `More` while nested More screens are open. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-18; physical gesture- and three-button-navigation checks pending |
 
 ## Required Android checks
 
@@ -54,6 +55,7 @@ native behaviour.
 |---|---|---|
 | Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-10 |
 | Android sign-in legibility | In Light and Dark appearance, every Sign In and Sign Up field placeholder is readable. A mixed-case email is visibly converted to lowercase; names and passwords retain their typed casing. | Code reviewed and light/dark Expo Go check completed on `Mlibo_AP1`, 2026-11-10; signed APK and physical Android checks pending |
+| Android system-navigation clearance | In both gesture and three-button modes, Home, Calendar, Bible, Study, and More labels remain visible and tappable above the Android navigation area. | Current source verified only in Expo Go on `Mlibo_AP1`, 2026-11-18; a replacement signed APK and physical Android checks are pending |
 
 - Sign up, sign in, sign out, and session restoration.
 - Daily-reading completion, streak refresh, and completed reload state.
@@ -76,3 +78,12 @@ native behaviour.
 For every manual test, record the device platform, date, app branch or commit,
 steps taken, observed result, and screenshot or error log if the result fails.
 Update `PROJECT_STATUS.md` after a meaningful verification result.
+
+## Current Android tester baseline
+
+The 10 November 2026 EAS preview build was created from commit
+`5bce367837edede6e20e6603976c25dab461807c`. It is a standalone-app smoke test,
+not a current tester release: it predates the merged local-artifact and Android
+bottom-navigation-inset fixes. A replacement preview APK must be built from
+the current `main` branch, installed on a physical Android phone, and tested
+against the Android rows above before external tester distribution.

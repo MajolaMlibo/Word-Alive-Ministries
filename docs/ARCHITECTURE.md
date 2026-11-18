@@ -29,6 +29,15 @@ Authenticated members use these tabs:
   sign-out.
 - Prayer Requests: members submit, edit, or delete their own pending requests.
 
+The tab navigator uses React Navigation's platform-safe bottom inset rather
+than a fixed tab-bar height. This keeps the five application tabs above
+Android gesture navigation and three-button navigation. The `More` tab keeps
+its label when a nested Profile, Prayer Requests, or Admin screen is open.
+
+The colour palette follows the device's Light or Dark appearance. Bible-passage
+text size is a reader-only, on-device preference; Profile no longer exposes a
+global text-size or high-contrast control.
+
 ## Backend
 
 Supabase provides Authentication, PostgreSQL, Row Level Security, Storage, and
