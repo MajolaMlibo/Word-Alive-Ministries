@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Internal tester-release readiness
+Local acceptance and replacement Android tester-build readiness
 
 ## Verified on 2026-11-08
 
@@ -137,8 +137,8 @@ Editor and reported `Success. No rows returned`.
   unchanged but is no longer read or written by the mobile app. The Home
   navigation colours and Profile control removal were verified on a physical
   iPhone in Expo Go on 2026-11-10.
-- `fix/android-auth-and-system-theme` is in review. It makes every Sign In and
-  Sign Up placeholder explicitly use a readable theme colour on Android,
+- `fix/android-auth-and-system-theme` was merged to `main` through pull request
+  #26. It makes every Sign In and Sign Up placeholder explicitly use a readable theme colour on Android,
   normalises email addresses to lowercase while preserving name and password
   casing, and replaces the first-time `Welcome back` heading with `Welcome to
   Word Alive`. It also adds a dark palette driven by the device's system
@@ -157,7 +157,8 @@ Editor and reported `Success. No rows returned`.
   restart, Calendar reading-plan markers, and selected-day chapters. Published
   study-note verification remains pending until the church supplies a real
   study or event.
-- `feature/release-readiness` is configuring an internal tester-build baseline.
+- `feature/release-readiness` was merged to `main` and establishes an internal
+  tester-build baseline.
   Its `preview` EAS profile is for shareable tester builds; it is not a store
   release and does not publish the application.
 - The existing EAS project link was verified as belonging to Expo account
@@ -178,12 +179,38 @@ Editor and reported `Success. No rows returned`.
   delayed build-status response, and the first lacked the remote preview
   environment configuration. Expo created and is managing the Android signing
   key. A correctly configured replacement APK finished on 2026-11-10 from
-  commit `a356c7ee`.
+  commit `5bce367837edede6e20e6603976c25dab461807c`.
 - The signed Android internal preview APK was installed on the `Mlibo_AP1`
   Android virtual device on 2026-11-10. It launched the standalone
   `com.wordaliveministries.app` MainActivity and showed the application's
   native sign-in screen, not Expo Go. This is a smoke test only; signed-in
   member journeys and physical Android-device verification remain pending.
+
+## Verified on 2026-11-18
+
+- `fix/ignore-local-artifacts` was merged through pull request #27. Local APK
+  copies in `/builds/` and the private working note file are ignored by Git;
+  no existing local artifact was deleted or changed.
+- `fix/android-bottom-navigation-inset` was merged through pull request #28.
+  The app no longer fixes the bottom-tab height, so React Navigation provides
+  Android's safe bottom inset. The nested More screens retain the `More` tab
+  label.
+- The current `main` branch was run in Expo Go on the `Mlibo_AP1` Android
+  virtual device. The five app-tab labels were clear above Android gesture
+  navigation, and the More label remained correct while opening nested screens.
+  This is emulator-only evidence; physical Android and three-button-navigation
+  testing remain pending.
+- `npx tsc --noEmit` passes. `npm run verify:supabase` reached Supabase Auth
+  settings with HTTP 200 using the local ignored production configuration.
+- `npx expo-doctor` now reports 19 of 20 checks. The only failed check is seven
+  minor Expo SDK 58 package patch-version mismatches. They require a separate
+  dependency-alignment branch before the next externally shared Android build.
+- The existing standalone preview APK is an historical smoke-test build from
+  commit `5bce367837edede6e20e6603976c25dab461807c`; it does not contain pull
+  requests #27 or #28. Its EAS artifact is
+  `https://expo.dev/artifacts/eas/xYxJz3Hl_MDFHMltCKtulW2LbFkUbnqJUNuoBYuLho0.apk`
+  and is scheduled to expire on 2026-11-24. Do not share it as the current
+  tester build.
 
 ## Known blockers
 
@@ -223,10 +250,15 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the signed-in Android member journey on the installed preview APK,
-   then verify it on a physical Android device before sharing its direct
-   installation link with the pastor's small tester group.
-2. Complete the two remaining Admin device checks: Reading Plan edit/save and
+1. In a separate branch, align the seven minor Expo SDK 58 package versions
+   reported by `npx expo-doctor`, rerun validation, and review the result.
+2. Increment the Android version code and create a replacement EAS `preview`
+   APK from the current `main` branch. It must include pull requests #27 and
+   #28; do not distribute the 10 November historical build.
+3. Complete the signed-in Android member journey on a physical Android device,
+   including gesture and three-button system navigation, before sharing the
+   new direct installation link with the pastor's small tester group.
+4. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-3. Obtain approved Bible-study events and verify populated Study, Calendar,
+5. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.

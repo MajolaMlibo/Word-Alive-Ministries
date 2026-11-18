@@ -19,7 +19,7 @@ The `preview` profile deliberately has no developer tools. It is the correct
 profile for stakeholder testing because testers install an app rather than use
 Expo Go.
 
-## Required decisions before the first cloud build
+## Resolved delivery baseline
 
 1. The existing EAS project belongs to Expo account `mlibo`. Its `owner` value
    in `app/app.json` must continue to match that account unless the project is
@@ -27,8 +27,13 @@ Expo Go.
 2. The approved Android package name and iOS bundle identifier are both
    `com.wordaliveministries.app`. Do not change them after builds have been
    shared or submitted to a store.
-3. Confirm whether the first tester group has Android devices, iPhones, or
-   both. Build Android first if an Android test device is available.
+3. Android is the first tester platform. The first standalone Android preview
+   smoke-test build completed on 10 November 2026 from commit
+   `5bce367837edede6e20e6603976c25dab461807c` and was installed on the
+   `Mlibo_AP1` Android virtual device.
+4. That APK is not the current tester baseline. It predates the local-artifact
+   and Android bottom-navigation-inset fixes merged on 18 November 2026. A new
+   preview APK must be produced and tested before it is shared externally.
 
 ## Distribution constraints
 
@@ -39,16 +44,41 @@ Expo Go.
 - TestFlight and public App Store distribution also require Apple Developer
   Program access.
 - Google Play publication requires a Google Play Console developer account.
+- A direct Android internal-distribution APK link expires. Do not treat an
+  expired link as a failed app build; create a fresh preview build instead.
+- Android testers must allow installation from the browser or app used to
+  download the APK. This is normal Android sideloading, not a Play Store
+  installation.
 
-## First-build verification
+## Required verification before sharing the next Android APK
 
-Before sharing a tester link, install the preview build on the project owner's
-phone and verify: sign in, Home, Bible reading completion, announcements,
-prayer requests, profile-photo selection, sign out, and sign back in. Record
-the device type, operating-system version, build URL, and outcome in the test
-plan.
+Before sharing a tester link, install the new preview build on the project
+owner's physical Android phone and verify: sign up/sign in, Home, Bible
+reading completion, announcements, prayer requests, profile-photo selection,
+sign out, and sign back in. Also test the tab bar in Android gesture and
+three-button navigation modes. Record the device type, operating-system
+version, build URL, source commit, and outcome in the test plan.
 
-## Explicitly deferred from tester distribution
+Ask every external tester to use a test account and fictitious, non-sensitive
+prayer-request text. The current production project is used by the app; do not
+ask testers to enter confidential pastoral information or someone else's photo.
+
+## Tester limitations to state clearly
+
+- This is an internal MVP test, not a public Google Play or Apple App Store
+  release.
+- iPhone distribution requires Apple Developer Program access and either
+  registered devices for ad hoc distribution or TestFlight. It is not ready
+  for the current tester group.
+- Email confirmation opens in the browser. Automatic return through the app's
+  custom link has not yet been verified in an installed build.
+- Push notifications have not been tested in a standalone build and must not
+  be promised to testers.
+- Bible passages are fetched from `bible-api.com` when not already cached;
+  first-time reading needs an internet connection and the external provider is
+  rate-limited.
+
+## Explicitly deferred from public distribution
 
 - Public-store submission or publication.
 - Push-notification delivery verification.

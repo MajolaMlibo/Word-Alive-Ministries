@@ -8,17 +8,24 @@ text-size controls, and a private profile photo.
 ## Current MVP status
 
 The production Supabase project is connected. Email-and-password sign-in,
-daily reading completion and streaks, the 2026 reading plan, and the original
-Study, Calendar, and Profile production-schema repairs are verified on a
-physical iPhone. The detailed verification record, including newer work that
-is awaiting device tests, is in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
+daily reading completion and streaks, the 2026 reading plan, Study, Calendar,
+Profile, announcements, ministry links, prayer requests, and role-gated Admin
+tools are implemented. Core member flows were verified on a physical iPhone
+in Expo Go; the detailed evidence and outstanding Android/iOS release checks
+are in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
+
+The signed Android preview APK created on 10 November 2026 is a historical
+smoke-test build. It does **not** contain the newer local-artifact and Android
+bottom-inset fixes merged on 18 November 2026. Do not use it as the current
+tester baseline; create and verify a replacement preview APK before sharing
+with the pastor's tester group.
 
 ## Repository layout
 
 ```text
 app/        Expo React Native application
 supabase/   Versioned Supabase SQL migrations and database notes
-docs/       Project status, architecture, test plan, release checklist, tester-release guide, and plan
+docs/       Project status, architecture, test plan, release checklist, tester guide, and supporting plan
 ```
 
 ## Requirements
@@ -113,6 +120,7 @@ member data.
 - [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md)
 - [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 - [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)
+- [`docs/TESTER_RELEASE_GUIDE.md`](docs/TESTER_RELEASE_GUIDE.md)
 
 ## Licence
 
