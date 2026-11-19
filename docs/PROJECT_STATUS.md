@@ -212,6 +212,24 @@ Editor and reported `Success. No rows returned`.
   and is scheduled to expire on 2026-11-24. Do not share it as the current
   tester build.
 
+## Verified on 2026-11-19
+
+- The project owner applied `202611180001_save_profile_surname_on_signup.sql`
+  successfully in the production Supabase SQL Editor. New registrations now
+  save separately supplied first name and surname values through the
+  production profile trigger.
+- The dedicated Administrator account was created through the app and assigned
+  the `admin` role; Pastor Q's account was assigned the `pastor` role. The
+  three former testing accounts were removed by the project owner through
+  Supabase administration. No account credentials or identifiers are recorded
+  in this repository.
+- Expo Go on the `Mlibo_AP1` Android virtual device verified that the dedicated
+  Administrator account can sign in with the Password keyboard Enter key and
+  can open the role-gated Admin option from More. The same device verified
+  that the Bible Search keyboard Search key opens `John 3:16`. This is
+  emulator-only evidence; signed-build, physical Android, and iOS checks are
+  still required.
+
 ## Known blockers
 
 - There are currently no confirmed, published Bible-study events in the
@@ -223,6 +241,10 @@ Editor and reported `Success. No rows returned`.
   photo-permission wording takes effect when a new development or production
   build is made.
 - There are no automated application tests or CI workflows.
+- The displayed daily-reading streak can remain stale after a member misses a
+  South African calendar day, because it is only recalculated on completion.
+  Correct this in a dedicated streak-refresh fix before external tester
+  distribution.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
   application has its own dependencies under `app/` and root `node_modules`
@@ -250,18 +272,17 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. In a separate branch, align the seven minor Expo SDK 58 package versions
+1. In a separate branch, correct the stale daily-reading streak by refreshing
+   it from the member's completion history when Home and Profile load.
+2. In a separate branch, align the seven minor Expo SDK 58 package versions
    reported by `npx expo-doctor`, rerun validation, and review the result.
-2. Increment the Android version code and create a replacement EAS `preview`
+3. Increment the Android version code and create a replacement EAS `preview`
    APK from the current `main` branch. It must include pull requests #27 and
    #28; do not distribute the 10 November historical build.
-3. Complete the signed-in Android member journey on a physical Android device,
+4. Complete the signed-in Android member journey on a physical Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.
-4. Complete the two remaining Admin device checks: Reading Plan edit/save and
+5. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-5. Obtain approved Bible-study events and verify populated Study, Calendar,
+6. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
-6. Apply the account-form migration, then verify a new account saves separate
-   First name and Surname values and that keyboard Enter keys follow the
-   documented form flow.
