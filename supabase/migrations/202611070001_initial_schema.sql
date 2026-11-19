@@ -191,14 +191,16 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, name)
+  insert into public.profiles (id, name, surname)
   values (
     new.id,
     coalesce(
-      new.raw_user_meta_data ->> 'full_name',
-      new.raw_user_meta_data ->> 'name',
+      nullif(btrim(new.raw_user_meta_data ->> 'first_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'full_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'name'), ''),
       split_part(new.email, '@', 1)
-    )
+    ),
+    nullif(btrim(new.raw_user_meta_data ->> 'surname'), '')
   );
 
   insert into public.user_roles (user_id, role)

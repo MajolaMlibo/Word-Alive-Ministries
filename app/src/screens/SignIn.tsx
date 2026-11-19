@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,11 +26,16 @@ export default function SignIn() {
   const { colors } = useAccessibility();
   const styles = makeStyles(colors);
   const [mode, setMode] = useState<AuthMode>('signIn');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const surnameInputRef = useRef<TextInputInstance>(null);
+  const emailInputRef = useRef<TextInputInstance>(null);
+  const passwordInputRef = useRef<TextInputInstance>(null);
+  const confirmPasswordInputRef = useRef<TextInputInstance>(null);
 
   const isCreatingAccount = mode === 'signUp';
 
@@ -40,8 +46,11 @@ export default function SignIn() {
   }
 
   async function submit() {
+    if (isSubmitting) return;
+
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedName = fullName.trim();
+    const normalizedFirstName = firstName.trim();
+    const normalizedSurname = surname.trim();
 
     if (!EMAIL_PATTERN.test(normalizedEmail)) {
       Alert.alert('Enter a valid email address');
@@ -53,8 +62,13 @@ export default function SignIn() {
       return;
     }
 
-    if (isCreatingAccount && normalizedName.length < 2) {
-      Alert.alert('Enter your full name');
+    if (isCreatingAccount && normalizedFirstName.length < 2) {
+      Alert.alert('Enter your first name');
+      return;
+    }
+
+    if (isCreatingAccount && normalizedSurname.length < 2) {
+      Alert.alert('Enter your surname');
       return;
     }
 
@@ -71,7 +85,11 @@ export default function SignIn() {
           email: normalizedEmail,
           password,
           options: {
-            data: { full_name: normalizedName },
+            data: {
+              first_name: normalizedFirstName,
+              surname: normalizedSurname,
+              full_name: `${normalizedFirstName} ${normalizedSurname}`,
+            },
             emailRedirectTo: AUTH_CALLBACK_URL,
           },
         });
@@ -142,16 +160,34 @@ export default function SignIn() {
 
           {isCreatingAccount ? (
             <TextInput
-              accessibilityLabel="Full name"
+              accessibilityLabel="First name"
               autoCapitalize="words"
-              autoComplete="name"
-              onChangeText={setFullName}
-              placeholder="Full name"
+              autoComplete="name-given"
+              onChangeText={setFirstName}
+              onSubmitEditing={() => surnameInputRef.current?.focus()}
+              placeholder="First name"
               placeholderTextColor={colors.textMuted}
               returnKeyType="next"
               style={styles.input}
-              textContentType="name"
-              value={fullName}
+              textContentType="givenName"
+              value={firstName}
+            />
+          ) : null}
+
+          {isCreatingAccount ? (
+            <TextInput
+              accessibilityLabel="Surname"
+              autoCapitalize="words"
+              autoComplete="name-family"
+              onChangeText={setSurname}
+              onSubmitEditing={() => emailInputRef.current?.focus()}
+              placeholder="Surname"
+              placeholderTextColor={colors.textMuted}
+              ref={surnameInputRef}
+              returnKeyType="next"
+              style={styles.input}
+              textContentType="familyName"
+              value={surname}
             />
           ) : null}
 
@@ -161,8 +197,10 @@ export default function SignIn() {
             autoComplete="email"
             keyboardType="email-address"
             onChangeText={(value) => setEmail(value.toLowerCase())}
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
             placeholder="Email address"
             placeholderTextColor={colors.textMuted}
+            ref={emailInputRef}
             returnKeyType="next"
             style={styles.input}
             textContentType="emailAddress"
@@ -174,9 +212,14 @@ export default function SignIn() {
             autoCapitalize="none"
             autoComplete={isCreatingAccount ? 'new-password' : 'password'}
             onChangeText={setPassword}
-            onSubmitEditing={isCreatingAccount ? undefined : submit}
+            onSubmitEditing={
+              isCreatingAccount
+                ? () => confirmPasswordInputRef.current?.focus()
+                : submit
+            }
             placeholder="Password"
             placeholderTextColor={colors.textMuted}
+            ref={passwordInputRef}
             returnKeyType={isCreatingAccount ? 'next' : 'done'}
             secureTextEntry
             style={styles.input}
@@ -193,6 +236,7 @@ export default function SignIn() {
               onSubmitEditing={submit}
               placeholder="Confirm password"
               placeholderTextColor={colors.textMuted}
+              ref={confirmPasswordInputRef}
               returnKeyType="done"
               secureTextEntry
               style={styles.input}
