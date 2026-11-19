@@ -239,6 +239,10 @@ Editor and reported `Success. No rows returned`.
   versions reported on 2026-11-18. `npx expo-doctor` now reports 20 of 20
   checks passing and TypeScript validation passes. A replacement Android build
   must still be made from the merged source before external distribution.
+- `feature/android-preview-build` prepares the replacement internal Android
+  APK with visible version `1.0.1` and Android `versionCode` `2`. The approved
+  package name and EAS `preview` profile are unchanged. Build, installation,
+  and physical-device verification are pending.
 
 ## Known blockers
 
@@ -278,9 +282,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Increment the Android version code and create a replacement EAS `preview`
-   APK from the current `main` branch. It must include pull requests #27 and
-   #28; do not distribute the 10 November historical build.
+1. Merge the Android preview-build metadata, then create a replacement EAS
+   `preview` APK from the resulting `main` branch. It must include pull
+   requests #27 and #28; do not distribute the 10 November historical build.
 2. Complete the signed-in Android member journey on a physical Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.

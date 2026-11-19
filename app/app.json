@@ -3,7 +3,7 @@
     "name": "Word Alive Ministries",
     "slug": "word-alive-ministries",
     "scheme": "wordalive-ministries",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -15,6 +15,7 @@
 
     "android": {
       "package": "com.wordaliveministries.app",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
