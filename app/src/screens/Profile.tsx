@@ -17,6 +17,7 @@ import {
   getAvatarSignedUrl,
   uploadAvatar,
 } from "../services/profileService";
+import { refreshDailyReadingStreak } from "../services/dailyReadingService";
 import { Profile } from "../services/database";
 
 
@@ -38,6 +39,12 @@ const styles = makeStyles(colors, fonts);
     } = await supabase.auth.getUser();
 
     if (!user) return;
+
+    const { error: streakError } = await refreshDailyReadingStreak();
+
+    if (streakError) {
+      console.warn('Unable to refresh the Profile reading streak.', streakError.message);
+    }
 
     const [profileResult, completionResult] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),

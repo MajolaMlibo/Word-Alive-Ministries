@@ -229,6 +229,10 @@ Editor and reported `Success. No rows returned`.
   that the Bible Search keyboard Search key opens `John 3:16`. This is
   emulator-only evidence; signed-build, physical Android, and iOS checks are
   still required.
+- `fix/reading-streak-refresh` is in progress. It adds a member-scoped
+  `refresh_daily_reading_streak` database function and calls it when Home and
+  Profile load. TypeScript validation passes; the production migration and
+  missed-day emulator check are still pending.
 
 ## Known blockers
 
@@ -242,9 +246,9 @@ Editor and reported `Success. No rows returned`.
   build is made.
 - There are no automated application tests or CI workflows.
 - The displayed daily-reading streak can remain stale after a member misses a
-  South African calendar day, because it is only recalculated on completion.
-  Correct this in a dedicated streak-refresh fix before external tester
-  distribution.
+  South African calendar day until the in-progress streak-refresh migration is
+  applied and verified. Do not distribute an external tester build before that
+  verification is complete.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
   application has its own dependencies under `app/` and root `node_modules`
@@ -272,8 +276,8 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. In a separate branch, correct the stale daily-reading streak by refreshing
-   it from the member's completion history when Home and Profile load.
+1. Apply the in-progress streak-refresh migration and verify in Expo Go that a
+   member with no completion today sees a streak of `0` in Home and Profile.
 2. In a separate branch, align the seven minor Expo SDK 58 package versions
    reported by `npx expo-doctor`, rerun validation, and review the result.
 3. Increment the Android version code and create a replacement EAS `preview`

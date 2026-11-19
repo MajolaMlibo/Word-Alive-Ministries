@@ -62,3 +62,12 @@ export async function completeDailyReading(readingId: string) {
     error,
   };
 }
+
+export async function refreshDailyReadingStreak() {
+  const { data, error } = await supabase.rpc('refresh_daily_reading_streak');
+
+  return {
+    currentStreak: typeof data === 'number' ? data : null,
+    error,
+  };
+}
