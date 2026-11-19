@@ -34,6 +34,9 @@ Expo Go.
 4. That APK is not the current tester baseline. It predates the local-artifact
    and Android bottom-navigation-inset fixes merged on 18 November 2026. A new
    preview APK must be produced and tested before it is shared externally.
+5. The replacement tester APK is prepared as visible version `1.0.1` with
+   Android `versionCode` `2`. Use the existing internal `preview` EAS profile;
+   do not change the package identifier.
 
 ## Distribution constraints
 

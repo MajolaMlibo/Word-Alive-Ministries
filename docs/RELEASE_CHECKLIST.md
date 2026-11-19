@@ -42,13 +42,15 @@
   `fix/android-bottom-navigation-inset`. The latter was verified in Expo Go on
   `Mlibo_AP1` on 2026-11-18; it is not yet in a signed preview APK.
 - [ ] Create a replacement Android preview APK from the current `main` branch.
-  Increment the Android version code before this external-distribution build.
+  The prepared metadata is visible version `1.0.1` with Android `versionCode`
+  `2`; merge it before this external-distribution build.
   On a physical Android device, verify readable Sign In and Sign Up fields,
   Light/Dark appearance, and tab labels in both gesture and three-button
   navigation modes.
-- [ ] Resolve the seven Expo SDK 58 patch-version mismatches reported by
-  `npx expo-doctor` on 2026-11-18 in a separate, tested dependency branch
-  before the replacement preview build.
+- [x] Resolve the seven Expo SDK 58 patch-version mismatches reported by
+  `npx expo-doctor` on 2026-11-18 through the separately tested
+  `fix/expo-sdk58-patch-alignment` branch; the follow-up report is 20 of 20
+  passing checks.
 - [ ] Register authorised iPhone tester devices and create an iOS ad hoc
   preview build, or use TestFlight after Apple Developer access is available.
 - [ ] Verify automatic email-confirmation deep linking.
