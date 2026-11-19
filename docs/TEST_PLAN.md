@@ -23,6 +23,10 @@ npx expo export --platform android
 reach Auth settings. It does not test member permissions or write database
 data.
 
+On 2026-11-19, `fix/expo-sdk58-patch-alignment` produced 20 of 20 passing
+`npx expo-doctor` checks and a passing TypeScript check. The next Android
+preview APK must be created only after this branch is merged.
+
 The web export is a bundling check only. It does not prove iOS or Android
 native behaviour.
 
