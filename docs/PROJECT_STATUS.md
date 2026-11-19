@@ -235,6 +235,10 @@ Editor and reported `Success. No rows returned`.
   value to `0` because there was no reading completed on the current South
   African date. The production migration succeeded; signed-build and physical
   Android/iOS checks remain pending.
+- `fix/expo-sdk58-patch-alignment` aligns the seven Expo SDK 58 package patch
+  versions reported on 2026-11-18. `npx expo-doctor` now reports 20 of 20
+  checks passing and TypeScript validation passes. A replacement Android build
+  must still be made from the merged source before external distribution.
 
 ## Known blockers
 
@@ -274,15 +278,13 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. In a separate branch, align the seven minor Expo SDK 58 package versions
-   reported by `npx expo-doctor`, rerun validation, and review the result.
-2. Increment the Android version code and create a replacement EAS `preview`
+1. Increment the Android version code and create a replacement EAS `preview`
    APK from the current `main` branch. It must include pull requests #27 and
    #28; do not distribute the 10 November historical build.
-3. Complete the signed-in Android member journey on a physical Android device,
+2. Complete the signed-in Android member journey on a physical Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.
-4. Complete the two remaining Admin device checks: Reading Plan edit/save and
+3. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-5. Obtain approved Bible-study events and verify populated Study, Calendar,
+4. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
