@@ -19,6 +19,7 @@ import { supabase } from '../services/supabase';
 import {
   getSouthAfricaDate,
   getTodaysDailyReading,
+  refreshDailyReadingStreak,
 } from '../services/dailyReadingService';
 import {
   DailyVersePreview,
@@ -274,6 +275,12 @@ export default function HomeScreen() {
       } = await supabase.auth.getUser();
 
       if (user) {
+        const { error: streakError } = await refreshDailyReadingStreak();
+
+        if (streakError) {
+          console.warn('Unable to refresh the Home reading streak.', streakError.message);
+        }
+
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
