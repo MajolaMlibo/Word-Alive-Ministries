@@ -229,10 +229,12 @@ Editor and reported `Success. No rows returned`.
   that the Bible Search keyboard Search key opens `John 3:16`. This is
   emulator-only evidence; signed-build, physical Android, and iOS checks are
   still required.
-- `fix/reading-streak-refresh` is in progress. It adds a member-scoped
-  `refresh_daily_reading_streak` database function and calls it when Home and
-  Profile load. TypeScript validation passes; the production migration and
-  missed-day emulator check are still pending.
+- `fix/reading-streak-refresh` was verified in Expo Go on the `Mlibo_AP1`
+  Android virtual device. After a controlled stale value of `7` was set for
+  the dedicated Administrator account, both Home and Profile recalculated the
+  value to `0` because there was no reading completed on the current South
+  African date. The production migration succeeded; signed-build and physical
+  Android/iOS checks remain pending.
 
 ## Known blockers
 
@@ -245,10 +247,6 @@ Editor and reported `Success. No rows returned`.
   photo-permission wording takes effect when a new development or production
   build is made.
 - There are no automated application tests or CI workflows.
-- The displayed daily-reading streak can remain stale after a member misses a
-  South African calendar day until the in-progress streak-refresh migration is
-  applied and verified. Do not distribute an external tester build before that
-  verification is complete.
 - The unused root-level Node package and tracked dependency tree were removed
   in the dedicated `fix/remove-root-supabase-install` branch. The Expo
   application has its own dependencies under `app/` and root `node_modules`
@@ -276,17 +274,15 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Apply the in-progress streak-refresh migration and verify in Expo Go that a
-   member with no completion today sees a streak of `0` in Home and Profile.
-2. In a separate branch, align the seven minor Expo SDK 58 package versions
+1. In a separate branch, align the seven minor Expo SDK 58 package versions
    reported by `npx expo-doctor`, rerun validation, and review the result.
-3. Increment the Android version code and create a replacement EAS `preview`
+2. Increment the Android version code and create a replacement EAS `preview`
    APK from the current `main` branch. It must include pull requests #27 and
    #28; do not distribute the 10 November historical build.
-4. Complete the signed-in Android member journey on a physical Android device,
+3. Complete the signed-in Android member journey on a physical Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.
-5. Complete the two remaining Admin device checks: Reading Plan edit/save and
+4. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-6. Obtain approved Bible-study events and verify populated Study, Calendar,
+5. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
