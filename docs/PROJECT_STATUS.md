@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Authentication session repair and Android preview build 3 verification
+Authentication event-state repair and Android preview build 4 verification
 
 ## Verified on 2026-11-08
 
@@ -256,12 +256,16 @@ Editor and reported `Success. No rows returned`.
   launched normally. This is emulator-only launch evidence.
 - The APK contains the required public Supabase URL and publishable key. No
   private Supabase credential was inspected or stored in the repository.
-- Android preview build 2 exposed a release-blocking session-bootstrap defect:
-  a successful standalone sign-in briefly showed Home, then returned to Sign
-  in. `fix/auth-session-bootstrap` prevents an older initial-session result
-  from overwriting a newer authentication event. TypeScript, Expo configuration,
-  and Expo Doctor validation pass; a replacement signed APK must verify the
-  correction before external distribution.
+- Android preview builds 2 and 3 both exposed the same release-blocking
+  session defect: a successful standalone sign-in briefly showed Home, then
+  returned to Sign in. Build 3 was created from merged commit
+  `281ba3334f0448de19e77664fa07f0b0ac0e8355`, installed on `Mlibo_AP1`, and
+  verified as still affected.
+- `fix/auth-event-session-state` now follows Supabase's event-state model: an
+  existing session is applied only when an auth event supplies one, and local
+  session state is cleared only on an actual `SIGNED_OUT` event. A delayed
+  empty `INITIAL_SESSION` event can therefore no longer overwrite a successful
+  sign-in. Preview build 4 must verify the correction before distribution.
 
 ## Known blockers
 
@@ -301,7 +305,7 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Merge `fix/auth-session-bootstrap`, then create Android preview build 3 and
+1. Merge `fix/auth-event-session-state`, then create Android preview build 4 and
    complete its signed-in member journey on the virtual device and a physical
    Android device,
    including gesture and three-button system navigation, before sharing the

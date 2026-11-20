@@ -136,55 +136,35 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
-    let sessionBootstrapComplete = false;
-    let receivedAuthEventDuringBootstrap = false;
-    let latestAuthSession: Session | null = null;
 
     const {
       data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) {
         return;
       }
 
-      if (!sessionBootstrapComplete) {
-        receivedAuthEventDuringBootstrap = true;
-        latestAuthSession = nextSession;
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setLoading(false);
         return;
       }
 
-      setSession(nextSession);
+      if (nextSession) {
+        setSession(nextSession);
+      }
+
       setLoading(false);
     });
 
-    async function restoreSession() {
+    async function completeInitialAuthRedirect() {
       const initialUrl = await Linking.getInitialURL();
       if (initialUrl) {
         await establishSessionFromAuthUrl(initialUrl);
       }
-
-      const {
-        data: { session: restoredSession },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        console.warn('Unable to restore the saved session.', error.message);
-      }
-
-      sessionBootstrapComplete = true;
-
-      if (isMounted) {
-        setSession(
-          receivedAuthEventDuringBootstrap
-            ? latestAuthSession
-            : restoredSession
-        );
-        setLoading(false);
-      }
     }
 
-    void restoreSession();
+    void completeInitialAuthRedirect();
 
     const linkSubscription = Linking.addEventListener('url', ({ url }) => {
       void establishSessionFromAuthUrl(url);
