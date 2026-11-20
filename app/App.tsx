@@ -136,6 +136,26 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
+    let sessionBootstrapComplete = false;
+    let receivedAuthEventDuringBootstrap = false;
+    let latestAuthSession: Session | null = null;
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (!sessionBootstrapComplete) {
+        receivedAuthEventDuringBootstrap = true;
+        latestAuthSession = nextSession;
+        return;
+      }
+
+      setSession(nextSession);
+      setLoading(false);
+    });
 
     async function restoreSession() {
       const initialUrl = await Linking.getInitialURL();
@@ -152,8 +172,14 @@ export default function App() {
         console.warn('Unable to restore the saved session.', error.message);
       }
 
+      sessionBootstrapComplete = true;
+
       if (isMounted) {
-        setSession(restoredSession);
+        setSession(
+          receivedAuthEventDuringBootstrap
+            ? latestAuthSession
+            : restoredSession
+        );
         setLoading(false);
       }
     }
@@ -162,14 +188,6 @@ export default function App() {
 
     const linkSubscription = Linking.addEventListener('url', ({ url }) => {
       void establishSessionFromAuthUrl(url);
-    });
-
-    const {
-      data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (isMounted) {
-        setSession(nextSession);
-      }
     });
 
     return () => {
