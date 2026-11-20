@@ -48,8 +48,12 @@
   build 2: its signed-in session returned to Sign in.
 - [x] Create preview build 3 after merging `fix/auth-session-bootstrap`. It
   reproduced the signed-in session defect and must not be distributed.
-- [ ] Create preview build 4 after merging `fix/auth-event-session-state`, then
-  complete its signed-in and physical-Android checks.
+- [x] Create preview build 4 after merging `fix/auth-event-session-state`.
+  The APK was installed on `Mlibo_AP1` on 2026-11-20; the dedicated
+  Administrator sign-in remained active for 15 seconds and after a
+  force-close/relaunch. The build 2/3 standalone-session defect is resolved
+  on the virtual device.
+- [ ] Complete preview build 4 physical-Android checks before external sharing.
   On a physical Android device, verify readable Sign In and Sign Up fields,
   Light/Dark appearance, and tab labels in both gesture and three-button
   navigation modes.

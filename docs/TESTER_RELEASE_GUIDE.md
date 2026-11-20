@@ -40,8 +40,14 @@ Expo Go.
    then returned to Sign in. `fix/auth-session-bootstrap` prepares the
    correction for a new Android build with `versionCode` `3`.
 7. Preview build 3 was installed and reproduced the same defect. Do not share
-   it. `fix/auth-event-session-state` prepares the replacement Android build
-   with `versionCode` `4`.
+   it.
+8. Preview build 4 was built from merged `main` commit
+   `e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c` with `versionCode` `4`.
+   On 20 November 2026, it was installed on `Mlibo_AP1`. The dedicated
+   Administrator sign-in stayed active for at least 15 seconds and survived a
+   force-close/relaunch, returning to Home rather than Sign In. The corrected
+   session behaviour is verified only on that virtual device; it is not yet
+   approved for external sharing.
 
 ## Distribution constraints
 
