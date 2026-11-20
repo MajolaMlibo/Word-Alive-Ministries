@@ -14,11 +14,11 @@ tools are implemented. Core member flows were verified on a physical iPhone
 in Expo Go; the detailed evidence and outstanding Android/iOS release checks
 are in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
-The signed Android preview APK created on 10 November 2026 is a historical
-smoke-test build. It does **not** contain the newer local-artifact and Android
-bottom-inset fixes merged on 18 November 2026. Do not use it as the current
-tester baseline; create and verify a replacement preview APK before sharing
-with the pastor's tester group.
+Android preview build 4 is a historical emulator smoke-test build from
+20 November 2026. It does **not** contain the subsequently merged Bible verse
+actions or the current visual Admin-editor work. Do not distribute it to the
+pastor's tester group. The current decision is to complete Expo Go functional
+verification first, then create and verify one replacement Android build.
 
 ## Repository layout
 
