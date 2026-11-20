@@ -292,8 +292,11 @@ Editor and reported `Success. No rows returned`.
   in Expo Go on `Mlibo_AP1`. The original controls did not apply formatting on
   Android, so the same branch now uses native React Native controls that issue
   commands directly to the loaded editor and preserve the selected WebView text
-  range. Loading the replacement toolbar is verified; applying formatting,
-  saving, member rendering, and reload persistence remain pending verification.
+  range. On 2026-11-20, the `Mlibo_AP1` Android virtual device verified that
+  selected editor text becomes visibly bold and that a selected phrase becomes
+  a visibly larger heading. The test phrase was not saved. Italic, lists,
+  quote, clear formatting, saving, member rendering, reload persistence, and
+  signed-APK checks remain pending verification.
 
 ## Known blockers
 

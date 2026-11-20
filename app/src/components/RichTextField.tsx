@@ -175,7 +175,8 @@ function buildEditorDocument({
     function restoreRange() { editor.focus(); const selection = window.getSelection(); const range = window.__wamSavedRange || savedRange; if (selection && range) { selection.removeAllRanges(); selection.addRange(range); } }
     function activeCommands() { return [document.queryCommandState('bold') && 'bold', document.queryCommandState('italic') && 'italic', document.queryCommandState('insertUnorderedList') && 'bullets', document.queryCommandState('insertOrderedList') && 'numbers', document.queryCommandValue('formatBlock').toLowerCase() === 'h2' && 'heading', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' && 'quote'].filter(Boolean); }
     function send() { captureRange(); const html = clean(); const height = Math.max(210, Math.min(420, document.body.scrollHeight + 8)); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html, height, active: activeCommands() })); }
-    window.wamRunCommand = (name) => { restoreRange(); if (name === 'heading') document.execCommand('formatBlock', false, 'h2'); else if (name === 'quote') document.execCommand('formatBlock', false, 'blockquote'); else if (name === 'bullets') document.execCommand('insertUnorderedList', false, null); else if (name === 'numbers') document.execCommand('insertOrderedList', false, null); else if (name === 'clear') { document.execCommand('removeFormat', false, null); document.execCommand('formatBlock', false, 'p'); } else document.execCommand(name, false, null); send(); };
+    function applyBlockFormat(tag) { document.execCommand('formatBlock', false, tag); if (document.queryCommandValue('formatBlock').toLowerCase() !== tag) document.execCommand('formatBlock', false, '<' + tag + '>'); }
+    window.wamRunCommand = (name) => { restoreRange(); if (name === 'heading') applyBlockFormat('h2'); else if (name === 'quote') applyBlockFormat('blockquote'); else if (name === 'bullets') document.execCommand('insertUnorderedList', false, null); else if (name === 'numbers') document.execCommand('insertOrderedList', false, null); else if (name === 'clear') { document.execCommand('removeFormat', false, null); applyBlockFormat('p'); } else document.execCommand(name, false, null); send(); };
     editor.addEventListener('input', send); editor.addEventListener('keyup', send); editor.addEventListener('mouseup', captureRange); editor.addEventListener('touchend', captureRange); editor.addEventListener('focus', captureRange); document.addEventListener('selectionchange', captureRange); editor.addEventListener('blur', send); window.wamSetContent = (html) => { editor.innerHTML = html || ''; savedRange = null; send(); }; setTimeout(send, 0);
   </script></body></html>`;
 }
@@ -190,11 +191,15 @@ function buildCommandScript(command: EditorCommand) {
     editor.focus();
     if (selection && savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
     const command = ${name};
-    if (command === 'heading') document.execCommand('formatBlock', false, 'h2');
-    else if (command === 'quote') document.execCommand('formatBlock', false, 'blockquote');
+    const applyBlockFormat = (tag) => {
+      document.execCommand('formatBlock', false, tag);
+      if (document.queryCommandValue('formatBlock').toLowerCase() !== tag) document.execCommand('formatBlock', false, '<' + tag + '>');
+    };
+    if (command === 'heading') applyBlockFormat('h2');
+    else if (command === 'quote') applyBlockFormat('blockquote');
     else if (command === 'bullets') document.execCommand('insertUnorderedList', false, null);
     else if (command === 'numbers') document.execCommand('insertOrderedList', false, null);
-    else if (command === 'clear') { document.execCommand('removeFormat', false, null); document.execCommand('formatBlock', false, 'p'); }
+    else if (command === 'clear') { document.execCommand('removeFormat', false, null); applyBlockFormat('p'); }
     else document.execCommand(command, false, null);
     const active = [document.queryCommandState('bold') && 'bold', document.queryCommandState('italic') && 'italic', document.queryCommandState('insertUnorderedList') && 'bullets', document.queryCommandState('insertOrderedList') && 'numbers', document.queryCommandValue('formatBlock').toLowerCase() === 'h2' && 'heading', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' && 'quote'].filter(Boolean);
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html: editor.innerHTML, height: Math.max(210, Math.min(420, document.body.scrollHeight + 8)), active }));
