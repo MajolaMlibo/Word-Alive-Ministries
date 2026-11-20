@@ -57,9 +57,9 @@ native behaviour.
 
 | Test | Expected result | Current evidence |
 |---|---|---|
-| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-20, using EAS preview build 2 from commit `a40203dd4ca808be446cf74a8abcba252ca11542`. It is version `1.0.1` / Android `versionCode` `2`. |
+| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-20, using EAS preview build 4 from commit `e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c`. It is version `1.0.1` / Android `versionCode` `4`. Physical Android verification remains pending. |
 | Android sign-in legibility | In Light and Dark appearance, every Sign In and Sign Up field placeholder is readable. A mixed-case email is visibly converted to lowercase; names and passwords retain their typed casing. | Code reviewed and light/dark Expo Go check completed on `Mlibo_AP1`, 2026-11-10; signed APK and physical Android checks pending |
-| Account registration and keyboard flow | Sign Up requires clear First name and Surname fields; Enter advances through the form; final Enter creates the account. Sign In password Enter submits. Bible Search Enter submits a complete reference. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-19: a dedicated Administrator account saved separate name and surname values; password Enter signed in; `John 3:16` Search opened the reference. Android preview builds 2 and 3 briefly opened Home after sign-in, then returned to Sign in. `fix/auth-event-session-state` must be verified in preview build 4. Physical Android/iOS checks remain pending. |
+| Account registration and keyboard flow | Sign Up requires clear First name and Surname fields; Enter advances through the form; final Enter creates the account. Sign In password Enter submits. Bible Search Enter submits a complete reference. | Expo Go verification on the `Mlibo_AP1` Android virtual device, 2026-11-19: a dedicated Administrator account saved separate name and surname values; password Enter signed in; `John 3:16` Search opened the reference. In standalone preview build 4 on 2026-11-20, the Administrator sign-in persisted for 15 seconds and after a force-close/relaunch. The original build 2 and 3 session defect is resolved on that virtual device. Full sign-up and keyboard-flow checks in the signed APK, physical Android, and iOS remain pending. |
 | Daily streak after a missed day | If the signed-in member has no completion on the current South African calendar date, Home and Profile each display `0`, regardless of an older saved completion. Completing today's reading then displays a streak of `1` or more. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-19: a controlled stale value of `7` for the dedicated Administrator account refreshed to `0` in both Home and Profile. The production migration succeeded. Signed-APK and physical Android/iOS checks remain pending. |
 | Android system-navigation clearance | In both gesture and three-button modes, Home, Calendar, Bible, Study, and More labels remain visible and tappable above the Android navigation area. | Current source verified only in Expo Go on `Mlibo_AP1`, 2026-11-18; a replacement signed APK and physical Android checks are pending |
 
@@ -87,12 +87,12 @@ Update `PROJECT_STATUS.md` after a meaningful verification result.
 
 ## Current Android tester baseline
 
-The current failed preview baseline was created from merged `main` commit
-`281ba3334f0448de19e77664fa07f0b0ac0e8355`. It is version `1.0.1`, Android
-`versionCode` `3`, and uses the approved package
-`com.wordaliveministries.app`. On 2026-11-20, its APK installed and reached the
-native sign-in screen on the `Mlibo_AP1` Android virtual device, but its
-signed-in session returned to Sign in. It must not be shared externally.
-Preview build 4 will retest the event-state correction, then complete the
-physical Android tests against the rows above before external tester
-distribution.
+The current candidate preview baseline was created from merged `main` commit
+`e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c`. It is version `1.0.1`, Android
+`versionCode` `4`, and uses the approved package
+`com.wordaliveministries.app`. On 2026-11-20, its APK installed on the
+`Mlibo_AP1` Android virtual device. A dedicated Administrator account stayed
+signed in for at least 15 seconds and, after a force-close and normal relaunch,
+opened Home rather than Sign In. This resolves the build 2/3 session defect on
+the virtual device. Complete the physical Android tests against the rows above
+before external tester distribution.

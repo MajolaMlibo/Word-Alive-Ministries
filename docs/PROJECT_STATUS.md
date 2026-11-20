@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Authentication event-state repair and Android preview build 4 verification
+Physical Android acceptance testing for preview build 4
 
 ## Verified on 2026-11-08
 
@@ -265,7 +265,16 @@ Editor and reported `Success. No rows returned`.
   existing session is applied only when an auth event supplies one, and local
   session state is cleared only on an actual `SIGNED_OUT` event. A delayed
   empty `INITIAL_SESSION` event can therefore no longer overwrite a successful
-  sign-in. Preview build 4 must verify the correction before distribution.
+  sign-in.
+- Android preview build 4 finished from merged `main` commit
+  `e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c`. It is version `1.0.1`, Android
+  `versionCode` `4`, and package `com.wordaliveministries.app`. On 2026-11-20
+  it installed on the `Mlibo_AP1` Android virtual device. A dedicated
+  Administrator account remained signed in for at least 15 seconds; after a
+  force-close and normal relaunch, the app showed Home and Church
+  Announcements rather than Sign In. This resolves the previously reproduced
+  standalone-session defect on that virtual device. Physical Android and iOS
+  verification remain outstanding.
 
 ## Known blockers
 
@@ -305,11 +314,10 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Merge `fix/auth-event-session-state`, then create Android preview build 4 and
-   complete its signed-in member journey on the virtual device and a physical
-   Android device,
-   including gesture and three-button system navigation, before sharing the
-   new direct installation link with the pastor's small tester group.
+1. Complete the preview build 4 signed-in member journey on the project
+   owner's physical Android device, including gesture and three-button system
+   navigation, before sharing the direct installation link with the pastor's
+   small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
 3. Obtain approved Bible-study events and verify populated Study, Calendar,
