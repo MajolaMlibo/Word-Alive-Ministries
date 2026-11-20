@@ -106,7 +106,7 @@ function buildEditorDocument({
     * { box-sizing: border-box; } html, body { margin: 0; padding: 0; background: ${surfaceColor}; color: ${textColor}; font-family: -apple-system, Roboto, Arial, sans-serif; }
     #toolbar { align-items: center; border-bottom: 1px solid ${borderColor}; display: flex; flex-wrap: wrap; gap: 2px; padding: 6px; }
     button { background: transparent; border: 0; border-radius: 7px; color: ${primaryColor}; font-size: 17px; font-weight: 700; min-height: 34px; min-width: 34px; padding: 4px 7px; }
-    button:active { background: ${borderColor}; } #editor { color: ${textColor}; font-size: 17px; line-height: 1.5; min-height: 142px; outline: none; padding: 12px; }
+    button.active, button:active { background: ${borderColor}; } #editor { color: ${textColor}; font-size: 17px; line-height: 1.5; min-height: 142px; outline: none; padding: 12px; }
     #editor:empty:before { color: ${mutedColor}; content: attr(data-placeholder); pointer-events: none; }
     #editor p { margin: 0 0 10px; } #editor h2 { color: ${primaryColor}; font-size: 21px; line-height: 1.3; margin: 8px 0; }
     #editor ul, #editor ol { margin: 6px 0; padding-left: 26px; } #editor blockquote { border-left: 3px solid ${primaryColor}; color: ${mutedColor}; margin: 8px 0; padding-left: 10px; }
@@ -119,10 +119,12 @@ function buildEditorDocument({
     const editor = document.getElementById('editor'); editor.innerHTML = ${content};
     const safeTags = new Set(['P','DIV','BR','STRONG','B','EM','I','H2','H3','UL','OL','LI','BLOCKQUOTE','A']);
     function clean() { const clone = editor.cloneNode(true); clone.querySelectorAll('*').forEach((node) => { if (!safeTags.has(node.tagName)) { node.replaceWith(...node.childNodes); return; } const href = node.tagName === 'A' ? node.getAttribute('href') : ''; [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name)); if (node.tagName === 'A' && href && /^https:\/\//i.test(href)) node.setAttribute('href', href); else if (node.tagName === 'A') node.replaceWith(...node.childNodes); }); return clone.innerHTML; }
-    function send() { const html = clean(); const height = Math.max(210, Math.min(420, document.body.scrollHeight + 8)); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html, height })); }
+    function updateToolbar() { document.querySelectorAll('button').forEach((button) => { const name = button.dataset.command; const active = (name === 'bold' || name === 'italic' || name === 'insertUnorderedList' || name === 'insertOrderedList') && document.queryCommandState(name); button.classList.toggle('active', Boolean(active)); }); }
+    function send() { const html = clean(); const height = Math.max(210, Math.min(420, document.body.scrollHeight + 8)); updateToolbar(); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html, height })); }
     function command(name) { editor.focus(); if (name === 'heading') document.execCommand('formatBlock', false, 'h2'); else if (name === 'quote') document.execCommand('formatBlock', false, 'blockquote'); else if (name === 'clear') { document.execCommand('removeFormat', false, null); document.execCommand('formatBlock', false, 'p'); } else document.execCommand(name, false, null); send(); }
-    document.querySelectorAll('button').forEach((button) => { button.addEventListener('mousedown', (event) => event.preventDefault()); button.addEventListener('click', () => command(button.dataset.command)); });
-    editor.addEventListener('input', send); editor.addEventListener('blur', send); window.wamSetContent = (html) => { editor.innerHTML = html || ''; };
+    let lastToolbarPress = 0; function runToolbarCommand(event, button) { event.preventDefault(); const now = Date.now(); if (now - lastToolbarPress < 250) return; lastToolbarPress = now; command(button.dataset.command); }
+    document.querySelectorAll('button').forEach((button) => { button.addEventListener('touchstart', (event) => runToolbarCommand(event, button), { passive: false }); button.addEventListener('mousedown', (event) => runToolbarCommand(event, button)); });
+    editor.addEventListener('input', send); editor.addEventListener('keyup', updateToolbar); document.addEventListener('selectionchange', updateToolbar); editor.addEventListener('blur', send); window.wamSetContent = (html) => { editor.innerHTML = html || ''; updateToolbar(); };
     setTimeout(send, 0);
   </script></body></html>`;
 }
