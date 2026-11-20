@@ -27,16 +27,15 @@ Expo Go.
 2. The approved Android package name and iOS bundle identifier are both
    `com.wordaliveministries.app`. Do not change them after builds have been
    shared or submitted to a store.
-3. Android is the first tester platform. The first standalone Android preview
-   smoke-test build completed on 10 November 2026 from commit
-   `5bce367837edede6e20e6603976c25dab461807c` and was installed on the
-   `Mlibo_AP1` Android virtual device.
-4. That APK is not the current tester baseline. It predates the local-artifact
-   and Android bottom-navigation-inset fixes merged on 18 November 2026. A new
-   preview APK must be produced and tested before it is shared externally.
-5. The replacement tester APK is prepared as visible version `1.0.1` with
-   Android `versionCode` `2`. Use the existing internal `preview` EAS profile;
-   do not change the package identifier.
+3. Android is the first tester platform. The current standalone Android preview
+   build finished on 19 November 2026 from merged `main` commit
+   `a40203dd4ca808be446cf74a8abcba252ca11542`.
+4. This replacement tester APK is visible version `1.0.1` with Android
+   `versionCode` `2`, and uses the existing internal `preview` EAS profile.
+   Do not change the package identifier.
+5. On 20 November 2026, the APK installed on the `Mlibo_AP1` Android virtual
+   device and reached its native sign-in screen. It has not completed the
+   signed-in or physical-device tests required for external sharing.
 
 ## Distribution constraints
 

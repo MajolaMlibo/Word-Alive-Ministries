@@ -57,7 +57,7 @@ native behaviour.
 
 | Test | Expected result | Current evidence |
 |---|---|---|
-| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-10 |
+| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-20, using EAS preview build 2 from commit `a40203dd4ca808be446cf74a8abcba252ca11542`. It is version `1.0.1` / Android `versionCode` `2`. |
 | Android sign-in legibility | In Light and Dark appearance, every Sign In and Sign Up field placeholder is readable. A mixed-case email is visibly converted to lowercase; names and passwords retain their typed casing. | Code reviewed and light/dark Expo Go check completed on `Mlibo_AP1`, 2026-11-10; signed APK and physical Android checks pending |
 | Account registration and keyboard flow | Sign Up requires clear First name and Surname fields; Enter advances through the form; final Enter creates the account. Sign In password Enter submits. Bible Search Enter submits a complete reference. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-19: a dedicated Administrator account saved separate name and surname values; password Enter signed in; `John 3:16` Search opened the reference. Signed-APK and physical Android/iOS checks remain pending. |
 | Daily streak after a missed day | If the signed-in member has no completion on the current South African calendar date, Home and Profile each display `0`, regardless of an older saved completion. Completing today's reading then displays a streak of `1` or more. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-19: a controlled stale value of `7` for the dedicated Administrator account refreshed to `0` in both Home and Profile. The production migration succeeded. Signed-APK and physical Android/iOS checks remain pending. |
@@ -87,9 +87,11 @@ Update `PROJECT_STATUS.md` after a meaningful verification result.
 
 ## Current Android tester baseline
 
-The 10 November 2026 EAS preview build was created from commit
-`5bce367837edede6e20e6603976c25dab461807c`. It is a standalone-app smoke test,
-not a current tester release: it predates the merged local-artifact and Android
-bottom-navigation-inset fixes. A replacement preview APK must be built from
-the current `main` branch, installed on a physical Android phone, and tested
-against the Android rows above before external tester distribution.
+The current EAS preview build was created from merged `main` commit
+`a40203dd4ca808be446cf74a8abcba252ca11542`. It is version `1.0.1`, Android
+`versionCode` `2`, and uses the approved package
+`com.wordaliveministries.app`. On 2026-11-20, its APK installed and reached the
+native sign-in screen on the `Mlibo_AP1` Android virtual device. This is an
+emulator-only standalone-launch smoke test. Complete the signed-in flow and
+physical Android tests against the rows above before external tester
+distribution.
