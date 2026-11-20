@@ -275,6 +275,15 @@ Editor and reported `Success. No rows returned`.
   Announcements rather than Sign In. This resolves the previously reproduced
   standalone-session defect on that virtual device. Physical Android and iOS
   verification remain outstanding.
+- On 2026-11-20, the `fix/bible-verse-actions` working branch was smoke-tested
+  in Expo Go on the `Mlibo_AP1` Android virtual device. The Bible action panel
+  displayed its highlight, bookmark, private-note, copy, and share controls.
+  A temporary bookmark for Joel 1:1 appeared in Saved verses, survived a
+  force-close/relaunch, and was then removed. The Admin Study form displayed
+  its writing toolbar and correctly required the study to be saved before
+  images could be added. The `study_media` production migration succeeded.
+  Image upload, note saving, copy, sharing, and signed-APK verification remain
+  pending.
 
 ## Known blockers
 
