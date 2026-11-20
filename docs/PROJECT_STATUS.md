@@ -314,11 +314,15 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the preview build 4 signed-in member journey on the project
+1. Complete the approved `fix/bible-verse-actions` branch: apply the
+   `study_media` migration, then verify Bible actions, Admin writing tools,
+   and study-note images in Expo Go before requesting a combined Android
+   preview build.
+2. Complete the preview build 4 signed-in member journey on the project
    owner's physical Android device, including gesture and three-button system
    navigation, before sharing the direct installation link with the pastor's
    small tester group.
-2. Complete the two remaining Admin device checks: Reading Plan edit/save and
+3. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-3. Obtain approved Bible-study events and verify populated Study, Calendar,
+4. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
