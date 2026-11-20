@@ -36,6 +36,9 @@ Expo Go.
 5. On 20 November 2026, the APK installed on the `Mlibo_AP1` Android virtual
    device and reached its native sign-in screen. It has not completed the
    signed-in or physical-device tests required for external sharing.
+6. Do not share preview build 2: its signed-in session briefly opened Home and
+   then returned to Sign in. `fix/auth-session-bootstrap` prepares the
+   correction for a new Android build with `versionCode` `3`.
 
 ## Distribution constraints
 

@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Android preview build 2 verification before external tester distribution
+Authentication session repair and Android preview build 3 verification
 
 ## Verified on 2026-11-08
 
@@ -256,6 +256,12 @@ Editor and reported `Success. No rows returned`.
   launched normally. This is emulator-only launch evidence.
 - The APK contains the required public Supabase URL and publishable key. No
   private Supabase credential was inspected or stored in the repository.
+- Android preview build 2 exposed a release-blocking session-bootstrap defect:
+  a successful standalone sign-in briefly showed Home, then returned to Sign
+  in. `fix/auth-session-bootstrap` prevents an older initial-session result
+  from overwriting a newer authentication event. TypeScript, Expo configuration,
+  and Expo Doctor validation pass; a replacement signed APK must verify the
+  correction before external distribution.
 
 ## Known blockers
 
@@ -295,8 +301,9 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the signed-in member journey in Android preview build 2 on the
-   virtual device, then repeat it on a physical Android device,
+1. Merge `fix/auth-session-bootstrap`, then create Android preview build 3 and
+   complete its signed-in member journey on the virtual device and a physical
+   Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.
 2. Complete the two remaining Admin device checks: Reading Plan edit/save and

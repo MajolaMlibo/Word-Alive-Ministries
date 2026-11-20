@@ -44,8 +44,10 @@
 - [x] Create the replacement Android preview APK from the current `main`
   branch. EAS preview build 2 finished from commit
   `a40203dd4ca808be446cf74a8abcba252ca11542`; its APK installed and reached
-  the native sign-in screen on `Mlibo_AP1` on 2026-11-20.
-- [ ] Complete the signed-in and physical-Android checks for preview build 2.
+  the native sign-in screen on `Mlibo_AP1` on 2026-11-20. Do not distribute
+  build 2: its signed-in session returned to Sign in.
+- [ ] Create preview build 3 after merging `fix/auth-session-bootstrap`, then
+  complete its signed-in and physical-Android checks.
   On a physical Android device, verify readable Sign In and Sign Up fields,
   Light/Dark appearance, and tab labels in both gesture and three-button
   navigation modes.
