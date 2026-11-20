@@ -30,7 +30,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Word Alive Ministries to access your photos so you can set a profile picture.",
+          "photosPermission": "Allow Word Alive Ministries to access your photos so you can set a profile picture or add a study-note image.",
           "microphonePermission": false
         }
       ],
