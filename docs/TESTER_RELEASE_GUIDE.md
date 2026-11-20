@@ -39,6 +39,9 @@ Expo Go.
 6. Do not share preview build 2: its signed-in session briefly opened Home and
    then returned to Sign in. `fix/auth-session-bootstrap` prepares the
    correction for a new Android build with `versionCode` `3`.
+7. Preview build 3 was installed and reproduced the same defect. Do not share
+   it. `fix/auth-event-session-state` prepares the replacement Android build
+   with `versionCode` `4`.
 
 ## Distribution constraints
 
