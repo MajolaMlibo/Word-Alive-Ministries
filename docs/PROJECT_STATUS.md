@@ -289,8 +289,11 @@ Editor and reported `Success. No rows returned`.
   bold, italic, heading, bulleted-list, numbered-list, quote, and
   clear-formatting controls. Existing plain text and the earlier Markdown-like
   values remain readable. The editor loaded and accepted an unsaved test phrase
-  in Expo Go on `Mlibo_AP1`; applying formatting, saving, member rendering, and
-  reload persistence remain pending verification.
+  in Expo Go on `Mlibo_AP1`. The original controls did not apply formatting on
+  Android, so the same branch now uses native React Native controls that issue
+  commands directly to the loaded editor and preserve the selected WebView text
+  range. Loading the replacement toolbar is verified; applying formatting,
+  saving, member rendering, and reload persistence remain pending verification.
 
 ## Known blockers
 
