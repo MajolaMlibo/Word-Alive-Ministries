@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Local acceptance and replacement Android tester-build readiness
+Android preview build 2 verification before external tester distribution
 
 ## Verified on 2026-11-08
 
@@ -237,12 +237,25 @@ Editor and reported `Success. No rows returned`.
   Android/iOS checks remain pending.
 - `fix/expo-sdk58-patch-alignment` aligns the seven Expo SDK 58 package patch
   versions reported on 2026-11-18. `npx expo-doctor` now reports 20 of 20
-  checks passing and TypeScript validation passes. A replacement Android build
-  must still be made from the merged source before external distribution.
+  checks passing and TypeScript validation passes.
 - `feature/android-preview-build` prepares the replacement internal Android
   APK with visible version `1.0.1` and Android `versionCode` `2`. The approved
-  package name and EAS `preview` profile are unchanged. Build, installation,
-  and physical-device verification are pending.
+  package name and EAS `preview` profile are unchanged.
+
+## Verified on 2026-11-20
+
+- The replacement EAS `preview` Android build finished from merged `main`
+  commit `a40203dd4ca808be446cf74a8abcba252ca11542`. It is visible version
+  `1.0.1`, Android `versionCode` `2`, and package
+  `com.wordaliveministries.app`.
+- The completed APK was installed on the `Mlibo_AP1` Android virtual device.
+  Android launched the standalone app package and showed the Word Alive
+  Ministries native sign-in screen, rather than Expo Go or a crash. The first
+  launch occurred while the emulator's package manager was recovering from an
+  unrelated system stall; after the emulator recovered, the same installed APK
+  launched normally. This is emulator-only launch evidence.
+- The APK contains the required public Supabase URL and publishable key. No
+  private Supabase credential was inspected or stored in the repository.
 
 ## Known blockers
 
@@ -282,13 +295,11 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Merge the Android preview-build metadata, then create a replacement EAS
-   `preview` APK from the resulting `main` branch. It must include pull
-   requests #27 and #28; do not distribute the 10 November historical build.
-2. Complete the signed-in Android member journey on a physical Android device,
+1. Complete the signed-in member journey in Android preview build 2 on the
+   virtual device, then repeat it on a physical Android device,
    including gesture and three-button system navigation, before sharing the
    new direct installation link with the pastor's small tester group.
-3. Complete the two remaining Admin device checks: Reading Plan edit/save and
+2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-4. Obtain approved Bible-study events and verify populated Study, Calendar,
+3. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
