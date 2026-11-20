@@ -6,10 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import FormattedText from '../components/FormattedText';
 import { supabase } from '../services/supabase';
-import { BibleStudy } from '../services/database';
+import { BibleStudy, StudyMedia } from '../services/database';
+import { getStudyMedia, getStudyMediaUrls } from '../services/studyMediaService';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
@@ -36,6 +39,8 @@ export default function StudyScreen() {
 
   const [filter, setFilter] = useState<StudyFilter>('upcoming');
   const [studies, setStudies] = useState<BibleStudy[]>([]);
+  const [studyMedia, setStudyMedia] = useState<StudyMedia[]>([]);
+  const [studyMediaUrls, setStudyMediaUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -62,7 +67,19 @@ export default function StudyScreen() {
         return;
       }
 
-      setStudies((data as BibleStudy[]) || []);
+      const loadedStudies = (data as BibleStudy[]) || [];
+      setStudies(loadedStudies);
+      const { media, error: mediaError } = await getStudyMedia(loadedStudies.map((study) => study.id));
+      if (mediaError) {
+        console.warn('Unable to load study images.', mediaError.message);
+        setStudyMedia([]);
+        setStudyMediaUrls({});
+      } else {
+        const { urls, error: urlError } = await getStudyMediaUrls(media);
+        if (urlError) console.warn('Unable to sign study images.', urlError.message);
+        setStudyMedia(media);
+        setStudyMediaUrls(urls);
+      }
     } catch (error) {
       console.warn('Unexpected error while loading Bible studies.', error);
       setStudies([]);
@@ -228,10 +245,18 @@ export default function StudyScreen() {
                   <View style={styles.detailBox}>
                     <Text style={styles.detailTitle}>Study Notes</Text>
 
-                    <Text style={styles.detailText}>
-                      {study.description ||
-                        'No additional notes have been provided for this Bible study.'}
-                    </Text>
+                    <FormattedText
+                      styles={styles}
+                      text={study.description || 'No additional notes have been provided for this Bible study.'}
+                    />
+
+                    {studyMedia.filter((item) => item.study_id === study.id).length ? (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
+                        {studyMedia.filter((item) => item.study_id === study.id).map((item) => studyMediaUrls[item.id] ? (
+                          <Image key={item.id} source={{ uri: studyMediaUrls[item.id] }} style={styles.studyImage} />
+                        ) : null)}
+                      </ScrollView>
+                    ) : null}
 
                     {study.location_or_url ? (
                       <View style={styles.locationRow}>
@@ -407,6 +432,29 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.text,
       lineHeight: fonts.body * 1.6,
     },
+
+    formattedText: {
+      color: colors.text,
+      fontSize: fonts.body,
+      lineHeight: fonts.body * 1.6,
+    },
+
+    formattedHeading: {
+      color: colors.primary,
+      fontSize: fonts.bodyLarge,
+      fontWeight: '800',
+      lineHeight: fonts.bodyLarge * 1.4,
+      marginTop: spacing.sm,
+    },
+
+    formattedBold: { fontWeight: '800' },
+    formattedItalic: { fontStyle: 'italic' },
+    formattedLink: { color: colors.primary, fontWeight: '700', textDecorationLine: 'underline' },
+    formattedQuote: { borderLeftColor: colors.accent, borderLeftWidth: 3, marginVertical: spacing.xs, paddingLeft: spacing.sm },
+    formattedListRow: { flexDirection: 'row', gap: spacing.xs },
+    formattedListMarker: { color: colors.primary, fontSize: fonts.body, fontWeight: '800', minWidth: 18 },
+    studyImageList: { gap: spacing.sm, paddingTop: spacing.sm },
+    studyImage: { borderRadius: 12, height: 180, width: 135 },
 
     locationRow: {
       alignItems: 'center',

@@ -59,6 +59,22 @@ export interface DailyReading {
   updated_at: string;
 }
 
+export type BibleHighlightColor = 'gold' | 'green' | 'blue' | 'pink';
+
+export interface BibleVerseSave {
+  id: string;
+  user_id: string;
+  translation: 'KJV';
+  book: string;
+  chapter: number;
+  verse: number;
+  highlight_color: BibleHighlightColor | null;
+  is_bookmarked: boolean;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BibleStudy {
   id: string;
   study_name: string;
@@ -72,6 +88,15 @@ export interface BibleStudy {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface StudyMedia {
+  id: string;
+  study_id: string;
+  storage_path: string;
+  sort_order: number;
+  created_by: string | null;
+  created_at: string;
 }
 
 export interface ReadingCompletion {

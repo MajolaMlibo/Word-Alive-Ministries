@@ -49,6 +49,8 @@ Core tables are:
 - `profiles` and `user_roles`
 - `reading_plans`, `daily_readings`, and `reading_completions`
 - `bible_studies`
+- `bible_verse_saves` (private member highlights, bookmarks, and notes)
+- `study_media` (authorised study-note images)
 - `announcements`
 - `ministry_links`
 - `prayer_requests` and `prayer_request_prayers`
@@ -142,6 +144,10 @@ reads or changes that data.
 - Supabase secret and service-role keys never belong in the app.
 - Row Level Security remains enabled for every production table and storage
   bucket.
+- Bible highlights, bookmarks, and notes are private to their owner. Study
+  images use the private `study-media` bucket; authenticated members may read
+  an image only when its linked Bible study is published, while authorised
+  content managers control uploads and removal.
 - Member content must not be added through the mobile app without an
   authorised content-management workflow.
 

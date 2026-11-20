@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import FormattedText from '../components/FormattedText';
 import { supabase } from '../services/supabase';
 import { BibleStudy, DailyReading } from '../services/database';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
@@ -133,9 +134,12 @@ function StudyNotesCard({
             </TouchableOpacity>
           ) : null}
 
-          <Text style={styles.description}>
-            {study.description || 'No additional study notes have been published.'}
-          </Text>
+          <View style={styles.description}>
+            <FormattedText
+              styles={styles}
+              text={study.description || 'No additional study notes have been published.'}
+            />
+          </View>
         </View>
       ) : (
         <Text style={styles.studyNotesHint}>Tap to view study notes</Text>
@@ -833,6 +837,27 @@ function makeStyles(colors: any, fonts: any) {
       color: colors.text,
       lineHeight: fonts.body * 1.5,
     },
+
+    formattedText: {
+      color: colors.text,
+      fontSize: fonts.body,
+      lineHeight: fonts.body * 1.5,
+    },
+
+    formattedHeading: {
+      color: colors.primary,
+      fontSize: fonts.bodyLarge,
+      fontWeight: '800',
+      lineHeight: fonts.bodyLarge * 1.35,
+      marginTop: spacing.xs,
+    },
+
+    formattedBold: { fontWeight: '800' },
+    formattedItalic: { fontStyle: 'italic' },
+    formattedLink: { color: colors.primary, fontWeight: '700', textDecorationLine: 'underline' },
+    formattedQuote: { borderLeftColor: colors.accent, borderLeftWidth: 3, marginVertical: spacing.xs, paddingLeft: spacing.sm },
+    formattedListRow: { flexDirection: 'row', gap: spacing.xs },
+    formattedListMarker: { color: colors.primary, fontSize: fonts.body, fontWeight: '800', minWidth: 18 },
 
     emptyCard: {
       backgroundColor: colors.surface,

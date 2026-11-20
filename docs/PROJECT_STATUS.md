@@ -275,6 +275,15 @@ Editor and reported `Success. No rows returned`.
   Announcements rather than Sign In. This resolves the previously reproduced
   standalone-session defect on that virtual device. Physical Android and iOS
   verification remain outstanding.
+- On 2026-11-20, the `fix/bible-verse-actions` working branch was smoke-tested
+  in Expo Go on the `Mlibo_AP1` Android virtual device. The Bible action panel
+  displayed its highlight, bookmark, private-note, copy, and share controls.
+  A temporary bookmark for Joel 1:1 appeared in Saved verses, survived a
+  force-close/relaunch, and was then removed. The Admin Study form displayed
+  its writing toolbar and correctly required the study to be saved before
+  images could be added. The `study_media` production migration succeeded.
+  Image upload, note saving, copy, sharing, and signed-APK verification remain
+  pending.
 
 ## Known blockers
 
@@ -314,11 +323,15 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the preview build 4 signed-in member journey on the project
+1. Complete the approved `fix/bible-verse-actions` branch: apply the
+   `study_media` migration, then verify Bible actions, Admin writing tools,
+   and study-note images in Expo Go before requesting a combined Android
+   preview build.
+2. Complete the preview build 4 signed-in member journey on the project
    owner's physical Android device, including gesture and three-button system
    navigation, before sharing the direct installation link with the pastor's
    small tester group.
-2. Complete the two remaining Admin device checks: Reading Plan edit/save and
+3. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-3. Obtain approved Bible-study events and verify populated Study, Calendar,
+4. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.

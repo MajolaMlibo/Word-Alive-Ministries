@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import RichTextField from '../components/RichTextField';
 import {
   Announcement,
   BibleStudy,
@@ -23,6 +25,7 @@ import {
   PrayerRequest,
   PrayerRequestStatus,
   ReadingPlan,
+  StudyMedia,
 } from '../services/database';
 import {
   deleteAnnouncement,
@@ -48,6 +51,12 @@ import {
 } from '../services/adminService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
 import { supabase } from '../services/supabase';
+import {
+  chooseAndUploadStudyImages,
+  deleteStudyMedia,
+  getStudyMedia,
+  getStudyMediaUrls,
+} from '../services/studyMediaService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -169,13 +178,25 @@ function Field({
   keyboardType?: 'default' | 'numeric' | 'url';
   styles: any;
 }) {
+  if (multiline) {
+    return (
+      <RichTextField
+        label={label}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        styles={styles}
+        value={value}
+      />
+    );
+  }
+
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         keyboardType={keyboardType}
-        multiline={multiline}
+        multiline={false}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={styles.placeholderColor}
@@ -517,6 +538,102 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   );
 }
 
+function StudyImagesManager({
+  studyId,
+  administratorId,
+  styles,
+}: {
+  studyId: string;
+  administratorId: string;
+  styles: any;
+}) {
+  const [media, setMedia] = useState<StudyMedia[]>([]);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { media: loadedMedia, error } = await getStudyMedia([studyId]);
+    if (error) {
+      Alert.alert('Unable to load study images', 'Please refresh and try again.');
+      setLoading(false);
+      return;
+    }
+    const { urls: loadedUrls, error: urlError } = await getStudyMediaUrls(loadedMedia);
+    if (urlError) Alert.alert('Unable to load study images', 'Please refresh and try again.');
+    setMedia(loadedMedia);
+    setUrls(loadedUrls);
+    setLoading(false);
+  }, [studyId]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const addImages = async () => {
+    setUploading(true);
+    const { cancelled, error } = await chooseAndUploadStudyImages(studyId, administratorId);
+    setUploading(false);
+    if (cancelled) return;
+    if (error) {
+      Alert.alert('Unable to add images', error.message || 'Please try again.');
+      return;
+    }
+    await load();
+  };
+
+  const removeImage = (item: StudyMedia) => Alert.alert(
+    'Remove study image?',
+    'Members will no longer see this image.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await deleteStudyMedia(item);
+          if (error) Alert.alert('Unable to remove image', 'Please try again.');
+          else await load();
+        },
+      },
+    ]
+  );
+
+  return (
+    <View style={styles.studyImagesEditor}>
+      <Text style={styles.fieldLabel}>Study images</Text>
+      <Text style={styles.helperText}>
+        Add up to six sermon-note images. Members see them only when this study is published.
+      </Text>
+      {loading ? <ActivityIndicator color={styles.primaryColor} /> : media.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
+          {media.map((item) => (
+            <View key={item.id} style={styles.studyImageItem}>
+              {urls[item.id] ? <Image source={{ uri: urls[item.id] }} style={styles.studyImagePreview} /> : null}
+              <TouchableOpacity
+                accessibilityLabel="Remove study image"
+                onPress={() => removeImage(item)}
+                style={styles.removeStudyImageButton}
+              >
+                <Ionicons name="close" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <Text style={styles.helperText}>No images added yet.</Text>
+      )}
+      <TouchableOpacity
+        disabled={uploading || loading}
+        onPress={() => void addImages()}
+        style={[styles.addStudyImageButton, (uploading || loading) && styles.disabledButton]}
+      >
+        <Ionicons name="images-outline" size={19} color="#FFF" />
+        <Text style={styles.addStudyImageButtonText}>{uploading ? 'Uploading...' : 'Add study images'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 function StudiesManager({ administratorId, styles }: { administratorId: string; styles: any }) {
   const blank = () => ({ name: '', scripture: '', date: '', start: '', end: '', description: '', location: '', status: 'draft' as ContentStatus });
   const [studies, setStudies] = useState<BibleStudy[]>([]);
@@ -545,7 +662,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     setSaving(false);
     if (error || !study) { Alert.alert('Unable to save study', 'Please check your connection and try again.'); return; }
     setStudies((current) => [...current.filter((item) => item.id !== study.id), study].sort((a, b) => a.study_date.localeCompare(b.study_date)));
-    reset();
+    edit(study);
   };
   const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Unable to delete study', 'Please try again.'); else { setStudies((current) => current.filter((item) => item.id !== study.id)); if (editing?.id === study.id) reset(); } } }]);
   return <View>
@@ -559,6 +676,9 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
       <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
+      {editing ? <StudyImagesManager studyId={editing.id} administratorId={administratorId} styles={styles} /> : (
+        <Text style={styles.helperText}>Save this study first, then add its sermon-note images.</Text>
+      )}
     </EditorCard>
     <Text style={styles.listTitle}>Scheduled studies and events</Text>
     {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : studies.length ? studies.map((study) => <ContentListCard key={study.id} title={study.study_name} subtitle={`${study.study_date} • ${titleCase(study.status)}`} onEdit={() => edit(study)} onDelete={() => remove(study)} styles={styles} />) : <EmptyState icon="school-outline" message="No Bible studies yet." styles={styles} />}
@@ -828,13 +948,14 @@ function makeStyles(colors: any, fonts: any) {
     hero: { backgroundColor: colors.primary, borderRadius: 22, marginBottom: spacing.lg, padding: spacing.lg }, heroTitle: { color: '#FFF', fontSize: fonts.display, fontWeight: '700', marginTop: spacing.sm }, heroText: { color: '#DDF4E6', fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.xs },
     sectionTabs: { marginBottom: spacing.lg }, sectionTabsContent: { paddingRight: spacing.lg }, sectionTab: { alignItems: 'center', borderColor: colors.primary, borderRadius: 14, borderWidth: 1, flexDirection: 'row', marginRight: spacing.xs, paddingHorizontal: spacing.sm, paddingVertical: 10 }, sectionTabActive: { backgroundColor: colors.primary }, sectionTabText: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginLeft: 4 }, sectionTabTextActive: { color: '#FFF' },
     panelHint: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5, marginBottom: spacing.sm }, editorCard: { backgroundColor: colors.surface, borderRadius: 20, padding: spacing.lg }, editorTitle: { color: colors.primary, fontSize: fonts.subtitle, fontWeight: '700', marginBottom: spacing.sm },
-    fieldWrap: { marginTop: spacing.sm }, fieldLabel: { color: colors.text, fontSize: fonts.caption, fontWeight: '700', marginBottom: 4 }, field: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, color: colors.text, fontSize: fonts.body, minHeight: 45, paddingHorizontal: spacing.sm }, textArea: { minHeight: 100, paddingTop: spacing.sm }, pickerFieldRow: { alignItems: 'center', flexDirection: 'row' }, pickerField: { alignItems: 'center', borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, flex: 1, flexDirection: 'row', minHeight: 45, paddingHorizontal: spacing.sm }, pickerFieldText: { color: colors.text, fontSize: fonts.body, marginLeft: spacing.xs }, pickerFieldPlaceholder: { color: colors.textMuted }, clearPickerButton: { marginLeft: spacing.xs, padding: spacing.xs },
+    fieldWrap: { marginTop: spacing.sm }, fieldLabel: { color: colors.text, fontSize: fonts.caption, fontWeight: '700', marginBottom: 4 }, field: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, color: colors.text, fontSize: fonts.body, minHeight: 45, paddingHorizontal: spacing.sm }, textArea: { minHeight: 100, paddingTop: spacing.sm }, richTextHint: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.4, marginBottom: spacing.xs }, richToolbar: { alignItems: 'center', borderColor: colors.borderSoft, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, flexDirection: 'row', flexWrap: 'wrap', marginBottom: -1, padding: 4 }, richToolButton: { alignItems: 'center', justifyContent: 'center', minHeight: 38, minWidth: 38 }, pickerFieldRow: { alignItems: 'center', flexDirection: 'row' }, pickerField: { alignItems: 'center', borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, flex: 1, flexDirection: 'row', minHeight: 45, paddingHorizontal: spacing.sm }, pickerFieldText: { color: colors.text, fontSize: fonts.body, marginLeft: spacing.xs }, pickerFieldPlaceholder: { color: colors.textMuted }, clearPickerButton: { marginLeft: spacing.xs, padding: spacing.xs },
     statusPicker: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.sm }, statusOption: { borderColor: colors.borderSoft, borderRadius: 10, borderWidth: 1, marginRight: 6, marginTop: 4, paddingHorizontal: 9, paddingVertical: 7 }, statusOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary }, statusOptionText: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700' }, statusOptionTextActive: { color: '#FFF' },
     primaryButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', marginTop: spacing.md, paddingVertical: 14 }, primaryButtonText: { color: '#FFF', fontSize: fonts.body, fontWeight: '700', marginLeft: spacing.xs }, disabledButton: { opacity: 0.65 }, cancelButton: { alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.xs }, cancelButtonText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700' },
     listTitle: { color: colors.text, fontSize: fonts.subtitle, fontWeight: '700', marginBottom: spacing.sm, marginTop: spacing.xl }, loading: { marginTop: spacing.lg }, itemCard: { backgroundColor: colors.surface, borderRadius: 18, marginBottom: spacing.sm, padding: spacing.md }, itemTitle: { color: colors.text, fontSize: fonts.body, fontWeight: '700' }, itemMeta: { color: colors.textMuted, fontSize: fonts.caption, marginTop: 3 }, itemDescription: { color: colors.text, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.xs }, cardActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.sm }, editText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700', marginRight: spacing.md }, deleteText: { color: colors.danger, fontSize: fonts.body, fontWeight: '700' },
     switchRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm }, switchLabel: { color: colors.text, flex: 1, fontSize: fonts.caption, fontWeight: '600', paddingRight: spacing.sm }, outlineButton: { alignItems: 'center', borderColor: colors.primary, borderRadius: 12, borderWidth: 1, marginTop: spacing.sm, paddingVertical: 10 }, outlineButtonText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700' }, adminDeleteButton: { alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.xs }, adminDeleteButtonText: { color: colors.danger, fontSize: fonts.caption, fontWeight: '700' },
     emptyCard: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 18, padding: spacing.xl }, emptyText: { color: colors.textMuted, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.sm, textAlign: 'center' }, deniedTitle: { color: colors.text, fontSize: fonts.subtitle, fontWeight: '700', marginTop: spacing.sm }, deniedText: { color: colors.textMuted, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.xs, textAlign: 'center' },
     planButton: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, marginTop: spacing.sm, padding: spacing.sm }, planButtonLabel: { color: colors.textMuted, fontSize: fonts.caption }, planButtonValue: { color: colors.text, fontSize: fonts.body, fontWeight: '700', marginTop: 3 }, planButtonHint: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: 3 }, warningText: { color: colors.danger, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5, marginTop: spacing.sm },
+    studyImagesEditor: { borderTopColor: colors.borderSoft, borderTopWidth: 1, marginTop: spacing.lg, paddingTop: spacing.md }, helperText: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5 }, studyImageList: { gap: spacing.sm, paddingVertical: spacing.sm }, studyImageItem: { height: 96, position: 'relative', width: 96 }, studyImagePreview: { borderRadius: 10, height: 96, width: 96 }, removeStudyImageButton: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 14, height: 28, justifyContent: 'center', position: 'absolute', right: -6, top: -6, width: 28 }, addStudyImageButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', marginTop: spacing.sm, minHeight: 46, paddingHorizontal: spacing.md }, addStudyImageButtonText: { color: '#FFF', fontSize: fonts.body, fontWeight: '700', marginLeft: spacing.xs },
   });
   return { ...styles, placeholderColor: colors.textMuted, primaryColor: colors.primary, textMutedColor: colors.textMuted };
 }
