@@ -59,6 +59,10 @@
   on a physical Android phone with both navigation modes.
 - [ ] Verify the daily-reading completion state for a Pastor or Administrator
   account after another member has completed the same reading.
+- [ ] On physical Android, verify an existing Notice and Study load their full
+  saved editor text, formatting remains visible after saving, long notes scroll
+  above the keyboard, and changing records with unsaved edits prompts to
+  discard or keep editing.
 
 ## Android and iOS verification
 

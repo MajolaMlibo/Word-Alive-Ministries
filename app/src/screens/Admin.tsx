@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -168,6 +170,7 @@ function Field({
   placeholder,
   multiline = false,
   keyboardType,
+  documentId,
   styles,
 }: {
   label: string;
@@ -176,6 +179,7 @@ function Field({
   placeholder?: string;
   multiline?: boolean;
   keyboardType?: 'default' | 'numeric' | 'url';
+  documentId?: string;
   styles: any;
 }) {
   if (multiline) {
@@ -183,6 +187,7 @@ function Field({
       <RichTextField
         label={label}
         onChangeText={onChangeText}
+        documentId={documentId}
         placeholder={placeholder}
         styles={styles}
         value={value}
@@ -442,6 +447,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savedForm = useRef(JSON.stringify(form));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -453,11 +459,15 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
 
   useEffect(() => { void load(); }, [load]);
 
-  const reset = () => { setEditing(null); setForm(blank()); };
-  const edit = (announcement: Announcement) => {
-    setEditing(announcement);
+  const applyForm = (nextForm: ReturnType<typeof blank>, nextEditing: Announcement | null) => {
+    savedForm.current = JSON.stringify(nextForm);
+    setEditing(nextEditing);
+    setForm(nextForm);
+  };
+  const reset = () => applyForm(blank(), null);
+  const startEditing = (announcement: Announcement) => {
     const expiry = splitDateTime(announcement.expires_at);
-    setForm({
+    applyForm({
       title: announcement.title,
       message: announcement.message,
       status: announcement.status,
@@ -465,7 +475,19 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
       expiryTime: expiry.time,
       actionLabel: announcement.action_label || '',
       actionUrl: announcement.action_url || '',
-    });
+    }, announcement);
+  };
+  const edit = (announcement: Announcement) => {
+    if (editing?.id === announcement.id) return;
+    const continueEditing = () => startEditing(announcement);
+    if (JSON.stringify(form) === savedForm.current) {
+      continueEditing();
+      return;
+    }
+    Alert.alert('Unsaved notice changes', 'Save changes or cancel editing before opening another notice.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard changes', style: 'destructive', onPress: continueEditing },
+    ]);
   };
 
   const save = async () => {
@@ -521,7 +543,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     <View>
       <EditorCard title={editing ? 'Edit notice' : 'New notice'} styles={styles}>
         <Field label="Title" value={form.title} onChangeText={(title) => setForm({ ...form, title })} styles={styles} />
-        <Field label="Message" value={form.message} onChangeText={(message) => setForm({ ...form, message })} multiline styles={styles} />
+        <Field label="Message" value={form.message} onChangeText={(message) => setForm({ ...form, message })} multiline documentId={editing?.id || 'new-notice'} styles={styles} />
         <Text style={styles.fieldLabel}>Status</Text>
         <ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
         <DateTimeField label="Expiry date (optional)" value={form.expiryDate} onChange={(expiryDate) => setForm({ ...form, expiryDate })} mode="date" optional styles={styles} />
@@ -641,6 +663,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
   const [editing, setEditing] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savedForm = useRef(JSON.stringify(form));
   const load = useCallback(async () => {
     setLoading(true);
     const { studies: loadedStudies, error } = await getAdminBibleStudies();
@@ -648,10 +671,26 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     setLoading(false);
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const reset = () => { setEditing(null); setForm(blank()); };
+  const applyForm = (nextForm: ReturnType<typeof blank>, nextEditing: BibleStudy | null) => {
+    savedForm.current = JSON.stringify(nextForm);
+    setEditing(nextEditing);
+    setForm(nextForm);
+  };
+  const reset = () => applyForm(blank(), null);
+  const startEditing = (study: BibleStudy) => {
+    applyForm({ name: study.study_name, scripture: study.scripture_ref || '', date: study.study_date, start: study.start_time?.slice(0, 5) || '', end: study.end_time?.slice(0, 5) || '', description: study.description || '', location: study.location_or_url || '', status: study.status }, study);
+  };
   const edit = (study: BibleStudy) => {
-    setEditing(study);
-    setForm({ name: study.study_name, scripture: study.scripture_ref || '', date: study.study_date, start: study.start_time?.slice(0, 5) || '', end: study.end_time?.slice(0, 5) || '', description: study.description || '', location: study.location_or_url || '', status: study.status });
+    if (editing?.id === study.id) return;
+    const continueEditing = () => startEditing(study);
+    if (JSON.stringify(form) === savedForm.current) {
+      continueEditing();
+      return;
+    }
+    Alert.alert('Unsaved study changes', 'Save changes or cancel editing before opening another study.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard changes', style: 'destructive', onPress: continueEditing },
+    ]);
   };
   const save = async () => {
     if (!form.name.trim() || !form.date) {
@@ -662,7 +701,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     setSaving(false);
     if (error || !study) { Alert.alert('Unable to save study', 'Please check your connection and try again.'); return; }
     setStudies((current) => [...current.filter((item) => item.id !== study.id), study].sort((a, b) => a.study_date.localeCompare(b.study_date)));
-    edit(study);
+    startEditing(study);
   };
   const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Unable to delete study', 'Please try again.'); else { setStudies((current) => current.filter((item) => item.id !== study.id)); if (editing?.id === study.id) reset(); } } }]);
   return <View>
@@ -673,7 +712,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
       <DateTimeField label="Start time (optional)" value={form.start} onChange={(start) => setForm({ ...form, start })} mode="time" optional styles={styles} />
       <DateTimeField label="End time (optional)" value={form.end} onChange={(end) => setForm({ ...form, end })} mode="time" optional styles={styles} />
       <Field label="Location or HTTPS link (optional)" value={form.location} onChangeText={(location) => setForm({ ...form, location })} styles={styles} />
-      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline styles={styles} />
+      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline documentId={editing?.id || 'new-study'} styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
       {editing ? <StudyImagesManager studyId={editing.id} administratorId={administratorId} styles={styles} /> : (
@@ -717,7 +756,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
     <EditorCard title={editing ? 'Edit reading plan' : 'New reading plan'} styles={styles}>
       <Field label="Plan name" value={form.name} onChangeText={(name) => setForm({ ...form, name })} styles={styles} />
       <Field label="Plan year" value={form.year} onChangeText={(year) => setForm({ ...form, year })} keyboardType="numeric" placeholder="2027" styles={styles} />
-      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline styles={styles} />
+      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline documentId={editing?.id || 'new-reading-plan'} styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
@@ -786,7 +825,7 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
       <Field label="Day number (1–366)" value={form.dayNumber} onChangeText={(dayNumber) => setForm({ ...form, dayNumber })} keyboardType="numeric" styles={styles} />
       <DateTimeField label="Scheduled date" value={form.date} onChange={(date) => setForm({ ...form, date })} mode="date" styles={styles} />
       <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm({ ...form, scripture })} placeholder="Psalms 107-111" styles={styles} />
-      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm({ ...form, reflection })} multiline styles={styles} />
+      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm({ ...form, reflection })} multiline documentId={editing?.id || 'new-daily-reading'} styles={styles} />
       <Field label="Audio HTTPS link (optional)" value={form.audioUrl} onChangeText={(audioUrl) => setForm({ ...form, audioUrl })} keyboardType="url" styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
@@ -927,19 +966,27 @@ export default function AdminScreen() {
   if (checkingAccess) return <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
   if (!allowed || !administratorId) return <View style={styles.center}><Ionicons color={colors.textMuted} name="lock-closed-outline" size={42} /><Text style={styles.deniedTitle}>Admin access required</Text><Text style={styles.deniedText}>This area is available only to approved pastors and administrators.</Text></View>;
 
-  return <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-    <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
-      {SECTIONS.map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
+  return <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.content}
+      keyboardDismissMode="interactive"
+      keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      style={styles.container}
+    >
+      <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
+        {SECTIONS.map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
+      </ScrollView>
+      {section === 'prayer' ? <PrayerManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>
-    {section === 'prayer' ? <PrayerManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
-    {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
-  </ScrollView>;
+  </KeyboardAvoidingView>;
 }
 
 function makeStyles(colors: any, fonts: any) {

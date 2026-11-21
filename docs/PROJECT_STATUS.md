@@ -341,6 +341,13 @@ Editor and reported `Success. No rows returned`.
   next Android tester candidate, but it must not be described as verified or
   production-ready until the pastor confirms it on a physical device.
 
+- `fix/admin-editor-state` follows the reported Android editor failures. It
+  remounts a visual editor for each selected record, waits for the editor to
+  load before enabling its writing controls, supports scrolling long notes,
+  and warns before an Administrator discards unsaved Notice or Study changes.
+  TypeScript validation passes. It still requires physical Android testing;
+  no new Android build has been created for this source-only fix.
+
 - There are currently no confirmed, published Bible-study events in the
   production database. Church meeting dates, times, locations, and links must
   be supplied by the pastor or an authorised church representative; the app
