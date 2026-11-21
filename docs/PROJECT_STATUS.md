@@ -71,12 +71,14 @@ build is authorised while the current source fixes are under review.
 
 ## Current work
 
-- `fix/study-schedule-visibility` is in progress. It displays published
-  studies scheduled for the current South African date in a public Today's
-  Study section, limits future studies to Pastor and Administrator roles, and
-  adds a production migration that enforces the same date limit for
-  database rows and private study-media objects. TypeScript, migration
-  application, and physical Android role checks remain pending.
+- `fix/study-schedule-visibility` was merged through pull request #51. It
+  displays published studies scheduled for the current South African date in a
+  public Today's Study section and limits future studies to Pastor and
+  Administrator roles. On 2026-11-21, the production migration
+  `202611210001_restrict_future_study_visibility.sql` succeeded in
+  `word-alive-prod`; the resulting policy list was manually verified for study
+  rows, study-media rows, and `study-media` Storage objects. TypeScript passed.
+  Physical Android role checks remain pending.
 - `fix/bible-reader-navigation` was merged through pull request #50. It moves
   passage controls into a closed-by-default reader panel, removes the
   unnecessary verse-number grid, and makes the Bible controls and text use one

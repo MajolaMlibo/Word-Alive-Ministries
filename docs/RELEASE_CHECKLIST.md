@@ -13,10 +13,12 @@
 - [ ] Verify expandable published study notes on a physical device after the
   church supplies a real study or event.
 - [ ] Publish confirmed Bible-study events and verify populated views.
-- [ ] Apply `202611210001_restrict_future_study_visibility.sql` in production
-  Supabase, then verify: members see Today's Study and Past only; Pastor and
-  Administrator accounts can also see Upcoming; a member cannot
-  retrieve a future study or its private media.
+- [x] Apply `202611210001_restrict_future_study_visibility.sql` in production
+  Supabase. It succeeded in `word-alive-prod` on 2026-11-21 and the resulting
+  study and Storage policies were verified.
+- [ ] Verify: members see Today's Study and Past only; Pastor and Administrator
+  accounts can also see Upcoming; a member cannot retrieve a future study or
+  its private media.
 - [x] Publish approved announcements and verify the member announcement feed.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,
   delete, private submission, and reload persistence.
