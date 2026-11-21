@@ -66,6 +66,11 @@
   notice, left swipe to mark an unread notice as read and move it to the
   bottom, a one-time guidance hint without an arrow, and working Read more
   only for a genuinely collapsed long message.
+- [ ] On physical Android, confirm Bible passage selection is closed by
+  default, selecting a book and chapter opens that chapter and closes the
+  selector, direct `Book chapter:verse` search still works, and long Bible
+  text scrolls naturally with the passage control rather than beneath fixed
+  navigation.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
 - [ ] Verify app-specific photo permission wording.
