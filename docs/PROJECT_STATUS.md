@@ -4,7 +4,8 @@
 
 Pastor's first Android tester release: record physical-device feedback and
 prioritise release-blocking defects without creating another build unless a
-fix is verified and explicitly approved for release.
+fix is verified and explicitly approved for release. No replacement Android
+build is authorised while the current source fixes are under review.
 
 ## Verified on 2026-11-08
 
@@ -70,25 +71,35 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
-- `fix/bible-reader-navigation` is in progress. It moves passage controls into
-  a closed-by-default reader panel, removes the unnecessary verse-number grid,
-  and makes the Bible controls and text use one natural scroll surface.
-  TypeScript and physical Android verification remain pending.
-- `fix/admin-editor-toolbar` is in progress. It places the Admin writing
-  toolbar inside the rich-text WebView so Android cannot discard a selected
-  range before a formatting command runs. It also keeps the toolbar visible
-  while longer content scrolls and guards mobile taps from applying a command
-  twice. TypeScript and physical Android verification remain pending.
-- `fix/android-adaptive-icon-safe-zone` is in progress. It keeps the supplied
-  Word Alive logo but moves both Android adaptive foreground layers inside the
-  platform's central safe area, preventing launcher masks from clipping the
-  branding. It also provides a safe legacy Android icon. Expo configuration
-  validation and installed-APK visual verification remain pending.
-- `fix/announcement-deck-interaction` is in progress. It replaces Home's
-  plain vertical notice list with a visible card deck, removes the inactive
-  arrow from the notice guidance, supports left-swipe mark-as-read and
-  right-swipe next-card actions, and makes Read more collapse text before it
-  is expanded. TypeScript and physical Android verification remain pending.
+- `fix/study-schedule-visibility` is in progress. It displays published
+  studies scheduled for the current South African date in a public Today's
+  Study section, limits future studies to Pastor and Administrator roles, and
+  adds a production migration that enforces the same date limit for
+  database rows and private study-media objects. TypeScript, migration
+  application, and physical Android role checks remain pending.
+- `fix/bible-reader-navigation` was merged through pull request #50. It moves
+  passage controls into a closed-by-default reader panel, removes the
+  unnecessary verse-number grid, and makes the Bible controls and text use one
+  natural scroll surface. TypeScript passed; physical Android verification
+  remains pending.
+- `fix/admin-editor-toolbar` was merged through pull request #49. It places the
+  Admin writing toolbar inside the rich-text WebView so Android cannot discard
+  a selected range before a formatting command runs. It also keeps the toolbar
+  visible while longer content scrolls and guards mobile taps from applying a
+  command twice. TypeScript passed; physical Android verification remains
+  pending.
+- `fix/android-adaptive-icon-safe-zone` was merged through pull request #48.
+  It keeps the supplied Word Alive logo but moves both Android adaptive
+  foreground layers inside the platform's central safe area, preventing
+  launcher masks from clipping the branding. It also provides a safe legacy
+  Android icon. Expo configuration passed; an installed-APK visual check is
+  pending.
+- `fix/announcement-deck-interaction` was merged through pull request #47. It
+  replaces Home's plain vertical notice list with a visible card deck, removes
+  the inactive arrow from the notice guidance, supports left-swipe
+  mark-as-read and right-swipe next-card actions, and makes Read more collapse
+  text before it is expanded. TypeScript passed; physical Android verification
+  remains pending.
 - `fix/study-image-lightbox` was merged through pull request #46. It stops
   image taps from collapsing a Study card and opens the selected study-note
   image full screen instead. TypeScript passed; physical Android verification

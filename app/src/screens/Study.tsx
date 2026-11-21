@@ -15,6 +15,7 @@ import { supabase } from '../services/supabase';
 import { BibleStudy, StudyMedia } from '../services/database';
 import { getStudyMedia, getStudyMediaUrls } from '../services/studyMediaService';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
+import { getCurrentUserRole, isAdminRole } from '../services/roleService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -38,7 +39,8 @@ export default function StudyScreen() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
-  const [filter, setFilter] = useState<StudyFilter>('upcoming');
+  const [filter, setFilter] = useState<StudyFilter>('past');
+  const [todayStudies, setTodayStudies] = useState<BibleStudy[]>([]);
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [studyMedia, setStudyMedia] = useState<StudyMedia[]>([]);
   const [studyMediaUrls, setStudyMediaUrls] = useState<Record<string, string>>({});
@@ -46,32 +48,53 @@ export default function StudyScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [canSeeUpcoming, setCanSeeUpcoming] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
 
-  const loadStudies = useCallback(async (which: StudyFilter) => {
+  const loadStudies = useCallback(async (which: StudyFilter, includeUpcoming: boolean) => {
     setLoading(true);
     setLoadError(null);
 
     try {
       const today = getSouthAfricaDate();
-      let query = supabase.from('bible_studies').select('*').eq('status', 'published');
+      const todayQuery = supabase
+        .from('bible_studies')
+        .select('*')
+        .eq('status', 'published')
+        .eq('study_date', today)
+        .order('start_time', { ascending: true });
 
-      query =
-        which === 'upcoming'
-          ? query.gte('study_date', today).order('study_date', { ascending: true })
-          : query.lt('study_date', today).order('study_date', { ascending: false });
+      const studyQuery = supabase
+        .from('bible_studies')
+        .select('*')
+        .eq('status', 'published');
 
-      const { data, error } = await query;
+      const primaryQuery = which === 'upcoming' && includeUpcoming
+        ? studyQuery.gt('study_date', today).order('study_date', { ascending: true })
+        : studyQuery.lt('study_date', today).order('study_date', { ascending: false });
 
-      if (error) {
-        console.warn('Unable to load Bible studies.', error.message);
+      const [todayResult, studiesResult] = await Promise.all([todayQuery, primaryQuery]);
+
+      if (todayResult.error || studiesResult.error) {
+        console.warn(
+          'Unable to load Bible studies.',
+          todayResult.error?.message || studiesResult.error?.message,
+        );
+        setTodayStudies([]);
         setStudies([]);
         setLoadError('We could not load Bible studies. Please try again.');
         return;
       }
 
-      const loadedStudies = (data as BibleStudy[]) || [];
+      const loadedTodayStudies = (todayResult.data as BibleStudy[]) || [];
+      const loadedStudies = (studiesResult.data as BibleStudy[]) || [];
+      setTodayStudies(loadedTodayStudies);
       setStudies(loadedStudies);
-      const { media, error: mediaError } = await getStudyMedia(loadedStudies.map((study) => study.id));
+      const loadedStudyIds = [...new Set([
+        ...loadedTodayStudies.map((study) => study.id),
+        ...loadedStudies.map((study) => study.id),
+      ])];
+      const { media, error: mediaError } = await getStudyMedia(loadedStudyIds);
       if (mediaError) {
         console.warn('Unable to load study images.', mediaError.message);
         setStudyMedia([]);
@@ -84,6 +107,7 @@ export default function StudyScreen() {
       }
     } catch (error) {
       console.warn('Unexpected error while loading Bible studies.', error);
+      setTodayStudies([]);
       setStudies([]);
       setLoadError('We could not load Bible studies. Please try again.');
     } finally {
@@ -92,8 +116,125 @@ export default function StudyScreen() {
   }, []);
 
   useEffect(() => {
-    loadStudies(filter);
-  }, [filter, loadStudies]);
+    let isMounted = true;
+
+    const loadRole = async () => {
+      const { role, error } = await getCurrentUserRole();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.warn('Unable to load the current study-access role.', error.message);
+      }
+
+      setCanSeeUpcoming(isAdminRole(role));
+      setRoleLoading(false);
+    };
+
+    loadRole();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (roleLoading) return;
+
+    if (filter === 'upcoming' && !canSeeUpcoming) {
+      setFilter('past');
+      return;
+    }
+
+    loadStudies(filter, canSeeUpcoming);
+  }, [canSeeUpcoming, filter, loadStudies, roleLoading]);
+
+  const renderStudyCard = (study: BibleStudy) => {
+    const open = expandedId === study.id;
+    const mediaForStudy = studyMedia.filter((item) => item.study_id === study.id);
+
+    return (
+      <View key={study.id} style={styles.card}>
+        <TouchableOpacity
+          accessibilityHint={open ? 'Collapses this study' : 'Expands this study'}
+          accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${study.study_name}`}
+          accessibilityRole="button"
+          activeOpacity={0.9}
+          onPress={() => setExpandedId(open ? null : study.id)}
+        >
+          <View style={styles.topRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="book" size={20} color={colors.primary} />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text style={styles.studyName}>{study.study_name}</Text>
+
+              {study.scripture_ref ? (
+                <Text style={styles.scriptureRef}>{study.scripture_ref}</Text>
+              ) : null}
+            </View>
+
+            <Ionicons
+              name={open ? 'chevron-up' : 'chevron-down'}
+              size={22}
+              color={colors.primary}
+            />
+          </View>
+
+          <View style={styles.metaRow}>
+            <Ionicons name="calendar-outline" size={15} color={colors.textMuted} />
+            <Text style={styles.meta}>{formatStudyDate(study.study_date)}</Text>
+
+            {study.start_time ? (
+              <>
+                <Text style={styles.dot}>•</Text>
+                <Ionicons name="time-outline" size={15} color={colors.textMuted} />
+                <Text style={styles.meta}>{formatStudyTime(study.start_time)}</Text>
+              </>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+
+        {open && (
+          <View style={styles.detailBox}>
+            <Text style={styles.detailTitle}>Study Notes</Text>
+
+            <FormattedText
+              styles={styles}
+              text={study.description || 'No additional notes have been provided for this Bible study.'}
+            />
+
+            {mediaForStudy.length ? (
+              <>
+                <Text style={styles.imageHint}>Tap an image to view it full screen.</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
+                  {mediaForStudy.map((item) => studyMediaUrls[item.id] ? (
+                    <TouchableOpacity
+                      accessibilityHint="Opens this image full screen"
+                      accessibilityLabel="Open study image"
+                      accessibilityRole="button"
+                      key={item.id}
+                      onPress={() => setSelectedImageUrl(studyMediaUrls[item.id])}
+                    >
+                      <Image source={{ uri: studyMediaUrls[item.id] }} style={styles.studyImage} />
+                    </TouchableOpacity>
+                  ) : null)}
+                </ScrollView>
+              </>
+            ) : null}
+
+            {study.location_or_url ? (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={16} color={colors.textMuted} />
+                <Text style={styles.locationText}>{study.location_or_url}</Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -106,44 +247,45 @@ export default function StudyScreen() {
         </Text>
       </View>
 
-      {/* Filter */}
-      <View style={styles.segment}>
-        <TouchableOpacity
-          style={[
-            styles.segmentBtn,
-            filter === 'upcoming' && styles.segmentActive,
-          ]}
-          onPress={() => setFilter('upcoming')}
-        >
-          <Text
+      {canSeeUpcoming && !roleLoading ? (
+        <View style={styles.segment}>
+          <TouchableOpacity
             style={[
-              styles.segmentText,
-              filter === 'upcoming' && styles.segmentTextActive,
+              styles.segmentBtn,
+              filter === 'upcoming' && styles.segmentActive,
             ]}
+            onPress={() => setFilter('upcoming')}
           >
-            Upcoming
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.segmentText,
+                filter === 'upcoming' && styles.segmentTextActive,
+              ]}
+            >
+              Upcoming
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.segmentBtn,
-            filter === 'past' && styles.segmentActive,
-          ]}
-          onPress={() => setFilter('past')}
-        >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.segmentText,
-              filter === 'past' && styles.segmentTextActive,
+              styles.segmentBtn,
+              filter === 'past' && styles.segmentActive,
             ]}
+            onPress={() => setFilter('past')}
           >
-            Past
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.segmentText,
+                filter === 'past' && styles.segmentTextActive,
+              ]}
+            >
+              Past
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
-      {loading ? (
+      {loading || roleLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -158,12 +300,12 @@ export default function StudyScreen() {
           <Text style={styles.emptyText}>{loadError}</Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={() => loadStudies(filter)}
+            onPress={() => loadStudies(filter, canSeeUpcoming)}
           >
             <Text style={styles.retryButtonText}>Try again</Text>
           </TouchableOpacity>
         </View>
-      ) : studies.length === 0 ? (
+      ) : todayStudies.length === 0 && studies.length === 0 ? (
         <View style={styles.center}>
           <Ionicons
             name="book-outline"
@@ -172,7 +314,7 @@ export default function StudyScreen() {
           />
           <Text style={styles.emptyTitle}>Nothing here yet</Text>
           <Text style={styles.emptyText}>
-            {filter === 'upcoming'
+            {filter === 'upcoming' && canSeeUpcoming
               ? 'There are no upcoming Bible studies.'
               : 'No previous studies have been added.'}
           </Text>
@@ -182,115 +324,40 @@ export default function StudyScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: spacing.xl }}
         >
-          {studies.map((study) => {
-            const open = expandedId === study.id;
-
-            return (
-              <View key={study.id} style={styles.card}>
-                <TouchableOpacity
-                  accessibilityHint={open ? 'Collapses this study' : 'Expands this study'}
-                  accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${study.study_name}`}
-                  accessibilityRole="button"
-                  activeOpacity={0.9}
-                  onPress={() => setExpandedId(open ? null : study.id)}
-                >
-                  <View style={styles.topRow}>
-                    <View style={styles.iconCircle}>
-                      <Ionicons
-                        name="book"
-                        size={20}
-                        color={colors.primary}
-                      />
-                    </View>
-
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.studyName}>
-                        {study.study_name}
-                      </Text>
-
-                      {study.scripture_ref ? (
-                        <Text style={styles.scriptureRef}>
-                          {study.scripture_ref}
-                        </Text>
-                      ) : null}
-                    </View>
-
-                    <Ionicons
-                      name={open ? 'chevron-up' : 'chevron-down'}
-                      size={22}
-                      color={colors.primary}
-                    />
-                  </View>
-
-                  <View style={styles.metaRow}>
-                    <Ionicons
-                      name="calendar-outline"
-                      size={15}
-                      color={colors.textMuted}
-                    />
-                    <Text style={styles.meta}>{formatStudyDate(study.study_date)}</Text>
-
-                    {study.start_time ? (
-                      <>
-                        <Text style={styles.dot}>•</Text>
-                        <Ionicons
-                          name="time-outline"
-                          size={15}
-                          color={colors.textMuted}
-                        />
-                        <Text style={styles.meta}>
-                          {formatStudyTime(study.start_time)}
-                        </Text>
-                      </>
-                    ) : null}
-                  </View>
-                </TouchableOpacity>
-
-                {open && (
-                  <View style={styles.detailBox}>
-                    <Text style={styles.detailTitle}>Study Notes</Text>
-
-                    <FormattedText
-                      styles={styles}
-                      text={study.description || 'No additional notes have been provided for this Bible study.'}
-                    />
-
-                    {studyMedia.filter((item) => item.study_id === study.id).length ? (
-                      <>
-                        <Text style={styles.imageHint}>Tap an image to view it full screen.</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
-                          {studyMedia.filter((item) => item.study_id === study.id).map((item) => studyMediaUrls[item.id] ? (
-                            <TouchableOpacity
-                              accessibilityHint="Opens this image full screen"
-                              accessibilityLabel="Open study image"
-                              accessibilityRole="button"
-                              key={item.id}
-                              onPress={() => setSelectedImageUrl(studyMediaUrls[item.id])}
-                            >
-                              <Image source={{ uri: studyMediaUrls[item.id] }} style={styles.studyImage} />
-                            </TouchableOpacity>
-                          ) : null)}
-                        </ScrollView>
-                      </>
-                    ) : null}
-
-                    {study.location_or_url ? (
-                      <View style={styles.locationRow}>
-                        <Ionicons
-                          name="location-outline"
-                          size={16}
-                          color={colors.textMuted}
-                        />
-                        <Text style={styles.locationText}>
-                          {study.location_or_url}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                )}
+          {todayStudies.length ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  {todayStudies.length === 1 ? "Today's study" : "Today's studies"}
+                </Text>
+                <Text style={styles.sectionSubtitle}>Published for today</Text>
               </View>
-            );
-          })}
+              {todayStudies.map(renderStudyCard)}
+            </>
+          ) : null}
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {filter === 'upcoming' && canSeeUpcoming ? 'Upcoming studies' : 'Past studies'}
+            </Text>
+            {canSeeUpcoming ? (
+              <Text style={styles.sectionSubtitle}>
+                {filter === 'upcoming'
+                  ? 'Visible to pastors and administrators'
+                  : 'Previously published studies'}
+              </Text>
+            ) : null}
+          </View>
+
+          {studies.length ? studies.map(renderStudyCard) : (
+            <View style={styles.inlineEmpty}>
+              <Text style={styles.inlineEmptyText}>
+                {filter === 'upcoming' && canSeeUpcoming
+                  ? 'There are no upcoming Bible studies.'
+                  : 'No previous studies have been added.'}
+              </Text>
+            </View>
+          )}
         </ScrollView>
       )}
 
@@ -376,6 +443,37 @@ function makeStyles(colors: any, fonts: any) {
 
     segmentTextActive: {
       color: '#FFF',
+    },
+
+    sectionHeader: {
+      marginBottom: spacing.sm,
+      marginTop: spacing.xs,
+    },
+
+    sectionTitle: {
+      color: colors.text,
+      fontSize: fonts.subtitle,
+      fontWeight: '700',
+    },
+
+    sectionSubtitle: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      marginTop: 2,
+    },
+
+    inlineEmpty: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      marginBottom: spacing.md,
+      padding: spacing.lg,
+    },
+
+    inlineEmptyText: {
+      color: colors.textMuted,
+      lineHeight: fonts.body * 1.5,
+      textAlign: 'center',
     },
 
     center: {
