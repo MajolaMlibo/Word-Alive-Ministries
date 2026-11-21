@@ -16,10 +16,11 @@
     "android": {
       "package": "com.wordaliveministries.app",
       "versionCode": 5,
+      "icon": "./assets/android-icon-legacy-safe.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "foregroundImage": "./assets/android-icon-foreground-safe.png",
         "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "monochromeImage": "./assets/android-icon-monochrome-safe.png"
       }
     },
 

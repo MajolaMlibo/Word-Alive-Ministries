@@ -106,8 +106,10 @@
 
 - [ ] Finalise icons, splash screen, screenshots, privacy policy, support
   email, and store descriptions.
-- [ ] Visually verify the supplied Android adaptive icon and black-background
-  splash screen in an installed Android preview build.
+- [ ] Visually verify the Android adaptive icon's safe-area version and the
+  black-background splash screen in an installed Android APK. Confirm the
+  complete logo is visible on the launcher; long launcher-label truncation is
+  controlled by the device launcher rather than the application.
 - [ ] Obtain required Google Play Console and Apple Developer access.
 - [ ] Create signed Android App Bundle and iOS store builds.
 - [ ] Obtain pastor acceptance after a documented stakeholder test session.

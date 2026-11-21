@@ -70,6 +70,11 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
+- `fix/android-adaptive-icon-safe-zone` is in progress. It keeps the supplied
+  Word Alive logo but moves both Android adaptive foreground layers inside the
+  platform's central safe area, preventing launcher masks from clipping the
+  branding. It also provides a safe legacy Android icon. Expo configuration
+  validation and installed-APK visual verification remain pending.
 - `fix/announcement-deck-interaction` is in progress. It replaces Home's
   plain vertical notice list with a visible card deck, removes the inactive
   arrow from the notice guidance, supports left-swipe mark-as-read and
@@ -186,10 +191,12 @@ Editor and reported `Success. No rows returned`.
   `mlibo`; `app/app.json` now uses that exact owner so EAS commands can resolve
   the linked project.
 - The approved mobile application identifier is
-  `com.wordaliveministries.app` for both Android and iOS. Android now uses the
+  `com.wordaliveministries.app` for both Android and iOS. Android uses the
   supplied adaptive foreground, background, and monochrome icon layers; the
-  supplied splash image uses its intended black background. Visual verification
-  remains pending until an installed preview build is available.
+  supplied splash image uses its intended black background. The current
+  safe-area corrective branch preserves the source art while using safe
+  foreground and monochrome copies for Android. Visual verification remains
+  pending until an installed Android APK includes the change.
 - Android preview builds need the two `EXPO_PUBLIC_SUPABASE_*` values in Expo's
   remote `preview` environment because the deliberately ignored local `.env`
   file is not available to a cloud build. On 2026-11-10 those two values were
