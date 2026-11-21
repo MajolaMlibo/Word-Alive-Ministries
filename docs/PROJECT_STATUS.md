@@ -294,7 +294,9 @@ Editor and reported `Success. No rows returned`.
   commands directly to the loaded editor and preserve the selected WebView text
   range. On 2026-11-20, the `Mlibo_AP1` Android virtual device verified that
   selected editor text becomes visibly bold and that a selected phrase becomes
-  a visibly larger heading. The test phrase was not saved. Italic, lists,
+  a visibly larger heading. On 2026-11-21, the project owner independently
+  confirmed that the Heading control formats selected text. The test phrase
+  was not saved. Italic, lists,
   quote, clear formatting, saving, member rendering, reload persistence, and
   signed-APK checks remain pending verification.
 
