@@ -60,6 +60,13 @@ Members can read published ministry content and only their own private data.
 Content-management roles are `pastor`, `admin`, and `editor`. The client cannot
 assign roles.
 
+For Bible studies, members can read only published rows dated today or earlier
+using the `Africa/Johannesburg` calendar date. The Study screen presents a
+public Today's Study section when one exists and past studies to every member.
+Future studies and their private `study-media` objects are available only to
+Pastor and Administrator roles; this is enforced by Supabase Row Level
+Security as well as by the mobile interface.
+
 ## Daily-reading flow
 
 1. The app calculates the current date in `Africa/Johannesburg`.
