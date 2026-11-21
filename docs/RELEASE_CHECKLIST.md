@@ -74,9 +74,10 @@
 - [ ] Verify the daily-reading completion state for a Pastor or Administrator
   account after another member has completed the same reading.
 - [ ] On physical Android, verify an existing Notice and Study load their full
-  saved editor text, formatting remains visible after saving, long notes scroll
-  above the keyboard, and changing records with unsaved edits prompts to
-  discard or keep editing.
+  saved editor text. Select text and test Bold, Italic, Heading, both list
+  types, Quote, and Clear formatting; save and reopen to confirm formatting
+  remains visible. Also confirm long notes scroll above the keyboard and
+  changing records with unsaved edits prompts to discard or keep editing.
 
 ## Android and iOS verification
 
