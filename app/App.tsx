@@ -28,6 +28,7 @@ import Calendar from './src/screens/Calendar';
 import Study from './src/screens/Study';
 import More from './src/screens/More';
 import SignIn from './src/screens/SignIn';
+import ResetPassword from './src/screens/ResetPassword';
 
 const Tab = createBottomTabNavigator();
 
@@ -117,6 +118,7 @@ async function establishSessionFromAuthUrl(url: string) {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     const appStateSubscription = AppState.addEventListener('change', (state) => {
@@ -144,8 +146,16 @@ export default function App() {
         return;
       }
 
+      if (event === 'PASSWORD_RECOVERY') {
+        setSession(nextSession);
+        setIsPasswordRecovery(Boolean(nextSession));
+        setLoading(false);
+        return;
+      }
+
       if (event === 'SIGNED_OUT') {
         setSession(null);
+        setIsPasswordRecovery(false);
         setLoading(false);
         return;
       }
@@ -179,16 +189,31 @@ export default function App() {
 
   return (
     <AccessibilityProvider>
-      <AppContent loading={loading} session={session} />
+      <AppContent
+        isPasswordRecovery={isPasswordRecovery}
+        loading={loading}
+        onCancelPasswordRecovery={async () => {
+          await supabase.auth.signOut({ scope: 'local' });
+          setIsPasswordRecovery(false);
+        }}
+        onCompletePasswordRecovery={() => setIsPasswordRecovery(false)}
+        session={session}
+      />
     </AccessibilityProvider>
   );
 }
 
 function AppContent({
+  isPasswordRecovery,
   loading,
+  onCancelPasswordRecovery,
+  onCompletePasswordRecovery,
   session,
 }: {
+  isPasswordRecovery: boolean;
   loading: boolean;
+  onCancelPasswordRecovery: () => Promise<void>;
+  onCompletePasswordRecovery: () => void;
   session: Session | null;
 }) {
   const { colors, colorScheme } = useAccessibility();
@@ -212,6 +237,15 @@ function AppContent({
       <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
+
+  if (isPasswordRecovery && session) {
+    return (
+      <ResetPassword
+        onCancel={onCancelPasswordRecovery}
+        onComplete={onCompletePasswordRecovery}
+      />
     );
   }
 

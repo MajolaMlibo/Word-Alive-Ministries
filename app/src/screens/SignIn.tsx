@@ -45,6 +45,53 @@ export default function SignIn() {
     setConfirmPassword('');
   }
 
+  function showAccountInstructions() {
+    Alert.alert(
+      'Check your email',
+      'If a new account can be created with this email address, we sent a confirmation link. If you already have an account, sign in or reset your password.',
+      [
+        {
+          text: 'Sign in',
+          onPress: () => setMode('signIn'),
+        },
+        { text: 'Close', style: 'cancel' },
+      ]
+    );
+  }
+
+  async function requestPasswordReset() {
+    if (isSubmitting) return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
+      Alert.alert('Enter your email address first');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: AUTH_CALLBACK_URL,
+      });
+
+      if (error) {
+        Alert.alert('Unable to request a password reset', error.message);
+        return;
+      }
+
+      Alert.alert(
+        'Check your email',
+        'If an account uses this email address, we sent password-reset instructions. Open the link on this device to choose a new password.'
+      );
+    } catch {
+      Alert.alert('Unable to connect', 'Check your internet connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function submit() {
     if (isSubmitting) return;
 
@@ -105,11 +152,7 @@ export default function SignIn() {
         if (data.session) {
           Alert.alert('Account created', 'Welcome to Word Alive Ministries.');
         } else {
-          Alert.alert(
-            'Confirm your email',
-            'We sent a confirmation link to your email address. Open it, then return to the app and sign in.'
-          );
-          setMode('signIn');
+          showAccountInstructions();
         }
 
         return;
@@ -267,6 +310,17 @@ export default function SignIn() {
             </Text>
           </TouchableOpacity>
 
+          {!isCreatingAccount ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={isSubmitting}
+              onPress={() => void requestPasswordReset()}
+              style={styles.passwordReset}
+            >
+              <Text style={styles.passwordResetText}>Forgot password?</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity
             accessibilityRole="button"
             disabled={isSubmitting}
@@ -355,6 +409,15 @@ function makeStyles(colors: AppColors) {
       alignItems: 'center',
       marginTop: 20,
       padding: 8,
+    },
+    passwordReset: {
+      alignItems: 'center',
+      marginTop: 14,
+      padding: 6,
+    },
+    passwordResetText: {
+      color: colors.primary,
+      fontWeight: '600',
     },
     modeSwitchText: {
       color: colors.primary,

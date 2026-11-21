@@ -70,6 +70,12 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
+- `fix/auth-signup-feedback` is in progress. It makes confirmation and
+  password-reset feedback deliberately neutral about whether an email address
+  is registered, offers clear Sign In and Forgot password actions, and opens a
+  protected in-app password-update screen after Supabase's recovery event.
+  TypeScript and real-device recovery-link verification remain pending.
+
 The prototype Supabase project contains development-only data. The production
 database will be created from the versioned migration in `supabase/migrations`.
 On 2026-11-08, the project owner applied
