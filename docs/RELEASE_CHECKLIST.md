@@ -52,6 +52,9 @@
   TestFlight and a dedicated iOS build for iPhone testing. The project owner
   deliberately deferred this cost until Android church testing is complete.
 - [ ] Verify automatic email-confirmation deep linking.
+- [ ] On a real device, verify neutral existing-account guidance, password-reset
+  email delivery, in-app recovery-link handling, new-password validation, and
+  sign-in using the new password.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
 - [ ] Verify app-specific photo permission wording.
