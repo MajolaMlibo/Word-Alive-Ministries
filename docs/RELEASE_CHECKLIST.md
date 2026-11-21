@@ -57,6 +57,8 @@
 - [ ] Verify app-specific photo permission wording.
 - [ ] Verify the current Android bottom-navigation inset in a standalone APK
   on a physical Android phone with both navigation modes.
+- [ ] Verify the daily-reading completion state for a Pastor or Administrator
+  account after another member has completed the same reading.
 
 ## Android and iOS verification
 

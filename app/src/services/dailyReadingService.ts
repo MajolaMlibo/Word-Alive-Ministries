@@ -40,10 +40,22 @@ export async function getTodaysDailyReading() {
 }
 
 export async function getDailyReadingCompletion(readingId: string) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    return {
+      completed: false,
+      error: new Error('You must be signed in to view reading progress.'),
+    };
+  }
+
   const { data, error } = await supabase
     .from('reading_completions')
     .select('id')
     .eq('reading_id', readingId)
+    .eq('user_id', session.user.id)
     .maybeSingle();
 
   return {
