@@ -53,10 +53,9 @@
   Administrator sign-in remained active for 15 seconds and after a
   force-close/relaunch. The build 2/3 standalone-session defect is resolved
   on the virtual device.
-- [ ] Complete preview build 4 physical-Android checks before external sharing.
-  On a physical Android device, verify readable Sign In and Sign Up fields,
-  Light/Dark appearance, and tab labels in both gesture and three-button
-  navigation modes.
+- [ ] Complete the current Expo Go functional checks before deciding to create
+  another Android build. Preview build 4 is not the external tester baseline:
+  it predates the current Bible-action and visual-editor work.
 - [x] Resolve the seven Expo SDK 58 patch-version mismatches reported by
   `npx expo-doctor` on 2026-11-18 through the separately tested
   `fix/expo-sdk58-patch-alignment` branch; the follow-up report is 20 of 20
@@ -90,7 +89,7 @@
 - [ ] Define retention and moderation rules for prayer requests before launch.
 - [x] Repair the critical nested `shell-quote` advisory without changing the
   Expo SDK.
-- [ ] Reassess the five remaining moderate Expo build-toolchain advisories with
+- [ ] Reassess the three remaining moderate Expo build-toolchain advisories with
   a supported Expo update before public-store release; do not use `npm audit
   fix --force` to downgrade the SDK.
 

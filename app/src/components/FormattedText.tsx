@@ -1,7 +1,8 @@
 import React from 'react';
 import { Linking, Text, TouchableOpacity, View } from 'react-native';
+import { displayText } from './richText';
 
-type Props = { text: string; styles: any };
+type Props = { text: string; styles: any; containerStyle?: any };
 
 function InlineText({ value, styles }: { value: string; styles: any }) {
   const parts = value.split(/(\*\*[^*]+\*\*|_[^_]+_|\[[^\]]+\]\(https:\/\/[^)]+\))/g);
@@ -14,8 +15,9 @@ function InlineText({ value, styles }: { value: string; styles: any }) {
   })}</Text>;
 }
 
-export default function FormattedText({ text, styles }: Props) {
-  return <View>{text.split('\n').map((line, index) => {
+export default function FormattedText({ text, styles, containerStyle }: Props) {
+  const display = displayText(text);
+  return <View style={containerStyle}>{display.split('\n').map((line, index) => {
     if (line.startsWith('## ')) return <InlineText key={index} value={line.slice(3)} styles={{ ...styles, formattedText: styles.formattedHeading }} />;
     if (line.startsWith('> ')) return <View key={index} style={styles.formattedQuote}><InlineText value={line.slice(2)} styles={styles} /></View>;
     const numbered = line.match(/^(\d+)\.\s(.*)$/);

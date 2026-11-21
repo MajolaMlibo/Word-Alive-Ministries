@@ -32,6 +32,8 @@ import {
 } from '../services/announcementService';
 import { Announcement, BibleStudy, DailyReading, Profile } from '../services/database';
 import { getAvatarSignedUrl } from '../services/profileService';
+import FormattedText from '../components/FormattedText';
+import { displayText, isRichText } from '../components/richText';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -92,7 +94,7 @@ function AnnouncementCard({
   const [expanded, setExpanded] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const publishedDate = formatAnnouncementDate(announcement.published_at);
-  const canExpand = announcement.message.length > 180;
+  const canExpand = displayText(announcement.message).length > 180;
 
   const resetSwipe = () => {
     Animated.spring(translateX, {
@@ -161,13 +163,17 @@ function AnnouncementCard({
         {publishedDate ? (
           <Text style={styles.announcementDate}>Posted {publishedDate}</Text>
         ) : null}
-        <Text
-          ellipsizeMode="tail"
-          numberOfLines={expanded ? undefined : 3}
-          style={styles.announcementMessage}
-        >
-          {announcement.message}
-        </Text>
+        {isRichText(announcement.message) ? (
+          <FormattedText containerStyle={styles.announcementMessage} styles={styles} text={announcement.message} />
+        ) : (
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={expanded ? undefined : 3}
+            style={styles.announcementMessage}
+          >
+            {announcement.message}
+          </Text>
+        )}
         {canExpand ? (
           <TouchableOpacity
             accessibilityLabel={
@@ -558,11 +564,15 @@ export default function HomeScreen() {
             </Text>
           </>
         ) : (
-          <Text numberOfLines={5} style={styles.scripture}>
-            {reading
-              ? reading.reflection || 'Open the Bible tab to read today’s passage.'
-              : 'There is no scripture scheduled for today.'}
-          </Text>
+          reading && isRichText(reading.reflection) ? (
+            <FormattedText containerStyle={styles.scripture} styles={styles} text={reading.reflection!} />
+          ) : (
+            <Text numberOfLines={5} style={styles.scripture}>
+              {reading
+                ? reading.reflection || 'Open the Bible tab to read today’s passage.'
+                : 'There is no scripture scheduled for today.'}
+            </Text>
+          )
         )}
 
         <TouchableOpacity
@@ -970,6 +980,27 @@ function makeStyles(
       lineHeight: fonts.body * 1.5,
       marginTop: spacing.xs,
     },
+
+    formattedText: {
+      color: colors.text,
+      fontSize: fonts.body,
+      lineHeight: fonts.body * 1.5,
+    },
+
+    formattedHeading: {
+      color: colors.primary,
+      fontSize: fonts.bodyLarge,
+      fontWeight: '800',
+      lineHeight: fonts.bodyLarge * 1.35,
+      marginTop: spacing.xs,
+    },
+
+    formattedBold: { fontWeight: '800' },
+    formattedItalic: { fontStyle: 'italic' },
+    formattedLink: { color: colors.primary, fontWeight: '700', textDecorationLine: 'underline' },
+    formattedQuote: { borderLeftColor: colors.accent, borderLeftWidth: 3, marginVertical: spacing.xs, paddingLeft: spacing.sm },
+    formattedListRow: { flexDirection: 'row', gap: spacing.xs },
+    formattedListMarker: { color: colors.primary, fontSize: fonts.body, fontWeight: '800', minWidth: 18 },
 
     announcementToggle: {
       color: colors.primary,

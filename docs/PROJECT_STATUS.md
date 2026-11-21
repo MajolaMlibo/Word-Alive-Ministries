@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-Physical Android acceptance testing for preview build 4
+Expo Go functional verification on the Android virtual device before requesting another Pastor tester build
 
 ## Verified on 2026-11-08
 
@@ -284,8 +284,31 @@ Editor and reported `Success. No rows returned`.
   images could be added. The `study_media` production migration succeeded.
   Image upload, note saving, copy, sharing, and signed-APK verification remain
   pending.
+- On 2026-11-20, the approved `fix/admin-rich-text-editor` branch replaced the
+  marker-based Admin multiline editor with a local visual editor. It displays
+  bold, italic, heading, bulleted-list, numbered-list, quote, and
+  clear-formatting controls. Existing plain text and the earlier Markdown-like
+  values remain readable. The editor loaded and accepted an unsaved test phrase
+  in Expo Go on `Mlibo_AP1`. The original controls did not apply formatting on
+  Android, so the same branch now uses native React Native controls that issue
+  commands directly to the loaded editor and preserve the selected WebView text
+  range. Automated Android-emulator input on 2026-11-20 visibly applied bold
+  and heading formatting to selected, unsaved test text. However, on
+  2026-11-21 the project owner reported that manually using the controls in
+  the same virtual device still left the selected text unchanged. On the same
+  date, the project owner approved merging this change into the next Android
+  tester candidate because a physical Android device may behave differently.
+  It is not production-verified: the pastor must test it before it can be
+  considered complete. Italic, lists, quote, clear formatting, saving, member
+  rendering, reload persistence, and signed-APK checks remain pending.
 
 ## Known blockers
+
+- **Admin formatted writing requires physical Android verification.** Automated
+  emulator input can apply selected formatting, but manual virtual-device use
+  still fails according to the project owner. The change is approved for the
+  next Android tester candidate, but it must not be described as verified or
+  production-ready until the pastor confirms it on a physical device.
 
 - There are currently no confirmed, published Bible-study events in the
   production database. Church meeting dates, times, locations, and links must
@@ -313,7 +336,8 @@ Editor and reported `Success. No rows returned`.
   guarantee; the app caches requests and must not attempt bulk Bible downloads.
   Reassess the provider and translation licensing before a global public
   release.
-- `npm audit` has five remaining moderate Expo toolchain findings. The critical
+- `npm audit` reported three remaining moderate Expo toolchain findings after
+  the SDK-compatible WebView installation on 2026-11-20. The critical
   nested `shell-quote` finding was repaired on 2026-11-09 without changing
   Expo. The only audit-proposed resolution for the remaining findings is an
   incompatible forced Expo downgrade, so it must be reassessed with a supported
@@ -323,15 +347,13 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the approved `fix/bible-verse-actions` branch: apply the
-   `study_media` migration, then verify Bible actions, Admin writing tools,
-   and study-note images in Expo Go before requesting a combined Android
-   preview build.
-2. Complete the preview build 4 signed-in member journey on the project
-   owner's physical Android device, including gesture and three-button system
-   navigation, before sharing the direct installation link with the pastor's
-   small tester group.
-3. Complete the two remaining Admin device checks: Reading Plan edit/save and
+1. Complete the current Android virtual-device checks: visual Admin writing,
+   Bible verse actions, Study-image upload/display, and the approved Study
+   information architecture before requesting another Android tester build.
+2. Complete the two remaining Admin device checks: Reading Plan edit/save and
    Daily Reading edit/save without changing the pastor-approved plan content.
-4. Obtain approved Bible-study events and verify populated Study, Calendar,
+3. Obtain approved Bible-study events and verify populated Study, Calendar,
    and Home views.
+4. After the above functional checks pass, decide whether a new Android
+   tester build is justified, then perform physical Android acceptance testing
+   before sharing it with the pastor's tester group.
