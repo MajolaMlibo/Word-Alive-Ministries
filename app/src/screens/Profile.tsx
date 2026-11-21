@@ -119,37 +119,6 @@ const styles = makeStyles(colors, fonts);
     }
   };
 
-  function handleSignOut() {
-    Alert.alert(
-      'Sign out?',
-      'You will need your email address and password to sign in again on this device.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign out',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              try {
-                // Local sign-out clears this device even when the network is unavailable.
-                const { error } = await supabase.auth.signOut({ scope: 'local' });
-
-                if (error) {
-                  Alert.alert('Unable to sign out', error.message);
-                }
-              } catch {
-                Alert.alert(
-                  'Unable to sign out',
-                  'Please try again when your connection is available.'
-                );
-              }
-            })();
-          },
-        },
-      ]
-    );
-  }
-
   return (
     <ScrollView
       style={styles.container}
@@ -207,16 +176,6 @@ const styles = makeStyles(colors, fonts);
           Every completed reading strengthens your daily walk with God.
         </Text>
       </View>
-
-<TouchableOpacity
-  accessibilityLabel="Sign out of Word Alive Ministries"
-  accessibilityRole="button"
-  style={styles.logout}
-  onPress={handleSignOut}
->
-  <Ionicons name="log-out-outline" size={20} color="#FFF" />
-  <Text style={styles.logoutText}>Sign Out</Text>
-</TouchableOpacity>
 
     </ScrollView>
   );
@@ -307,38 +266,5 @@ function makeStyles(colors: any, fonts: any) {
       marginTop: spacing.xs,
     },
 
-    logout: {
-      backgroundColor: "#C62828",
-      borderRadius: 16,
-      paddingVertical: 15,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      margin: 10,
-    },
-
-    logoutText: {
-      color: "#FFF",
-      fontWeight: "700",
-      fontSize: fonts.body,
-      marginLeft: spacing.sm,
-    },
-
-    login: {
-      backgroundColor: colors.primary,
-      borderRadius: 16,
-      paddingVertical: 15,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      margin: 10,
-    },
-
-    loginText: {
-      color: "#FFF",
-      fontWeight: "700",
-      fontSize: fonts.body,
-      marginLeft: spacing.sm,
-    },
   });
 }

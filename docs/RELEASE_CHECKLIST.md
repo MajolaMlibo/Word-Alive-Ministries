@@ -55,6 +55,9 @@
 - [ ] On a real device, verify neutral existing-account guidance, password-reset
   email delivery, in-app recovery-link handling, new-password validation, and
   sign-in using the new password.
+- [ ] On a real device, confirm Sign out is only in the main More menu below
+  ministry links, requires confirmation, and returns to Sign In after local
+  session clearing.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
 - [ ] Verify app-specific photo permission wording.

@@ -18,6 +18,7 @@ import AdminScreen from './Admin';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
 import { getVisibleMinistryLinks } from '../services/ministryLinkService';
 import { MinistryLink } from '../services/database';
+import { supabase } from '../services/supabase';
 
 type MoreDestination = 'Profile' | 'Prayer' | 'Admin';
 type MorePage = 'menu' | MoreDestination;
@@ -133,6 +134,36 @@ export default function MoreScreen() {
       );
     }
   }, []);
+
+  function handleSignOut() {
+    Alert.alert(
+      'Sign out?',
+      'You will need your email address and password to sign in again on this device.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                const { error } = await supabase.auth.signOut({ scope: 'local' });
+
+                if (error) {
+                  Alert.alert('Unable to sign out', error.message);
+                }
+              } catch {
+                Alert.alert(
+                  'Unable to sign out',
+                  'Please try again when your connection is available.'
+                );
+              }
+            })();
+          },
+        },
+      ]
+    );
+  }
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -255,6 +286,17 @@ export default function MoreScreen() {
           <Text style={styles.linkRetryText}>Unable to load ministry links. Try again.</Text>
         </TouchableOpacity>
       ) : null}
+
+      <TouchableOpacity
+        accessibilityHint="Signs out on this device"
+        accessibilityLabel="Sign out of Word Alive Ministries"
+        accessibilityRole="button"
+        onPress={handleSignOut}
+        style={styles.signOutButton}
+      >
+        <Ionicons color={colors.primary} name="log-out-outline" size={20} />
+        <Text style={styles.signOutText}>Sign out</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -366,6 +408,22 @@ function makeStyles(colors: any, fonts: any) {
       fontSize: fonts.caption,
       fontWeight: '700',
       marginLeft: spacing.xs,
+    },
+    signOutButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 16,
+      borderWidth: 1,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: spacing.xl,
+      paddingVertical: 14,
+    },
+    signOutText: {
+      color: colors.primary,
+      fontSize: fonts.body,
+      fontWeight: '700',
+      marginLeft: spacing.sm,
     },
   });
 }

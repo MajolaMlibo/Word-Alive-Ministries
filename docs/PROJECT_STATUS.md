@@ -70,7 +70,11 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
-- `fix/auth-signup-feedback` is in progress. It makes confirmation and
+- `fix/more-sign-out-placement` is in progress. It relocates the local
+  sign-out confirmation to the bottom of More, after the official ministry
+  links, and replaces the harsh red Profile button with a ministry-green
+  outline action. TypeScript and physical-device verification remain pending.
+- `fix/auth-signup-feedback` was merged through pull request #44. It makes confirmation and
   password-reset feedback deliberately neutral about whether an email address
   is registered, offers clear Sign In and Forgot password actions, and opens a
   protected in-app password-update screen after Supabase's recovery event.
