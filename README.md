@@ -14,11 +14,14 @@ tools are implemented. Core member flows were verified on a physical iPhone
 in Expo Go; the detailed evidence and outstanding Android/iOS release checks
 are in [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 
-Android preview build 4 is a historical emulator smoke-test build from
-20 November 2026. It does **not** contain the subsequently merged Bible verse
-actions or the current visual Admin-editor work. Do not distribute it to the
-pastor's tester group. The current decision is to complete Expo Go functional
-verification first, then create and verify one replacement Android build.
+The current Android tester build is version `1.0.2` / Android `versionCode`
+`5`, built from merged `main` commit `60771a94`. It contains the current Bible
+verse-action and visual Admin-editor work. On 21 November 2026 it installed,
+launched as the standalone Word Alive Ministries package, and restored a
+signed-in Home session after a force-close/relaunch on the `Mlibo_AP1` Android
+virtual device. It is authorised for Pastor's first Android tester release;
+the installer link, expiry date, known limitations, and physical-device test
+scope are in [`docs/TESTER_RELEASE_GUIDE.md`](docs/TESTER_RELEASE_GUIDE.md).
 
 ## Repository layout
 

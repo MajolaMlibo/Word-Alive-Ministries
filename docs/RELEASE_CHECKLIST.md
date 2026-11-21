@@ -33,35 +33,24 @@
   align the configured project owner.
 - [x] Configure the approved Android package name and iOS bundle identifier:
   `com.wordaliveministries.app`.
-- [x] Create and install the Android preview APK through EAS internal
-  distribution on the `Mlibo_AP1` Android virtual device. Complete physical
-  Android-device verification remains required.
+- [x] Create Android build 5 through EAS internal distribution from merged
+  `main` commit `60771a94`, install it on `Mlibo_AP1`, and verify standalone
+  launch plus saved-session relaunch to Home on 2026-11-21.
 - [x] Merge `fix/android-auth-and-system-theme` and verify its Light/Dark
   appearance behaviour in Expo Go on the Android virtual device.
 - [x] Merge `fix/ignore-local-artifacts` and
   `fix/android-bottom-navigation-inset`. The latter was verified in Expo Go on
   `Mlibo_AP1` on 2026-11-18; its standalone-APK tab-bar check is still pending.
-- [x] Create the replacement Android preview APK from the current `main`
-  branch. EAS preview build 2 finished from commit
-  `a40203dd4ca808be446cf74a8abcba252ca11542`; its APK installed and reached
-  the native sign-in screen on `Mlibo_AP1` on 2026-11-20. Do not distribute
-  build 2: its signed-in session returned to Sign in.
-- [x] Create preview build 3 after merging `fix/auth-session-bootstrap`. It
-  reproduced the signed-in session defect and must not be distributed.
-- [x] Create preview build 4 after merging `fix/auth-event-session-state`.
-  The APK was installed on `Mlibo_AP1` on 2026-11-20; the dedicated
-  Administrator sign-in remained active for 15 seconds and after a
-  force-close/relaunch. The build 2/3 standalone-session defect is resolved
-  on the virtual device.
-- [ ] Complete the current Expo Go functional checks before deciding to create
-  another Android build. Preview build 4 is not the external tester baseline:
-  it predates the current Bible-action and visual-editor work.
+- [x] Build 5 includes the subsequent Bible verse-action and visual
+  Admin-editor work. It is the authorised Pastor tester build; its direct
+  install link expires on 2026-12-05.
 - [x] Resolve the seven Expo SDK 58 patch-version mismatches reported by
   `npx expo-doctor` on 2026-11-18 through the separately tested
   `fix/expo-sdk58-patch-alignment` branch; the follow-up report is 20 of 20
   passing checks.
-- [ ] Register authorised iPhone tester devices and create an iOS ad hoc
-  preview build, or use TestFlight after Apple Developer access is available.
+- [ ] Final-release milestone: enrol in the Apple Developer Program, then use
+  TestFlight and a dedicated iOS build for iPhone testing. The project owner
+  deliberately deferred this cost until Android church testing is complete.
 - [ ] Verify automatic email-confirmation deep linking.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.

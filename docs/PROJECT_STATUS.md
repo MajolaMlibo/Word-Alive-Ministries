@@ -2,7 +2,9 @@
 
 ## Current milestone
 
-Expo Go functional verification on the Android virtual device before requesting another Pastor tester build
+Pastor's first Android tester release: record physical-device feedback and
+prioritise release-blocking defects without creating another build unless a
+fix is verified and explicitly approved for release.
 
 ## Verified on 2026-11-08
 
@@ -302,6 +304,27 @@ Editor and reported `Success. No rows returned`.
   considered complete. Italic, lists, quote, clear formatting, saving, member
   rendering, reload persistence, and signed-APK checks remain pending.
 
+## Verified on 2026-11-21
+
+- `feature/android-build-5` was merged to `main` as commit
+  `60771a946b7731e3c84e1143f4ff4fa3acbf70ea`. It changes the visible app
+  version to `1.0.2`, Android `versionCode` to `5`, and uses the approved
+  internal `android` EAS profile.
+- EAS Android build `1fab9c47-4f1c-41a0-a406-9e4cb02d33fa` finished from that
+  commit. Its package is `com.wordaliveministries.app`; the internal APK link
+  expires on 2026-12-05. A second identical build request was cancelled after
+  the original build-status response was delayed. The cancelled request has no
+  distribution artifact.
+- The completed APK was installed on the `Mlibo_AP1` Android virtual device.
+  Android reported version `1.0.2` / code `5` and focused
+  `com.wordaliveministries.app.MainActivity`, not Expo Go. The app reached
+  signed-in Home, then returned to signed-in Home after a force-close and
+  normal relaunch. This is verified virtual-device smoke evidence, not a
+  substitute for physical Android testing.
+- The project owner approved build 5 as Pastor's first Android tester release.
+  iOS testing is deliberately deferred to the final-release milestone because
+  the project does not currently have Apple Developer Program membership.
+
 ## Known blockers
 
 - **Admin formatted writing requires physical Android verification.** Automated
@@ -347,13 +370,15 @@ Editor and reported `Success. No rows returned`.
 
 ## Next work
 
-1. Complete the current Android virtual-device checks: visual Admin writing,
-   Bible verse actions, Study-image upload/display, and the approved Study
-   information architecture before requesting another Android tester build.
-2. Complete the two remaining Admin device checks: Reading Plan edit/save and
-   Daily Reading edit/save without changing the pastor-approved plan content.
-3. Obtain approved Bible-study events and verify populated Study, Calendar,
-   and Home views.
-4. After the above functional checks pass, decide whether a new Android
-   tester build is justified, then perform physical Android acceptance testing
-   before sharing it with the pastor's tester group.
+1. Receive Pastor's build-5 physical Android feedback. Capture the device
+   model, Android version, repeatable steps, and a screenshot or screen
+   recording for every issue.
+2. Prioritise any release-blocking defect found by Pastor. Admin formatted
+   writing is already a known physical-device check because manual emulator
+   use did not reliably apply formatting.
+3. Verify the remaining Admin Reading Plan and Daily Reading edit/save actions
+   without changing the pastor-approved 2026 plan content, and publish real
+   church studies/events when their approved information is supplied.
+4. Create another Android build only after an approved, verified fix requires
+   it. Defer Apple Developer enrolment, TestFlight, and iOS testing to the
+   final-release milestone.

@@ -24,8 +24,8 @@ reach Auth settings. It does not test member permissions or write database
 data.
 
 On 2026-11-19, `fix/expo-sdk58-patch-alignment` produced 20 of 20 passing
-`npx expo-doctor` checks and a passing TypeScript check. The next Android
-preview APK must be created only after this branch is merged.
+`npx expo-doctor` checks and a passing TypeScript check. Android build 5 was
+then created from merged `main` with the aligned dependencies.
 
 The web export is a bundling check only. It does not prove iOS or Android
 native behaviour.
@@ -57,7 +57,7 @@ native behaviour.
 
 | Test | Expected result | Current evidence |
 |---|---|---|
-| Standalone app launch | The signed APK installs, Android opens the app's own package, and the member sees the app sign-in screen rather than Expo Go or a crash | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-20, using EAS preview build 4 from commit `e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c`. It is version `1.0.1` / Android `versionCode` `4`. Physical Android verification remains pending. |
+| Standalone app launch and saved session | The signed APK installs, Android opens the app's own package, and a saved authenticated session opens Home rather than Expo Go, a crash, or Sign In | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-21, using EAS Android build 5 from commit `60771a946b7731e3c84e1143f4ff4fa3acbf70ea`. It is version `1.0.2` / Android `versionCode` `5`. It returned to the signed-in Home screen after force-close/relaunch. Physical Android verification remains pending. |
 | Android sign-in legibility | In Light and Dark appearance, every Sign In and Sign Up field placeholder is readable. A mixed-case email is visibly converted to lowercase; names and passwords retain their typed casing. | Code reviewed and light/dark Expo Go check completed on `Mlibo_AP1`, 2026-11-10; signed APK and physical Android checks pending |
 | Account registration and keyboard flow | Sign Up requires clear First name and Surname fields; Enter advances through the form; final Enter creates the account. Sign In password Enter submits. Bible Search Enter submits a complete reference. | Expo Go verification on the `Mlibo_AP1` Android virtual device, 2026-11-19: a dedicated Administrator account saved separate name and surname values; password Enter signed in; `John 3:16` Search opened the reference. In standalone preview build 4 on 2026-11-20, the Administrator sign-in persisted for 15 seconds and after a force-close/relaunch. The original build 2 and 3 session defect is resolved on that virtual device. Full sign-up and keyboard-flow checks in the signed APK, physical Android, and iOS remain pending. |
 | Daily streak after a missed day | If the signed-in member has no completion on the current South African calendar date, Home and Profile each display `0`, regardless of an older saved completion. Completing today's reading then displays a streak of `1` or more. | Verified in Expo Go on the `Mlibo_AP1` Android virtual device, 2026-11-19: a controlled stale value of `7` for the dedicated Administrator account refreshed to `0` in both Home and Profile. The production migration succeeded. Signed-APK and physical Android/iOS checks remain pending. |
@@ -90,12 +90,11 @@ Update `PROJECT_STATUS.md` after a meaningful verification result.
 
 ## Current Android tester baseline
 
-The current candidate preview baseline was created from merged `main` commit
-`e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c`. It is version `1.0.1`, Android
-`versionCode` `4`, and uses the approved package
-`com.wordaliveministries.app`. On 2026-11-20, its APK installed on the
-`Mlibo_AP1` Android virtual device. A dedicated Administrator account stayed
-signed in for at least 15 seconds and, after a force-close and normal relaunch,
-opened Home rather than Sign In. This resolves the build 2/3 session defect on
-the virtual device. Complete the physical Android tests against the rows above
-before external tester distribution.
+The current Pastor tester build is build 5 from merged `main` commit
+`60771a946b7731e3c84e1143f4ff4fa3acbf70ea`. It is version `1.0.2`, Android
+`versionCode` `5`, uses package `com.wordaliveministries.app`, and is
+documented with its installer link and expiry in `TESTER_RELEASE_GUIDE.md`.
+On 2026-11-21 it installed, launched, and restored a saved signed-in session
+to Home on the `Mlibo_AP1` virtual device. Pastor's physical-device results
+are the next acceptance evidence; Admin visual formatting remains a specific
+physical-device check.

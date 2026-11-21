@@ -19,35 +19,25 @@ The `android` profile deliberately has no developer tools. It is the correct
 profile for stakeholder testing because testers install an app rather than use
 Expo Go.
 
-## Resolved delivery baseline
+## Current Android tester build
 
-1. The existing EAS project belongs to Expo account `mlibo`. Its `owner` value
-   in `app/app.json` must continue to match that account unless the project is
-   deliberately transferred to an Expo organisation.
-2. The approved Android package name and iOS bundle identifier are both
-   `com.wordaliveministries.app`. Do not change them after builds have been
-   shared or submitted to a store.
-3. Android is the first tester platform. The current standalone Android preview
-   build finished on 19 November 2026 from merged `main` commit
-   `a40203dd4ca808be446cf74a8abcba252ca11542`.
-4. This replacement tester APK is visible version `1.0.1` with Android
-   `versionCode` `2`, and uses the existing internal `preview` EAS profile.
-   Do not change the package identifier.
-5. On 20 November 2026, the APK installed on the `Mlibo_AP1` Android virtual
-   device and reached its native sign-in screen. It has not completed the
-   signed-in or physical-device tests required for external sharing.
-6. Do not share preview build 2: its signed-in session briefly opened Home and
-   then returned to Sign in. `fix/auth-session-bootstrap` prepares the
-   correction for a new Android build with `versionCode` `3`.
-7. Preview build 3 was installed and reproduced the same defect. Do not share
-   it.
-8. Preview build 4 was built from merged `main` commit
-   `e58edeb4cac8a0d591b5a9ec19782ff1089b7a9c` with `versionCode` `4`.
-   On 20 November 2026, it was installed on `Mlibo_AP1`. The dedicated
-   Administrator sign-in stayed active for at least 15 seconds and survived a
-   force-close/relaunch, returning to Home rather than Sign In. The corrected
-   session behaviour is verified only on that virtual device; it is not yet
-   approved for external sharing.
+- **Version:** `1.0.2` / Android `versionCode` `5`
+- **Source:** merged `main` commit `60771a946b7731e3c84e1143f4ff4fa3acbf70ea`
+- **Package:** `com.wordaliveministries.app`
+- **Build profile:** `android` (internal distribution)
+- **Install link:** <https://expo.dev/artifacts/eas/aQfEIaqh-OI-okcqNUXdVTaChClLN_Lr3m6PHcvTuWw.apk>
+- **Link expiry:** 5 December 2026
+
+On 21 November 2026, build 5 installed on the `Mlibo_AP1` Android virtual
+device, opened the standalone Word Alive Ministries package rather than Expo
+Go, and restored the signed-in Home screen after a force-close/relaunch. This
+is sufficient smoke-test evidence for Pastor's first Android tester release.
+It is not evidence that all member flows work on every physical Android phone.
+
+The older builds 2 and 3 must not be shared because they reproduced a
+standalone sign-in session defect. Build 4 predates the Bible verse-action and
+visual Admin-editor work. The duplicate build request created while build 5
+status was delayed was cancelled; it has no installer artifact.
 
 ## Distribution constraints
 
@@ -59,19 +49,25 @@ Expo Go.
   Program access.
 - Google Play publication requires a Google Play Console developer account.
 - A direct Android internal-distribution APK link expires. Do not treat an
-  expired link as a failed app build; create a fresh preview build instead.
+  expired link as a failed app build; create a fresh Android build instead.
 - Android testers must allow installation from the browser or app used to
   download the APK. This is normal Android sideloading, not a Play Store
   installation.
 
-## Required verification before sharing the next Android APK
+## Pastor tester scope
 
-Before sharing a tester link, install the new preview build on the project
-owner's physical Android phone and verify: sign up/sign in, Home, Bible
-reading completion, announcements, prayer requests, profile-photo selection,
-sign out, and sign back in. Also test the tab bar in Android gesture and
-three-button navigation modes. Record the device type, operating-system
-version, build URL, source commit, and outcome in the test plan.
+Pastor is the first Android tester for build 5. Ask him to report the phone
+model, Android version, and a screenshot or screen recording for any problem.
+The priority checks are sign in, Home, Bible reading completion, announcements,
+Prayer Requests, Profile photo selection, sign out/sign back in, and the five
+bottom tabs. If his device offers gesture and three-button navigation, test
+both. Record the result in `docs/TEST_PLAN.md` before claiming a feature is
+physically verified.
+
+**Known required check:** In Admin, select text in a Notice or Study note and
+try bold, heading, and another formatting control. The visual formatting
+controls need physical-Android confirmation: automated emulator input worked,
+but manual virtual-device use did not reliably change selected text.
 
 Ask every external tester to use a test account and fictitious, non-sensitive
 prayer-request text. The current production project is used by the app; do not
@@ -81,9 +77,9 @@ ask testers to enter confidential pastoral information or someone else's photo.
 
 - This is an internal MVP test, not a public Google Play or Apple App Store
   release.
-- iPhone distribution requires Apple Developer Program access and either
-  registered devices for ad hoc distribution or TestFlight. It is not ready
-  for the current tester group.
+- iPhone distribution is deferred to the final-release milestone because the
+  project does not currently have Apple Developer Program membership. It will
+  use TestFlight after enrolment and a separate iOS build.
 - Email confirmation opens in the browser. Automatic return through the app's
   custom link has not yet been verified in an installed build.
 - Push notifications have not been tested in a standalone build and must not
