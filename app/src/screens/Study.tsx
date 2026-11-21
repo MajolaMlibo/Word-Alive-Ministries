@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FormattedText from '../components/FormattedText';
@@ -43,6 +44,7 @@ export default function StudyScreen() {
   const [studyMediaUrls, setStudyMediaUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadStudies = useCallback(async (which: StudyFilter) => {
@@ -184,62 +186,65 @@ export default function StudyScreen() {
             const open = expandedId === study.id;
 
             return (
-              <TouchableOpacity
-                key={study.id}
-                activeOpacity={0.9}
-                style={styles.card}
-                onPress={() => setExpandedId(open ? null : study.id)}
-              >
-                <View style={styles.topRow}>
-                  <View style={styles.iconCircle}>
+              <View key={study.id} style={styles.card}>
+                <TouchableOpacity
+                  accessibilityHint={open ? 'Collapses this study' : 'Expands this study'}
+                  accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${study.study_name}`}
+                  accessibilityRole="button"
+                  activeOpacity={0.9}
+                  onPress={() => setExpandedId(open ? null : study.id)}
+                >
+                  <View style={styles.topRow}>
+                    <View style={styles.iconCircle}>
+                      <Ionicons
+                        name="book"
+                        size={20}
+                        color={colors.primary}
+                      />
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.studyName}>
+                        {study.study_name}
+                      </Text>
+
+                      {study.scripture_ref ? (
+                        <Text style={styles.scriptureRef}>
+                          {study.scripture_ref}
+                        </Text>
+                      ) : null}
+                    </View>
+
                     <Ionicons
-                      name="book"
-                      size={20}
+                      name={open ? 'chevron-up' : 'chevron-down'}
+                      size={22}
                       color={colors.primary}
                     />
                   </View>
 
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.studyName}>
-                      {study.study_name}
-                    </Text>
+                  <View style={styles.metaRow}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={15}
+                      color={colors.textMuted}
+                    />
+                    <Text style={styles.meta}>{formatStudyDate(study.study_date)}</Text>
 
-                    {study.scripture_ref ? (
-                      <Text style={styles.scriptureRef}>
-                        {study.scripture_ref}
-                      </Text>
+                    {study.start_time ? (
+                      <>
+                        <Text style={styles.dot}>•</Text>
+                        <Ionicons
+                          name="time-outline"
+                          size={15}
+                          color={colors.textMuted}
+                        />
+                        <Text style={styles.meta}>
+                          {formatStudyTime(study.start_time)}
+                        </Text>
+                      </>
                     ) : null}
                   </View>
-
-                  <Ionicons
-                    name={open ? 'chevron-up' : 'chevron-down'}
-                    size={22}
-                    color={colors.primary}
-                  />
-                </View>
-
-                <View style={styles.metaRow}>
-                  <Ionicons
-                    name="calendar-outline"
-                    size={15}
-                    color={colors.textMuted}
-                  />
-                  <Text style={styles.meta}>{formatStudyDate(study.study_date)}</Text>
-
-                  {study.start_time ? (
-                    <>
-                      <Text style={styles.dot}>•</Text>
-                      <Ionicons
-                        name="time-outline"
-                        size={15}
-                        color={colors.textMuted}
-                      />
-                      <Text style={styles.meta}>
-                        {formatStudyTime(study.start_time)}
-                      </Text>
-                    </>
-                  ) : null}
-                </View>
+                </TouchableOpacity>
 
                 {open && (
                   <View style={styles.detailBox}>
@@ -251,11 +256,22 @@ export default function StudyScreen() {
                     />
 
                     {studyMedia.filter((item) => item.study_id === study.id).length ? (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
-                        {studyMedia.filter((item) => item.study_id === study.id).map((item) => studyMediaUrls[item.id] ? (
-                          <Image key={item.id} source={{ uri: studyMediaUrls[item.id] }} style={styles.studyImage} />
-                        ) : null)}
-                      </ScrollView>
+                      <>
+                        <Text style={styles.imageHint}>Tap an image to view it full screen.</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
+                          {studyMedia.filter((item) => item.study_id === study.id).map((item) => studyMediaUrls[item.id] ? (
+                            <TouchableOpacity
+                              accessibilityHint="Opens this image full screen"
+                              accessibilityLabel="Open study image"
+                              accessibilityRole="button"
+                              key={item.id}
+                              onPress={() => setSelectedImageUrl(studyMediaUrls[item.id])}
+                            >
+                              <Image source={{ uri: studyMediaUrls[item.id] }} style={styles.studyImage} />
+                            </TouchableOpacity>
+                          ) : null)}
+                        </ScrollView>
+                      </>
                     ) : null}
 
                     {study.location_or_url ? (
@@ -272,11 +288,36 @@ export default function StudyScreen() {
                     ) : null}
                   </View>
                 )}
-              </TouchableOpacity>
+              </View>
             );
           })}
         </ScrollView>
       )}
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setSelectedImageUrl(null)}
+        transparent
+        visible={Boolean(selectedImageUrl)}
+      >
+        <View style={styles.imageModalBackdrop}>
+          <TouchableOpacity
+            accessibilityLabel="Close full screen image"
+            accessibilityRole="button"
+            onPress={() => setSelectedImageUrl(null)}
+            style={styles.imageModalClose}
+          >
+            <Ionicons color="#FFFFFF" name="close" size={28} />
+          </TouchableOpacity>
+          {selectedImageUrl ? (
+            <Image
+              resizeMode="contain"
+              source={{ uri: selectedImageUrl }}
+              style={styles.fullScreenImage}
+            />
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -455,6 +496,10 @@ function makeStyles(colors: any, fonts: any) {
     formattedListMarker: { color: colors.primary, fontSize: fonts.body, fontWeight: '800', minWidth: 18 },
     studyImageList: { gap: spacing.sm, paddingTop: spacing.sm },
     studyImage: { borderRadius: 12, height: 180, width: 135 },
+    imageHint: { color: colors.textMuted, fontSize: fonts.caption, marginTop: spacing.sm },
+    imageModalBackdrop: { alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.94)', flex: 1, justifyContent: 'center', padding: spacing.md },
+    imageModalClose: { alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.45)', borderRadius: 22, height: 44, justifyContent: 'center', position: 'absolute', right: spacing.md, top: spacing.xl, width: 44, zIndex: 1 },
+    fullScreenImage: { height: '88%', width: '100%' },
 
     locationRow: {
       alignItems: 'center',

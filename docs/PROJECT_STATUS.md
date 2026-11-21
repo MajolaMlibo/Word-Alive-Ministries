@@ -70,7 +70,10 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
-- `fix/more-sign-out-placement` is in progress. It relocates the local
+- `fix/study-image-lightbox` is in progress. It stops image taps from
+  collapsing a Study card and opens the selected study-note image full screen
+  instead. TypeScript and physical Android verification remain pending.
+- `fix/more-sign-out-placement` was merged through pull request #45. It relocates the local
   sign-out confirmation to the bottom of More, after the official ministry
   links, and replaces the harsh red Profile button with a ministry-green
   outline action. TypeScript and physical-device verification remain pending.
