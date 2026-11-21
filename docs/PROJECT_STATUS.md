@@ -70,9 +70,15 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
-- `fix/study-image-lightbox` is in progress. It stops image taps from
-  collapsing a Study card and opens the selected study-note image full screen
-  instead. TypeScript and physical Android verification remain pending.
+- `fix/announcement-deck-interaction` is in progress. It replaces Home's
+  plain vertical notice list with a visible card deck, removes the inactive
+  arrow from the notice guidance, supports left-swipe mark-as-read and
+  right-swipe next-card actions, and makes Read more collapse text before it
+  is expanded. TypeScript and physical Android verification remain pending.
+- `fix/study-image-lightbox` was merged through pull request #46. It stops
+  image taps from collapsing a Study card and opens the selected study-note
+  image full screen instead. TypeScript passed; physical Android verification
+  remains pending.
 - `fix/more-sign-out-placement` was merged through pull request #45. It relocates the local
   sign-out confirmation to the bottom of More, after the official ministry
   links, and replaces the harsh red Profile button with a ministry-green

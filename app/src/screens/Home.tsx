@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Animated,
   PanResponder,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
@@ -38,8 +39,25 @@ import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
 const SWIPE_TO_MARK_READ_DISTANCE = 88;
+const SWIPE_OUT_DISTANCE = 420;
+const ANNOUNCEMENT_PREVIEW_CHARACTER_LIMIT = 180;
+const ANNOUNCEMENT_SWIPE_HINT_KEY = 'wam-announcement-swipe-hint-seen-v1';
+const MAX_VISIBLE_ANNOUNCEMENT_BACK_CARDS = 2;
 
 type AnnouncementReadTimes = Record<string, string>;
+
+function announcementPreviewText(message: string) {
+  return displayText(message)
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/\[([^\]]+)\]\(https:\/\/[^)]+\)/g, '$1')
+    .replace(/^##\s+/gm, '')
+    .replace(/^>\s?/gm, '')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 function formatAnnouncementDate(publishedAt: string | null) {
   if (!publishedAt) return null;
@@ -76,8 +94,11 @@ type AnnouncementCardProps = {
   announcement: Announcement;
   isRead: boolean;
   isMarking: boolean;
+  totalAnnouncements: number;
   onMarkAsRead: (announcement: Announcement) => Promise<boolean>;
+  onShowNext: () => void;
   onOpenAction: (url: string) => Promise<void>;
+  onSwipeInteraction: () => void;
   primaryColor: string;
   styles: ReturnType<typeof makeStyles>;
 };
@@ -86,15 +107,20 @@ function AnnouncementCard({
   announcement,
   isRead,
   isMarking,
+  totalAnnouncements,
   onMarkAsRead,
+  onShowNext,
   onOpenAction,
+  onSwipeInteraction,
   primaryColor,
   styles,
 }: AnnouncementCardProps) {
   const [expanded, setExpanded] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const publishedDate = formatAnnouncementDate(announcement.published_at);
-  const canExpand = displayText(announcement.message).length > 180;
+  const previewMessage = announcementPreviewText(announcement.message);
+  const canExpand = previewMessage.length > ANNOUNCEMENT_PREVIEW_CHARACTER_LIMIT;
+  const canShowNext = totalAnnouncements > 1;
 
   const resetSwipe = () => {
     Animated.spring(translateX, {
@@ -107,20 +133,21 @@ function AnnouncementCard({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gesture) =>
-          !isRead &&
           !isMarking &&
-          gesture.dx < -12 &&
-          Math.abs(gesture.dx) > Math.abs(gesture.dy),
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
+          ((!isRead && gesture.dx < -12) || (canShowNext && gesture.dx > 12)),
         onPanResponderMove: (_, gesture) => {
-          if (!isRead && !isMarking) {
+          if (!isRead && !isMarking && gesture.dx < 0) {
             translateX.setValue(Math.min(0, gesture.dx));
+          } else if (canShowNext && !isMarking && gesture.dx > 0) {
+            translateX.setValue(Math.max(0, gesture.dx));
           }
         },
         onPanResponderRelease: (_, gesture) => {
           if (!isRead && !isMarking && gesture.dx <= -SWIPE_TO_MARK_READ_DISTANCE) {
             Animated.timing(translateX, {
-              toValue: -SWIPE_TO_MARK_READ_DISTANCE,
-              duration: 120,
+              toValue: -SWIPE_OUT_DISTANCE,
+              duration: 180,
               useNativeDriver: true,
             }).start(async ({ finished }) => {
               if (!finished) return;
@@ -130,8 +157,23 @@ function AnnouncementCard({
               if (!marked) {
                 resetSwipe();
               } else {
+                onSwipeInteraction();
                 translateX.setValue(0);
               }
+            });
+            return;
+          }
+
+          if (canShowNext && !isMarking && gesture.dx >= SWIPE_TO_MARK_READ_DISTANCE) {
+            Animated.timing(translateX, {
+              toValue: SWIPE_OUT_DISTANCE,
+              duration: 180,
+              useNativeDriver: true,
+            }).start(({ finished }) => {
+              if (!finished) return;
+              onSwipeInteraction();
+              onShowNext();
+              translateX.setValue(0);
             });
             return;
           }
@@ -140,7 +182,16 @@ function AnnouncementCard({
         },
         onPanResponderTerminate: resetSwipe,
       }),
-    [announcement, isMarking, isRead, onMarkAsRead, translateX]
+    [
+      announcement,
+      canShowNext,
+      isMarking,
+      isRead,
+      onMarkAsRead,
+      onShowNext,
+      onSwipeInteraction,
+      translateX,
+    ]
   );
 
   const markRead = () => {
@@ -150,20 +201,31 @@ function AnnouncementCard({
   return (
     <View style={styles.announcementSwipeContainer}>
       {!isRead ? (
-        <View pointerEvents="none" style={styles.announcementSwipeHint}>
+        <View pointerEvents="none" style={[styles.announcementSwipeHint, styles.announcementSwipeHintLeft]}>
           <Ionicons name="checkmark-circle" size={19} color="#FFF" />
           <Text style={styles.announcementSwipeHintText}>Mark as read</Text>
         </View>
       ) : null}
+      {canShowNext ? (
+        <View pointerEvents="none" style={[styles.announcementSwipeHint, styles.announcementSwipeHintRight]}>
+          <Text style={styles.announcementSwipeHintText}>Next notice</Text>
+          <Ionicons name="arrow-forward" size={19} color="#FFF" />
+        </View>
+      ) : null}
       <Animated.View
-        {...(!isRead && !isMarking ? panResponder.panHandlers : {})}
+        {...(!isMarking ? panResponder.panHandlers : {})}
         style={[styles.announcementCard, { transform: [{ translateX }] }]}
       >
-        <Text style={styles.announcementTitle}>{announcement.title}</Text>
+        <View style={styles.announcementTitleRow}>
+          <Text style={styles.announcementTitle}>{announcement.title}</Text>
+          {totalAnnouncements > 1 ? (
+            <Text style={styles.announcementPosition}>1 of {totalAnnouncements}</Text>
+          ) : null}
+        </View>
         {publishedDate ? (
           <Text style={styles.announcementDate}>Posted {publishedDate}</Text>
         ) : null}
-        {isRichText(announcement.message) ? (
+        {expanded && isRichText(announcement.message) ? (
           <FormattedText containerStyle={styles.announcementMessage} styles={styles} text={announcement.message} />
         ) : (
           <Text
@@ -171,7 +233,7 @@ function AnnouncementCard({
             numberOfLines={expanded ? undefined : 3}
             style={styles.announcementMessage}
           >
-            {announcement.message}
+            {previewMessage}
           </Text>
         )}
         {canExpand ? (
@@ -252,11 +314,29 @@ export default function HomeScreen() {
   const [markingAnnouncementId, setMarkingAnnouncementId] = useState<
     string | null
   >(null);
+  const [hasSeenAnnouncementSwipeHint, setHasSeenAnnouncementSwipeHint] =
+    useState(false);
   const [nextStudy, setNextStudy] = useState<BibleStudy | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void AsyncStorage.getItem(ANNOUNCEMENT_SWIPE_HINT_KEY)
+      .then((value) => {
+        if (isMounted) setHasSeenAnnouncementSwipeHint(value === 'true');
+      })
+      .catch((error) => {
+        console.warn('Unable to load announcement swipe guidance state.', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getFormattedDate = () =>
     new Date().toLocaleDateString('en-GB', {
@@ -420,12 +500,30 @@ export default function HomeScreen() {
     (announcement) => !announcementReadTimes[announcement.id]
   ).length;
 
-  const announcementHint =
-    unreadAnnouncementCount === 0
-      ? `${announcements.length} ${announcements.length === 1 ? 'update' : 'updates'} • Read cards are at the bottom.`
-      : unreadAnnouncementCount === announcements.length
-        ? `${announcements.length} ${announcements.length === 1 ? 'update' : 'updates'} • Swipe left on a card to mark it as read.`
-        : `${unreadAnnouncementCount} unread of ${announcements.length} updates • Swipe left on a card to mark it as read.`;
+  const announcementHint = hasSeenAnnouncementSwipeHint
+    ? `${unreadAnnouncementCount} unread of ${announcements.length} ${announcements.length === 1 ? 'update' : 'updates'}.`
+    : `${announcements.length} ${announcements.length === 1 ? 'update' : 'updates'} • Swipe left to mark a card as read or right to see the next card.`;
+
+  const announcementDeckPreviews = announcements
+    .slice(1, MAX_VISIBLE_ANNOUNCEMENT_BACK_CARDS + 1)
+    .reverse();
+
+  const dismissAnnouncementSwipeHint = useCallback(() => {
+    if (hasSeenAnnouncementSwipeHint) return;
+
+    setHasSeenAnnouncementSwipeHint(true);
+    void AsyncStorage.setItem(ANNOUNCEMENT_SWIPE_HINT_KEY, 'true').catch(
+      (error) => {
+        console.warn('Unable to save announcement swipe guidance state.', error);
+      }
+    );
+  }, [hasSeenAnnouncementSwipeHint]);
+
+  const showNextAnnouncement = useCallback(() => {
+    setAnnouncements((current) =>
+      current.length > 1 ? [...current.slice(1), current[0]] : current
+    );
+  }, []);
 
   const openAnnouncementLink = useCallback(async (url: string) => {
     try {
@@ -593,11 +691,6 @@ export default function HomeScreen() {
 
         {announcements.length && !announcementsError ? (
           <View style={styles.announcementHintRow}>
-            <Ionicons
-              name="chevron-back"
-              size={18}
-              color={colors.primary}
-            />
             <Text style={styles.announcementHintText}>{announcementHint}</Text>
           </View>
         ) : null}
@@ -623,18 +716,53 @@ export default function HomeScreen() {
             </View>
           </View>
         ) : announcements.length ? (
-          announcements.map((announcement) => (
-            <AnnouncementCard
-              announcement={announcement}
-              isMarking={markingAnnouncementId === announcement.id}
-              isRead={Boolean(announcementReadTimes[announcement.id])}
-              key={announcement.id}
-              onMarkAsRead={markAnnouncementRead}
-              onOpenAction={openAnnouncementLink}
-              primaryColor={colors.primary}
-              styles={styles}
-            />
-          ))
+          <View style={styles.announcementDeck}>
+            {announcementDeckPreviews.map((announcement, index) => {
+              const depth = announcementDeckPreviews.length - index;
+
+              return (
+                <View
+                  key={announcement.id}
+                  pointerEvents="none"
+                  style={[
+                    styles.announcementDeckBack,
+                    {
+                      bottom: 0,
+                      left: depth * 8,
+                      opacity: 1 - depth * 0.12,
+                      right: depth * 8,
+                      top: depth * 12,
+                    },
+                  ]}
+                >
+                  <Text numberOfLines={1} style={styles.announcementDeckBackText}>
+                    {announcement.title}
+                  </Text>
+                </View>
+              );
+            })}
+            <View
+              style={
+                announcementDeckPreviews.length
+                  ? { marginBottom: announcementDeckPreviews.length * 12 }
+                  : undefined
+              }
+            >
+              <AnnouncementCard
+                announcement={announcements[0]}
+                isMarking={markingAnnouncementId === announcements[0].id}
+                isRead={Boolean(announcementReadTimes[announcements[0].id])}
+                key={announcements[0].id}
+                onMarkAsRead={markAnnouncementRead}
+                onOpenAction={openAnnouncementLink}
+                onShowNext={showNextAnnouncement}
+                onSwipeInteraction={dismissAnnouncementSwipeHint}
+                primaryColor={colors.primary}
+                styles={styles}
+                totalAnnouncements={announcements.length}
+              />
+            </View>
+          </View>
         ) : (
           <View style={styles.announcementCard}>
             <View style={styles.announcementState}>
@@ -914,35 +1042,59 @@ function makeStyles(
     },
 
     announcementHintRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
       marginBottom: spacing.sm,
     },
 
     announcementHintText: {
       color: colors.textMuted,
-      flex: 1,
       fontSize: fonts.caption,
       lineHeight: fonts.caption * 1.4,
-      marginLeft: 2,
+    },
+
+    announcementDeck: {
+      marginBottom: spacing.md,
+      position: 'relative',
+    },
+
+    announcementDeckBack: {
+      backgroundColor: colors.primaryMuted,
+      borderColor: colors.borderSoft,
+      borderRadius: 20,
+      borderWidth: 1,
+      justifyContent: 'flex-end',
+      padding: spacing.md,
+      position: 'absolute',
+    },
+
+    announcementDeckBackText: {
+      color: colors.primary,
+      fontSize: fonts.caption,
+      fontWeight: '700',
     },
 
     announcementSwipeContainer: {
       backgroundColor: colors.primary,
       borderRadius: 20,
-      marginBottom: spacing.md,
       overflow: 'hidden',
+      position: 'relative',
     },
 
     announcementSwipeHint: {
-      alignItems: 'flex-end',
-      bottom: 0,
+      alignItems: 'center',
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      paddingRight: spacing.lg,
+      justifyContent: 'center',
       position: 'absolute',
-      right: 0,
       top: 0,
+    },
+
+    announcementSwipeHintLeft: {
+      bottom: 0,
+      left: spacing.md,
+    },
+
+    announcementSwipeHintRight: {
+      bottom: 0,
+      right: spacing.md,
     },
 
     announcementSwipeHintText: {
@@ -963,9 +1115,23 @@ function makeStyles(
       shadowOffset: { width: 0, height: 3 },
     },
 
+    announcementTitleRow: {
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      gap: spacing.sm,
+      justifyContent: 'space-between',
+    },
+
     announcementTitle: {
       color: colors.text,
+      flex: 1,
       fontSize: fonts.body,
+      fontWeight: '700',
+    },
+
+    announcementPosition: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
       fontWeight: '700',
     },
 
