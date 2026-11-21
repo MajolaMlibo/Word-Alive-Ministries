@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import WebViewComponent, { WebViewMessageEvent } from 'react-native-webview';
 import { editorHtmlForValue, valueFromEditorHtml } from './richText';
 
@@ -13,6 +13,8 @@ type Props = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
+  /** Changes when the parent opens a different record for editing. */
+  documentId?: string;
   styles: any;
 };
 
@@ -33,27 +35,44 @@ const TOOLS: { command: EditorCommand; label: string; accessibilityLabel: string
  * WebView to one of these buttons, the editor stores the current text range.
  * A command restores that range inside the WebView before changing it.
  */
-export default function RichTextField({ label, value, onChangeText, placeholder, styles }: Props) {
+const MAX_EDITOR_HEIGHT = 420;
+
+export default function RichTextField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  documentId = label,
+  styles,
+}: Props) {
   const editor = useRef<WebViewHandle>(null);
   const emittedValue = useRef(value);
+  const previousDocumentId = useRef(documentId);
   const [height, setHeight] = useState(210);
   const [activeCommands, setActiveCommands] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState(0);
-  const initialHtml = useMemo(() => editorHtmlForValue(value), []);
+  const [editorReady, setEditorReady] = useState(false);
+  const initialHtml = useMemo(() => editorHtmlForValue(value), [documentId]);
 
-  // On a Fast Refresh, React can preserve the old WebView document even when
-  // this component's JavaScript changed. Remount it once so the document and
-  // its native-toolbar command function always come from the current source.
+  // A WebView does not reliably accept injected JavaScript before it finishes
+  // loading. Remount and initialise it from the selected record instead of
+  // attempting to inject content into a previous record's editor.
   useEffect(() => {
+    if (previousDocumentId.current === documentId) return;
+    previousDocumentId.current = documentId;
+    emittedValue.current = value;
+    setActiveCommands([]);
+    setEditorReady(false);
     setEditorInstance((current) => current + 1);
-  }, []);
+  }, [documentId]);
 
   useEffect(() => {
     if (value === emittedValue.current) return;
     emittedValue.current = value;
+    if (!editorReady) return;
     const html = JSON.stringify(editorHtmlForValue(value)).replace(/</g, '\\u003c');
     editor.current?.injectJavaScript(`window.wamSetContent(${html}); true;`);
-  }, [value]);
+  }, [editorReady, value]);
 
   const document = useMemo(() => buildEditorDocument({
     initialHtml,
@@ -77,19 +96,28 @@ export default function RichTextField({ label, value, onChangeText, placeholder,
   const onMessage = (event: WebViewMessageEvent) => {
     try {
       const message = JSON.parse(event.nativeEvent.data);
-      if (message.type !== 'change' || typeof message.html !== 'string') return;
-      const next = valueFromEditorHtml(message.html);
-      emittedValue.current = next;
-      onChangeText(next);
+      if (message.type !== 'change' && message.type !== 'layout') return;
+      if (message.type === 'change' && typeof message.html === 'string') {
+        const next = valueFromEditorHtml(message.html);
+        emittedValue.current = next;
+        onChangeText(next);
+      }
       if (Array.isArray(message.active)) setActiveCommands(message.active.filter((item: unknown) => typeof item === 'string'));
-      if (typeof message.height === 'number') setHeight(Math.max(210, Math.min(420, message.height)));
+      if (typeof message.height === 'number') setHeight(Math.max(210, Math.min(MAX_EDITOR_HEIGHT, message.height)));
     } catch {
       // Ignore malformed messages from the local editor document.
     }
   };
 
   const runCommand = (command: EditorCommand) => {
+    if (!editorReady) return;
     editor.current?.injectJavaScript(buildCommandScript(command));
+  };
+
+  const onEditorLoad = () => {
+    setEditorReady(true);
+    const html = JSON.stringify(editorHtmlForValue(value)).replace(/</g, '\\u003c');
+    editor.current?.injectJavaScript(`window.wamSetContent(${html}, true); true;`);
   };
 
   return (
@@ -99,7 +127,12 @@ export default function RichTextField({ label, value, onChangeText, placeholder,
         Type, then select the words you want to change before using a writing tool. Members see this formatting after publishing.
       </Text>
       <View style={styles.richEditorFrame}>
-        <View style={{ alignItems: 'center', borderBottomColor: styles.borderSoftColor, borderBottomWidth: 1, flexDirection: 'row', padding: 6 }}>
+        <ScrollView
+          contentContainerStyle={{ alignItems: 'center', padding: 6 }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ borderBottomColor: styles.borderSoftColor, borderBottomWidth: 1 }}
+        >
           {TOOLS.map((tool) => {
             const selected = activeCommands.includes(tool.command);
             return (
@@ -107,7 +140,8 @@ export default function RichTextField({ label, value, onChangeText, placeholder,
                 accessibilityLabel={tool.accessibilityLabel}
                 accessibilityRole="button"
                 key={tool.command}
-                onPressIn={() => runCommand(tool.command)}
+                disabled={!editorReady}
+                onPress={() => runCommand(tool.command)}
                 style={{
                   alignItems: 'center',
                   backgroundColor: selected ? styles.borderSoftColor : 'transparent',
@@ -116,6 +150,7 @@ export default function RichTextField({ label, value, onChangeText, placeholder,
                   justifyContent: 'center',
                   marginRight: 3,
                   minWidth: 34,
+                  opacity: editorReady ? 1 : 0.45,
                   paddingHorizontal: 6,
                 }}
               >
@@ -123,16 +158,18 @@ export default function RichTextField({ label, value, onChangeText, placeholder,
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
         <NativeWebView
           accessibilityLabel={`${label} visual editor`}
           domStorageEnabled
           javaScriptEnabled
           key={`wam-native-toolbar-${editorInstance}`}
+          nestedScrollEnabled
+          onLoadEnd={onEditorLoad}
           onMessage={onMessage}
           originWhitelist={['*']}
           ref={editor}
-          scrollEnabled={false}
+          scrollEnabled={height >= MAX_EDITOR_HEIGHT}
           source={{ html: document }}
           style={[styles.richEditor, { height }]}
         />
@@ -174,10 +211,11 @@ function buildEditorDocument({
     function captureRange() { const selection = window.getSelection(); if (selection && selection.rangeCount && editor.contains(selection.anchorNode)) { savedRange = selection.getRangeAt(0).cloneRange(); window.__wamSavedRange = savedRange; } }
     function restoreRange() { editor.focus(); const selection = window.getSelection(); const range = window.__wamSavedRange || savedRange; if (selection && range) { selection.removeAllRanges(); selection.addRange(range); } }
     function activeCommands() { return [document.queryCommandState('bold') && 'bold', document.queryCommandState('italic') && 'italic', document.queryCommandState('insertUnorderedList') && 'bullets', document.queryCommandState('insertOrderedList') && 'numbers', document.queryCommandValue('formatBlock').toLowerCase() === 'h2' && 'heading', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' && 'quote'].filter(Boolean); }
+    function reportLayout() { const height = Math.max(210, Math.min(420, document.body.scrollHeight + 8)); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'layout', height, active: activeCommands() })); }
     function send() { captureRange(); const html = clean(); const height = Math.max(210, Math.min(420, document.body.scrollHeight + 8)); window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html, height, active: activeCommands() })); }
     function applyBlockFormat(tag) { document.execCommand('formatBlock', false, tag); if (document.queryCommandValue('formatBlock').toLowerCase() !== tag) document.execCommand('formatBlock', false, '<' + tag + '>'); }
     window.wamRunCommand = (name) => { restoreRange(); if (name === 'heading') applyBlockFormat('h2'); else if (name === 'quote') applyBlockFormat('blockquote'); else if (name === 'bullets') document.execCommand('insertUnorderedList', false, null); else if (name === 'numbers') document.execCommand('insertOrderedList', false, null); else if (name === 'clear') { document.execCommand('removeFormat', false, null); applyBlockFormat('p'); } else document.execCommand(name, false, null); send(); };
-    editor.addEventListener('input', send); editor.addEventListener('keyup', send); editor.addEventListener('mouseup', captureRange); editor.addEventListener('touchend', captureRange); editor.addEventListener('focus', captureRange); document.addEventListener('selectionchange', captureRange); editor.addEventListener('blur', send); window.wamSetContent = (html) => { editor.innerHTML = html || ''; savedRange = null; send(); }; setTimeout(send, 0);
+    editor.addEventListener('input', send); editor.addEventListener('keyup', send); editor.addEventListener('mouseup', captureRange); editor.addEventListener('touchend', captureRange); editor.addEventListener('focus', captureRange); document.addEventListener('selectionchange', captureRange); editor.addEventListener('blur', send); window.wamSetContent = (html, silent) => { editor.innerHTML = html || ''; savedRange = null; if (silent) reportLayout(); else send(); }; setTimeout(reportLayout, 0);
   </script></body></html>`;
 }
 
