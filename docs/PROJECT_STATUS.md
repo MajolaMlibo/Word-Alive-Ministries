@@ -292,15 +292,22 @@ Editor and reported `Success. No rows returned`.
   in Expo Go on `Mlibo_AP1`. The original controls did not apply formatting on
   Android, so the same branch now uses native React Native controls that issue
   commands directly to the loaded editor and preserve the selected WebView text
-  range. On 2026-11-20, the `Mlibo_AP1` Android virtual device verified that
-  selected editor text becomes visibly bold and that a selected phrase becomes
-  a visibly larger heading. On 2026-11-21, the project owner independently
-  confirmed that the Heading control formats selected text. The test phrase
-  was not saved. Italic, lists,
-  quote, clear formatting, saving, member rendering, reload persistence, and
-  signed-APK checks remain pending verification.
+  range. Automated Android-emulator input on 2026-11-20 visibly applied bold
+  and heading formatting to selected, unsaved test text. However, on
+  2026-11-21 the project owner reported that manually using the controls in
+  the same virtual device still left the selected text unchanged. Treat this
+  feature as unresolved and do not merge or build it. A physical Android
+  reproduction, followed by a different editor approach if needed, is
+  required. Italic, lists, quote, clear formatting, saving, member rendering,
+  reload persistence, and signed-APK checks remain pending verification.
 
 ## Known blockers
+
+- **Admin formatted writing is not ready for testers.** Automated emulator
+  input can apply the selected formatting, but manual virtual-device use still
+  fails according to the project owner. Do not advertise this feature, merge
+  its PR, or create a build from this branch until it is reproduced and fixed
+  on a physical Android device.
 
 - There are currently no confirmed, published Bible-study events in the
   production database. Church meeting dates, times, locations, and links must
