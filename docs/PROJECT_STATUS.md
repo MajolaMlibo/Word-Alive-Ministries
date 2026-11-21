@@ -70,6 +70,11 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
+- `fix/admin-editor-toolbar` is in progress. It places the Admin writing
+  toolbar inside the rich-text WebView so Android cannot discard a selected
+  range before a formatting command runs. It also keeps the toolbar visible
+  while longer content scrolls and guards mobile taps from applying a command
+  twice. TypeScript and physical Android verification remain pending.
 - `fix/android-adaptive-icon-safe-zone` is in progress. It keeps the supplied
   Word Alive logo but moves both Android adaptive foreground layers inside the
   platform's central safe area, preventing launcher masks from clipping the
