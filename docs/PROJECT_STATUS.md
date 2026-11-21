@@ -327,6 +327,14 @@ Editor and reported `Success. No rows returned`.
 
 ## Known blockers
 
+- `fix/admin-daily-reading-progress` corrects a role-specific daily-reading
+  lookup defect identified during physical Android testing on 2026-11-21. The
+  app previously queried by `reading_id` only; a Pastor or Administrator can
+  read multiple members' completion rows, so its single-row lookup failed once
+  another member completed the same reading. The fix scopes the lookup to the
+  signed-in user's `user_id`. TypeScript validation passes; physical Android
+  verification remains required.
+
 - **Admin formatted writing requires physical Android verification.** Automated
   emulator input can apply selected formatting, but manual virtual-device use
   still fails according to the project owner. The change is approved for the
