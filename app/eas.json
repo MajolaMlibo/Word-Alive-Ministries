@@ -1,6 +1,6 @@
 {
   "build": {
-    "preview": {
+    "android": {
       "distribution": "internal",
       "environment": "preview"
     },
