@@ -58,6 +58,9 @@
 - [ ] On a real device, confirm Sign out is only in the main More menu below
   ministry links, requires confirmation, and returns to Sign In after local
   session clearing.
+- [ ] On Android, open a published Study with a real image; confirm tapping the
+  image leaves the Study card expanded, opens the image full screen, and the
+  close control returns to the same expanded study.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
 - [ ] Verify app-specific photo permission wording.
