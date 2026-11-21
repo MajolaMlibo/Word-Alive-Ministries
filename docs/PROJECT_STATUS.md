@@ -295,19 +295,20 @@ Editor and reported `Success. No rows returned`.
   range. Automated Android-emulator input on 2026-11-20 visibly applied bold
   and heading formatting to selected, unsaved test text. However, on
   2026-11-21 the project owner reported that manually using the controls in
-  the same virtual device still left the selected text unchanged. Treat this
-  feature as unresolved and do not merge or build it. A physical Android
-  reproduction, followed by a different editor approach if needed, is
-  required. Italic, lists, quote, clear formatting, saving, member rendering,
-  reload persistence, and signed-APK checks remain pending verification.
+  the same virtual device still left the selected text unchanged. On the same
+  date, the project owner approved merging this change into the next Android
+  tester candidate because a physical Android device may behave differently.
+  It is not production-verified: the pastor must test it before it can be
+  considered complete. Italic, lists, quote, clear formatting, saving, member
+  rendering, reload persistence, and signed-APK checks remain pending.
 
 ## Known blockers
 
-- **Admin formatted writing is not ready for testers.** Automated emulator
-  input can apply the selected formatting, but manual virtual-device use still
-  fails according to the project owner. Do not advertise this feature, merge
-  its PR, or create a build from this branch until it is reproduced and fixed
-  on a physical Android device.
+- **Admin formatted writing requires physical Android verification.** Automated
+  emulator input can apply selected formatting, but manual virtual-device use
+  still fails according to the project owner. The change is approved for the
+  next Android tester candidate, but it must not be described as verified or
+  production-ready until the pastor confirms it on a physical device.
 
 - There are currently no confirmed, published Bible-study events in the
   production database. Church meeting dates, times, locations, and links must
