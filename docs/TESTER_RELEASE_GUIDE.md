@@ -12,10 +12,10 @@ a public App Store or Google Play release.
 
 | Profile | Purpose | Distribution |
 | --- | --- | --- |
-| `preview` | Pastor and small-group testing | Internal only |
+| `android` | Pastor and small-group testing | Internal only |
 | `production` | Future public-store submission | Store workflow only; do not use until release gates are complete |
 
-The `preview` profile deliberately has no developer tools. It is the correct
+The `android` profile deliberately has no developer tools. It is the correct
 profile for stakeholder testing because testers install an app rather than use
 Expo Go.
 

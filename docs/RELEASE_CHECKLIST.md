@@ -28,7 +28,7 @@
 
 ## Internal tester-build readiness
 
-- [x] Add the `preview` EAS profile for internal tester distribution.
+- [x] Configure the `android` EAS profile for internal Android tester distribution.
 - [x] Confirm the existing EAS project belongs to Expo account `mlibo` and
   align the configured project owner.
 - [x] Configure the approved Android package name and iOS bundle identifier:
