@@ -61,6 +61,11 @@
 - [ ] On Android, open a published Study with a real image; confirm tapping the
   image leaves the Study card expanded, opens the image full screen, and the
   close control returns to the same expanded study.
+- [ ] On physical Android, verify the Home notice deck with at least three
+  notices: visible cards behind the current card, right swipe for the next
+  notice, left swipe to mark an unread notice as read and move it to the
+  bottom, a one-time guidance hint without an arrow, and working Read more
+  only for a genuinely collapsed long message.
 - [ ] Verify push-notification permission, token registration, delivery, and
   tap handling.
 - [ ] Verify app-specific photo permission wording.
