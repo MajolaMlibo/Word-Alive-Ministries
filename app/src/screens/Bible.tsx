@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   Share,
+  type ScrollViewInstance,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -377,7 +378,8 @@ function BibleReader({
   );
   const [passage, setPassage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [searchStep, setSearchStep] = useState<'book' | 'chapter' | 'verse' | null>(null);
+  const [searchStep, setSearchStep] = useState<'book' | 'chapter' | null>(null);
+  const [isPassageNavigationOpen, setIsPassageNavigationOpen] = useState(false);
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
   const [verseSaves, setVerseSaves] = useState<BibleVerseSave[]>([]);
   const [allVerseSaves, setAllVerseSaves] = useState<BibleVerseSave[]>([]);
@@ -390,6 +392,7 @@ function BibleReader({
     'standard'
   );
   const [isTextSizeMenuOpen, setIsTextSizeMenuOpen] = useState(false);
+  const readerScrollRef = useRef<ScrollViewInstance>(null);
   const readerTextScale = BIBLE_READER_TEXT_SCALE[readerTextSize];
   const styles = makeStyles(colors, fonts, readerTextScale);
 
@@ -447,6 +450,10 @@ function BibleReader({
     load();
   }, [load]);
 
+  useEffect(() => {
+    readerScrollRef.current?.scrollTo({ animated: true, y: 0 });
+  }, [book, chapter]);
+
   const loadVerseSaves = useCallback(async () => {
     const { saves, error } = await getBibleVerseSaves(book, chapter);
     if (error) {
@@ -498,6 +505,7 @@ function BibleReader({
     setChapter(Math.min(Math.max(p.chapter, 1), matchingBook[1]));
     setVerse(p.verse);
     setSearchStep(null);
+    setIsPassageNavigationOpen(false);
   }
 
   const bookQuery = input.replace(/\s+\d.*$/, '').trim().toLowerCase();
@@ -505,7 +513,6 @@ function BibleReader({
     name.toLowerCase().includes(bookQuery)
   ).slice(0, 6);
   const chapters = Array.from({ length: getChapterCount(book) }, (_, index) => index + 1);
-  const verses = passage?.verses?.map((item: any) => item.verse) ?? [];
 
   function selectBook(selectedBook: string) {
     setBook(selectedBook);
@@ -521,13 +528,13 @@ function BibleReader({
     setVerse(undefined);
     setSelectedVerses([]);
     setInput(`${book} ${selectedChapter}`);
-    setSearchStep('verse');
+    setSearchStep(null);
+    setIsPassageNavigationOpen(false);
   }
 
-  function selectVerse(selectedVerse: number) {
-    setVerse(selectedVerse);
-    setInput(`${book} ${chapter}:${selectedVerse}`);
+  function togglePassageNavigation() {
     setSearchStep(null);
+    setIsPassageNavigationOpen((isOpen) => !isOpen);
   }
 
   function toggleVerseSelection(selectedVerse: number) {
@@ -667,7 +674,40 @@ function BibleReader({
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.searchCard}>
+      <ScrollView
+        contentContainerStyle={styles.readerContent}
+        ref={readerScrollRef}
+        showsVerticalScrollIndicator={false}
+        style={styles.reader}
+      >
+      <View style={styles.readerNavigation}>
+        <TouchableOpacity
+          accessibilityLabel="Choose Bible passage"
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isPassageNavigationOpen }}
+          onPress={togglePassageNavigation}
+          style={styles.readerNavigationButton}
+        >
+          <View>
+            <Text style={styles.readerNavigationLabel}>Choose passage</Text>
+            <Text style={styles.readerNavigationReference}>
+              {book} {chapter}{verse ? `:${verse}` : ''} · KJV
+            </Text>
+          </View>
+          <View style={styles.readerNavigationChange}>
+            <Text style={styles.readerNavigationChangeText}>
+              {isPassageNavigationOpen ? 'Close' : 'Change'}
+            </Text>
+            <Ionicons
+              color={colors.primary}
+              name={isPassageNavigationOpen ? 'chevron-up' : 'chevron-down'}
+              size={20}
+            />
+          </View>
+        </TouchableOpacity>
+
+        {isPassageNavigationOpen ? (
+          <View style={styles.searchCard}>
         <TextInput
           value={input}
           onChangeText={(value) => {
@@ -720,26 +760,6 @@ function BibleReader({
           </View>
           </>}
 
-          {searchStep === 'verse' && <>
-          <Text style={styles.pickerLabel}>Choose a verse</Text>
-          {loading ? (
-          <ActivityIndicator color={colors.primary} style={styles.verseLoading} />
-        ) : verses.length ? (
-          <View style={styles.numberGrid}>
-            {verses.map((number: number) => (
-              <TouchableOpacity
-                key={number}
-                style={[styles.numberChip, number === verse && styles.selectedChip]}
-                onPress={() => selectVerse(number)}
-              >
-                <Text style={[styles.numberChipText, number === verse && styles.selectedChipText]}>{number}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.pickerHint}>Choose a chapter to see its verses.</Text>
-        )}
-          </>}
           </ScrollView>
         )}
 
@@ -773,6 +793,8 @@ function BibleReader({
             />
           </TouchableOpacity>
         </View>
+        </View>
+        ) : null}
       </View>
 
       {loading ? (
@@ -781,10 +803,7 @@ function BibleReader({
           style={{ marginTop: 40 }}
         />
       ) : (
-        <ScrollView
-          style={styles.reader}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.readerCard}>
           <View style={styles.readerHeading}>
             <Text style={styles.readerTitle}>
               {book} {chapter}
@@ -906,8 +925,9 @@ function BibleReader({
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       )}
+      </ScrollView>
 
       <Modal
         animationType="slide"
@@ -1206,10 +1226,10 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     },
 
     searchCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 18,
+      backgroundColor: colors.background,
+      borderRadius: 14,
       padding: spacing.md,
-      marginBottom: spacing.md,
+      marginTop: spacing.sm,
     },
 
     input: {
@@ -1306,8 +1326,56 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
 
     reader: {
       flex: 1,
+    },
+
+    readerContent: {
+      paddingBottom: spacing.xl,
+    },
+
+    readerNavigation: {
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      padding: spacing.sm,
+    },
+
+    readerNavigationButton: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      minHeight: 54,
+      paddingHorizontal: spacing.xs,
+    },
+
+    readerNavigationLabel: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+
+    readerNavigationReference: {
+      color: colors.primary,
+      fontSize: fonts.body,
+      fontWeight: '800',
+      marginTop: 2,
+    },
+
+    readerNavigationChange: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 2,
+    },
+
+    readerNavigationChangeText: {
+      color: colors.primary,
+      fontSize: fonts.caption,
+      fontWeight: '800',
+    },
+
+    readerCard: {
       backgroundColor: colors.surface,
       borderRadius: 20,
+      marginTop: spacing.md,
       padding: spacing.lg,
     },
 

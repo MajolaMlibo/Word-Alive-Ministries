@@ -70,6 +70,10 @@ fix is verified and explicitly approved for release.
 
 ## Current work
 
+- `fix/bible-reader-navigation` is in progress. It moves passage controls into
+  a closed-by-default reader panel, removes the unnecessary verse-number grid,
+  and makes the Bible controls and text use one natural scroll surface.
+  TypeScript and physical Android verification remain pending.
 - `fix/admin-editor-toolbar` is in progress. It places the Admin writing
   toolbar inside the rich-text WebView so Android cannot discard a selected
   range before a formatting command runs. It also keeps the toolbar visible
