@@ -78,7 +78,10 @@ build is authorised while the current source fixes are under review.
   `202611210001_restrict_future_study_visibility.sql` succeeded in
   `word-alive-prod`; the resulting policy list was manually verified for study
   rows, study-media rows, and `study-media` Storage objects. TypeScript passed.
-  Physical Android role checks remain pending.
+  On 2026-11-22, Expo Go testing confirmed staff Upcoming access, member
+  Today and Past visibility, full-screen study images, and that archiving
+  removed the test study from the member view. Standalone Android testing
+  and separate Pastor-account verification remain pending.
 - `fix/bible-reader-navigation` was merged through pull request #50. It moves
   passage controls into a closed-by-default reader panel, removes the
   unnecessary verse-number grid, and makes the Bible controls and text use one

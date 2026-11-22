@@ -16,9 +16,11 @@
 - [x] Apply `202611210001_restrict_future_study_visibility.sql` in production
   Supabase. It succeeded in `word-alive-prod` on 2026-11-21 and the resulting
   study and Storage policies were verified.
-- [ ] Verify: members see Today's Study and Past only; Pastor and Administrator
-  accounts can also see Upcoming; a member cannot retrieve a future study or
-  its private media.
+- [x] Verify Study schedule and image viewing in Expo Go with Administrator
+  and member accounts, including removal from the member view after archiving.
+- [ ] Repeat Study schedule checks in standalone Android with member,
+  Administrator, and Pastor accounts. Verify direct future-study and
+  private-media access is denied to members.
 - [x] Publish approved announcements and verify the member announcement feed.
 - [x] Implement and verify the member Prayer Requests flow: create, edit,
   delete, private submission, and reload persistence.
