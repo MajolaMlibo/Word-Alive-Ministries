@@ -1,5 +1,7 @@
 # Test Plan
 
+Record recurring maintenance findings and role handoffs in [Operations and maintenance](OPERATIONS.md).
+
 ## Test approach
 
 Each feature must pass TypeScript validation, a relevant backend check where
