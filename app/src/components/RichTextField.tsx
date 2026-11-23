@@ -148,7 +148,7 @@ function buildEditorDocument({
   const content = JSON.stringify(initialHtml).replace(/</g, '\\u003c');
   const hint = JSON.stringify(placeholder || 'Write here...').replace(/</g, '\\u003c');
 
-  return `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /><style>
+  return String.raw`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /><style>
     * { box-sizing: border-box; } html, body { margin: 0; min-height: 100%; padding: 0; background: ${surfaceColor}; color: ${textColor}; font-family: -apple-system, Roboto, Arial, sans-serif; }
     #toolbar { -webkit-overflow-scrolling: touch; background: ${surfaceColor}; border-bottom: 1px solid ${borderColor}; display: flex; gap: 3px; overflow-x: auto; padding: 6px; position: sticky; top: 0; white-space: nowrap; z-index: 2; }
     #toolbar button { align-items: center; appearance: none; background: transparent; border: 0; border-radius: 7px; color: ${primaryColor}; display: inline-flex; font-size: 17px; font-weight: 700; height: 34px; justify-content: center; min-width: 34px; padding: 0 6px; }
