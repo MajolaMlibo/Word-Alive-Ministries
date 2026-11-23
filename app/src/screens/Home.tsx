@@ -38,9 +38,8 @@ import { displayText, isRichText } from '../components/richText';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-const SWIPE_TO_MARK_READ_DISTANCE = 88;
+const SWIPE_TO_MARK_READ_DISTANCE = 48;
 const SWIPE_OUT_DISTANCE = 420;
-const ANNOUNCEMENT_PREVIEW_CHARACTER_LIMIT = 180;
 const ANNOUNCEMENT_SWIPE_HINT_KEY = 'wam-announcement-swipe-hint-seen-v1';
 const MAX_VISIBLE_ANNOUNCEMENT_BACK_CARDS = 2;
 
@@ -95,6 +94,7 @@ type AnnouncementCardProps = {
   isRead: boolean;
   isMarking: boolean;
   totalAnnouncements: number;
+  position: number;
   onMarkAsRead: (announcement: Announcement) => Promise<boolean>;
   onShowNext: () => void;
   onOpenAction: (url: string) => Promise<void>;
@@ -108,6 +108,7 @@ function AnnouncementCard({
   isRead,
   isMarking,
   totalAnnouncements,
+  position,
   onMarkAsRead,
   onShowNext,
   onOpenAction,
@@ -119,7 +120,13 @@ function AnnouncementCard({
   const translateX = useRef(new Animated.Value(0)).current;
   const publishedDate = formatAnnouncementDate(announcement.published_at);
   const previewMessage = announcementPreviewText(announcement.message);
-  const canExpand = previewMessage.length > ANNOUNCEMENT_PREVIEW_CHARACTER_LIMIT;
+  const [canExpand, setCanExpand] = useState(false);
+  const entrance = useRef(new Animated.Value(0.97)).current;
+  useEffect(() => {
+    const animation = Animated.spring(entrance, { toValue: 1, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [entrance]);
   const canShowNext = totalAnnouncements > 1;
 
   const resetSwipe = () => {
@@ -135,9 +142,9 @@ function AnnouncementCard({
         onMoveShouldSetPanResponder: (_, gesture) =>
           !isMarking &&
           Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
-          ((!isRead && gesture.dx < -12) || (canShowNext && gesture.dx > 12)),
+          ((!isRead && gesture.dx < -8) || (canShowNext && Math.abs(gesture.dx) > 8)),
         onPanResponderMove: (_, gesture) => {
-          if (!isRead && !isMarking && gesture.dx < 0) {
+          if ((!isRead || canShowNext) && !isMarking && gesture.dx < 0) {
             translateX.setValue(Math.min(0, gesture.dx));
           } else if (canShowNext && !isMarking && gesture.dx > 0) {
             translateX.setValue(Math.max(0, gesture.dx));
@@ -164,9 +171,9 @@ function AnnouncementCard({
             return;
           }
 
-          if (canShowNext && !isMarking && gesture.dx >= SWIPE_TO_MARK_READ_DISTANCE) {
+          if (canShowNext && !isMarking && Math.abs(gesture.dx) >= SWIPE_TO_MARK_READ_DISTANCE) {
             Animated.timing(translateX, {
-              toValue: SWIPE_OUT_DISTANCE,
+              toValue: Math.sign(gesture.dx) * SWIPE_OUT_DISTANCE,
               duration: 180,
               useNativeDriver: true,
             }).start(({ finished }) => {
@@ -214,17 +221,25 @@ function AnnouncementCard({
       ) : null}
       <Animated.View
         {...(!isMarking ? panResponder.panHandlers : {})}
-        style={[styles.announcementCard, { transform: [{ translateX }] }]}
+        style={[styles.announcementCard, { transform: [{ translateX }, { scale: entrance }] }]}
       >
         <View style={styles.announcementTitleRow}>
           <Text style={styles.announcementTitle}>{announcement.title}</Text>
           {totalAnnouncements > 1 ? (
-            <Text style={styles.announcementPosition}>1 of {totalAnnouncements}</Text>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Notice ${position} of ${totalAnnouncements}. Next notice`} onPress={onShowNext} disabled={isMarking} hitSlop={8}>
+              <Text style={styles.announcementPosition}>{position} of {totalAnnouncements} ›</Text>
+            </TouchableOpacity>
           ) : null}
         </View>
         {publishedDate ? (
           <Text style={styles.announcementDate}>Posted {publishedDate}</Text>
         ) : null}
+        <View>
+          <Text accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+            pointerEvents="none" style={[styles.announcementMessage, { position: 'absolute', left: 0, right: 0, opacity: 0 }]}
+            onTextLayout={(event) => setCanExpand(event.nativeEvent.lines.length > 3)}>
+            {previewMessage}
+          </Text>
         {expanded && isRichText(announcement.message) ? (
           <FormattedText containerStyle={styles.announcementMessage} styles={styles} text={announcement.message} />
         ) : (
@@ -236,6 +251,7 @@ function AnnouncementCard({
             {previewMessage}
           </Text>
         )}
+        </View>
         {canExpand ? (
           <TouchableOpacity
             accessibilityLabel={
@@ -306,6 +322,7 @@ export default function HomeScreen() {
     null
   );
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [noticeOrder, setNoticeOrder] = useState<string[]>([]);
   const [announcementsError, setAnnouncementsError] = useState<string | null>(
     null
   );
@@ -452,7 +469,9 @@ export default function HomeScreen() {
           );
 
           setAnnouncementReadTimes(readTimes);
-          setAnnouncements(orderAnnouncements(announcementData, readTimes));
+          const ordered = orderAnnouncements(announcementData, readTimes);
+          setNoticeOrder(ordered.map((notice) => notice.id));
+          setAnnouncements(ordered);
           setAnnouncementsError(null);
         }
       }
@@ -750,6 +769,7 @@ export default function HomeScreen() {
             >
               <AnnouncementCard
                 announcement={announcements[0]}
+                position={noticeOrder.indexOf(announcements[0].id) + 1}
                 isMarking={markingAnnouncementId === announcements[0].id}
                 isRead={Boolean(announcementReadTimes[announcements[0].id])}
                 key={announcements[0].id}
