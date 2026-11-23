@@ -229,6 +229,15 @@ function DateTimeField({
   styles: any;
 }) {
   const [showPicker, setShowPicker] = useState(false);
+  if (Platform.OS === 'web') {
+    return <View style={styles.fieldWrap}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <input aria-label={label} type={mode} value={value}
+        onChange={event => onChange(event.currentTarget.value)}
+        style={{ font: 'inherit', color: styles.textColor, backgroundColor: styles.surfaceColor,
+          border: '1px solid ' + styles.borderSoftColor, borderRadius: 12, padding: 12, minHeight: 44 }} />
+    </View>;
+  }
   const displayValue = value
     ? mode === 'date'
       ? dateFromInputValue(value).toLocaleDateString('en-GB', {
@@ -768,41 +777,75 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
   </View>;
 }
 
-function ReadingsManager({ administratorId, styles }: { administratorId: string; styles: any }) {
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+
+function ReadingsManager({ administratorId, styles, scrollTo }: {
+  administratorId: string; styles: any; scrollTo: (y: number) => void;
+}) {
   const blank = (planId = '') => ({ planId, dayNumber: '', date: '', scripture: '', reflection: '', audioUrl: '', status: 'draft' as ContentStatus });
-  const [plans, setPlans] = useState<ReadingPlan[]>([]);
+  const [plans, setPlans] = useState<ReadingPlan[] | null>(null);
+  const [plansFailed, setPlansFailed] = useState(false);
   const [readings, setReadings] = useState<DailyReading[]>([]);
   const [form, setForm] = useState(blank());
   const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<DailyReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const [plansResult, readingsResult] = await Promise.all([
-      getAdminReadingPlans(),
-      getAdminDailyReadings(),
-    ]);
-    if (plansResult.error || readingsResult.error) {
-      Alert.alert('Unable to load readings', 'Please refresh and try again.');
-    } else {
-      setPlans(plansResult.plans);
-      setReadings(readingsResult.readings);
-      setForm((current) => current.planId ? current : blank(plansResult.plans[0]?.id || ''));
-    }
-    setLoading(false);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState<number | null>(new Date().getMonth());
+  const [revision, setRevision] = useState(0);
+  const [loadError, setLoadError] = useState(false);
+  const sectionY = useRef(0);
+  const revealId = useRef<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getAdminReadingPlans().then(({ plans: items, error }) => {
+      if (!active) return;
+      if (error) {
+        setPlansFailed(true);
+        return;
+      }
+      setPlans(items);
+      const today = new Date();
+      const plan = items.find(p => p.plan_year === today.getFullYear() && p.status === 'published') ?? items[0];
+      if (plan) {
+        setYear(plan.plan_year);
+        setMonth(plan.plan_year === today.getFullYear() ? today.getMonth() : 0);
+        setForm(current => ({ ...current, planId: plan.id }));
+      }
+    });
+    return () => { active = false; };
   }, []);
-  useEffect(() => { void load(); }, [load]);
-  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank(plans[0]?.id || '')); };
+
+  useEffect(() => {
+    if (!form.planId || month === null) return;
+    let active = true;
+    setLoading(true);
+    setLoadError(false);
+    getAdminDailyReadings(form.planId, year, month).then(result => {
+      if (!active) return;
+      setReadings(result.readings);
+      setLoadError(Boolean(result.error));
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [form.planId, year, month, revision]);
+
+  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank(form.planId)); };
   const edit = (reading: DailyReading) => {
+    scrollTo(sectionY.current);
     setEditing(reading);
     setForm({ planId: reading.plan_id, dayNumber: String(reading.day_number), date: reading.scheduled_date, scripture: reading.scripture_ref, reflection: reading.reflection || '', audioUrl: reading.audio_url || '', status: reading.status });
   };
-  const cyclePlan = () => {
-    if (plans.length < 2) return;
-    const index = plans.findIndex((plan) => plan.id === form.planId);
-    const nextPlan = plans[(index + 1) % plans.length];
-    setForm(current => ({ ...current, planId: nextPlan.id }));
+  const selectPlan = (plan: ReadingPlan) => {
+    revealId.current = null;
+    setLoading(true);
+    setYear(plan.plan_year);
+    const today = new Date();
+    setMonth(plan.plan_year === today.getFullYear() ? today.getMonth() : 0);
+    setForm(current => ({ ...current, planId: plan.id }));
   };
   const save = async () => {
     const dayNumber = Number(form.dayNumber);
@@ -814,18 +857,26 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
     const { reading, error } = await saveDailyReading({ planId: form.planId, dayNumber, scheduledDate: form.date, scriptureRef: form.scripture, reflection: toOptional(form.reflection), audioUrl: toOptional(form.audioUrl), status: form.status, publishedAt: editing?.published_at || null }, administratorId, editing?.id);
     setSaving(false);
     if (error || !reading) { Alert.alert('Unable to save reading', 'Please check for duplicate day numbers or dates in this plan.'); return; }
-    setReadings((current) => [...current.filter((item) => item.id !== reading.id), reading].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date)));
+    revealId.current = reading.id;
+    setLoading(true);
+    setYear(Number(reading.scheduled_date.slice(0, 4)));
+    setMonth(Number(reading.scheduled_date.slice(5, 7)) - 1);
     reset();
+    setRevision(v => v + 1);
   };
   const remove = (reading: DailyReading) => Alert.alert('Delete daily reading?', 'This removes the scheduled reading and cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteDailyReading(reading.id); if (error) Alert.alert('Unable to delete reading', 'Please try again.'); else { setReadings((current) => current.filter((item) => item.id !== reading.id)); if (editing?.id === reading.id) reset(); } } }]);
+  if (plansFailed) return <EmptyState icon="alert-circle-outline" message="Could not load reading plans. Pull down to refresh." styles={styles} />;
+  if (!plans) return <ActivityIndicator color={styles.primaryColor} />;
+  if (!plans.length) return <EmptyState icon="book-outline" message="Create a reading plan in Plans to schedule readings." styles={styles} />;
   const selectedPlan = plans.find((plan) => plan.id === form.planId);
-  return <View>
+  return <View onLayout={event => { sectionY.current = event.nativeEvent.layout.y; }}>
+    <Text style={styles.listTitle}>{editing ? 'Reading plan for this entry' : 'Reading plan'}</Text>
+    {plans.map(plan => <TouchableOpacity key={plan.id} accessibilityRole="button"
+      accessibilityState={{ selected: form.planId === plan.id }} disabled={saving || form.planId === plan.id}
+      style={[styles.sectionTab, { marginBottom: 4 }, form.planId === plan.id && styles.sectionTabActive]} onPress={() => selectPlan(plan)}>
+      <Text style={[styles.sectionTabText, form.planId === plan.id && styles.sectionTabTextActive]}>{plan.name} ({plan.plan_year})</Text>
+    </TouchableOpacity>)}
     <EditorCard title={editing ? 'Edit daily reading' : 'New daily reading'} styles={styles}>
-      {plans.length ? <TouchableOpacity onPress={cyclePlan} style={styles.planButton}>
-        <Text style={styles.planButtonLabel}>Reading plan</Text>
-        <Text style={styles.planButtonValue}>{selectedPlan ? `${selectedPlan.name} (${selectedPlan.plan_year})` : 'Choose a plan'}</Text>
-        {plans.length > 1 ? <Text style={styles.planButtonHint}>Tap to change</Text> : null}
-      </TouchableOpacity> : <Text style={styles.warningText}>No reading plan exists. Create a plan in Supabase before adding a reading.</Text>}
       <Field label="Day number (1–366)" value={form.dayNumber} onChangeText={(dayNumber) => setForm(current => ({ ...current, dayNumber }))} keyboardType="numeric" styles={styles} />
       <DateTimeField label="Scheduled date" value={form.date} onChange={(date) => setForm(current => ({ ...current, date }))} mode="date" styles={styles} />
       <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm(current => ({ ...current, scripture }))} placeholder="Psalms 107-111" styles={styles} />
@@ -835,7 +886,32 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Scheduled readings</Text>
-    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : readings.length ? readings.map((reading) => <ContentListCard key={reading.id} title={reading.scripture_ref} subtitle={`${reading.scheduled_date} • Day ${reading.day_number} • ${titleCase(reading.status)}`} onEdit={() => edit(reading)} onDelete={() => remove(reading)} styles={styles} />) : <EmptyState icon="book-outline" message="No daily readings found." styles={styles} />}
+    {selectedPlan && <>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Previous year" style={styles.sectionTab} onPress={() => { setLoading(true); setYear(year - 1); }}><Text style={styles.sectionTabText}>‹</Text></TouchableOpacity>
+        <Text style={styles.fieldLabel}>{year}</Text>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Next year" style={styles.sectionTab} onPress={() => { setLoading(true); setYear(year + 1); }}><Text style={styles.sectionTabText}>›</Text></TouchableOpacity>
+      </View>
+      {MONTHS.map((name, index) => <React.Fragment key={name}>
+        <TouchableOpacity accessibilityRole="button" aria-expanded={month === index} accessibilityState={{ expanded: month === index }}
+          style={styles.planButton} onPress={() => { revealId.current = null; setLoading(true); setMonth(month === index ? null : index); }}>
+          <Text style={styles.planButtonValue}>{month === index ? '▾' : '▸'} {name}</Text>
+        </TouchableOpacity>
+        {month === index && (loading ? <ActivityIndicator color={styles.primaryColor} /> :
+          loadError ? <TouchableOpacity accessibilityRole="button" onPress={() => { setLoading(true); setRevision(v => v + 1); }}>
+            <Text style={styles.warningText}>Unable to load readings. Tap to retry.</Text>
+          </TouchableOpacity> : readings.length ? readings.map(reading =>
+            <View key={reading.id} onLayout={event => {
+              if (revealId.current === reading.id) {
+                revealId.current = null;
+                scrollTo(sectionY.current + event.nativeEvent.layout.y);
+              }
+            }}>
+              <ContentListCard title={reading.scripture_ref} subtitle={`${reading.scheduled_date} • Day ${reading.day_number} • ${titleCase(reading.status)}`}
+                onEdit={() => edit(reading)} onDelete={() => remove(reading)} styles={styles} />
+            </View>) : <EmptyState icon="book-outline" message={`No readings scheduled for ${name} ${year}.`} styles={styles} />)}
+      </React.Fragment>)}
+    </>}
   </View>;
 }
 
@@ -944,6 +1020,7 @@ function EmptyState({ icon, message, styles }: { icon: keyof typeof Ionicons.gly
 }
 
 export default function AdminScreen() {
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [section, setSection] = useState<AdminSection>('prayer');
@@ -972,6 +1049,7 @@ export default function AdminScreen() {
 
   return <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
     <ScrollView
+      ref={scroll}
       contentContainerStyle={styles.content}
       keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled"
@@ -986,7 +1064,7 @@ export default function AdminScreen() {
       {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
-      {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
       {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>

@@ -450,3 +450,7 @@ Editor and reported `Success. No rows returned`.
    final-release milestone.
 
 23 November 2026 — Admin notice creation and editing passed the physical Galaxy A26 draft test on the PR #56 branch, including retrieval after app restart. The owner also verified notice formatting persisted after reopening. See TEST_PLAN.md for scope and pending verification.
+
+2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production verification returned 365 draft readings dated 1 January through 31 December 2027. Pastoral review is pending.
+
+Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.

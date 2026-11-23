@@ -124,3 +124,7 @@ are the next acceptance evidence; Admin visual formatting remains a specific
 physical-device check.
 
 On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corruption in the admin notice editor. After the change to preserve the WebView selection during typing, USB-DRAFT-56-R2 saved both lines exactly. Editing added a third line. After a full app restart, the signed-in admin reopened the draft from Notices and all three lines matched exactly. Both test notices remained drafts. This check used the local USB debug app. The project owner then confirmed that notice formatting survived saving and reopening on the same Samsung. Coverage of individual toolbar commands, study editing, iOS and the release APK remains pending.
+
+### Grouped admin readings
+
+Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
