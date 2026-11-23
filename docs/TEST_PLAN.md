@@ -57,6 +57,8 @@ native behaviour.
 
 ## Required Android checks
 
+Notice editor regression: open an existing multiline notice, verify its last line, edit a draft, save and reopen it. The embedded editor script must parse before typing or formatting can report changes. Device verification pending.
+
 | Test | Expected result | Current evidence |
 |---|---|---|
 | Standalone app launch and saved session | The signed APK installs, Android opens the app's own package, and a saved authenticated session opens Home rather than Expo Go, a crash, or Sign In | Verified on the `Mlibo_AP1` Android virtual device, 2026-11-21, using EAS Android build 5 from commit `60771a946b7731e3c84e1143f4ff4fa3acbf70ea`. It is version `1.0.2` / Android `versionCode` `5`. It returned to the signed-in Home screen after force-close/relaunch. Physical Android verification remains pending. |
