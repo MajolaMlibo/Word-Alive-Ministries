@@ -229,6 +229,15 @@ function DateTimeField({
   styles: any;
 }) {
   const [showPicker, setShowPicker] = useState(false);
+  if (Platform.OS === 'web') {
+    return <View style={styles.fieldWrap}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <input aria-label={label} type={mode} value={value}
+        onChange={event => onChange(event.currentTarget.value)}
+        style={{ font: 'inherit', color: styles.textColor, backgroundColor: styles.surfaceColor,
+          border: '1px solid ' + styles.borderSoftColor, borderRadius: 12, padding: 12, minHeight: 44 }} />
+    </View>;
+  }
   const displayValue = value
     ? mode === 'date'
       ? dateFromInputValue(value).toLocaleDateString('en-GB', {
@@ -880,7 +889,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Next year" style={styles.sectionTab} onPress={() => { setLoading(true); setYear(year + 1); }}><Text style={styles.sectionTabText}>›</Text></TouchableOpacity>
       </View>
       {MONTHS.map((name, index) => <React.Fragment key={name}>
-        <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded: month === index }}
+        <TouchableOpacity accessibilityRole="button" aria-expanded={month === index} accessibilityState={{ expanded: month === index }}
           style={styles.planButton} onPress={() => { revealId.current = null; setLoading(true); setMonth(month === index ? null : index); }}>
           <Text style={styles.planButtonValue}>{month === index ? '▾' : '▸'} {name}</Text>
         </TouchableOpacity>

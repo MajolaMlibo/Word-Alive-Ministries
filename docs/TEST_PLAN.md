@@ -119,4 +119,4 @@ physical-device check.
 
 ### Grouped admin readings
 
-Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On a device or browser, verify plan selection, month expansion, and that saving an entry reveals its dated row. Use a test database for writes.
+Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
