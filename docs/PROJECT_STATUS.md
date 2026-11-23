@@ -448,3 +448,5 @@ Editor and reported `Success. No rows returned`.
 4. Create another Android build only after an approved, verified fix requires
    it. Defer Apple Developer enrolment, TestFlight, and iOS testing to the
    final-release milestone.
+
+2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production application and pastoral review are pending.
