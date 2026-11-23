@@ -70,6 +70,8 @@ const BIBLE_HIGHLIGHT_OPTIONS: {
   { key: 'pink', label: 'Pink', color: '#F8D2DE' },
 ];
 
+const HIGHLIGHT_INK = '#17241B';
+
 const HIGHLIGHT_COLOR_BY_KEY = Object.fromEntries(
   BIBLE_HIGHLIGHT_OPTIONS.map((option) => [option.key, option.color])
 ) as Record<BibleHighlightColor, string>;
@@ -908,8 +910,8 @@ function BibleReader({
                   selectedVerses.includes(v.verse) && styles.selectedVerse,
                 ]}
               >
-                <Text style={styles.verseText}>
-                  <Text style={styles.verseNum}>{v.verse} </Text>
+                <Text style={[styles.verseText, verseSave?.highlight_color && !selectedVerses.includes(v.verse) ? { color: HIGHLIGHT_INK } : null]}>
+                  <Text style={[styles.verseNum, verseSave?.highlight_color && !selectedVerses.includes(v.verse) ? { color: HIGHLIGHT_INK } : null]}>{v.verse} </Text>
                   {v.text}
                 </Text>
                 {verseSave?.is_bookmarked || verseSave?.note ? (
@@ -1612,7 +1614,7 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     },
 
     highlightOptionText: {
-      color: colors.text,
+      color: HIGHLIGHT_INK,
       fontSize: fonts.caption,
       fontWeight: '700',
     },
