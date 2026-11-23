@@ -188,7 +188,6 @@ function Field({
         key={documentId || label}
         label={label}
         onChangeText={onChangeText}
-        documentId={documentId}
         placeholder={placeholder}
         styles={styles}
         value={value}
@@ -445,6 +444,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   const blank = () => ({ title: '', message: '', status: 'draft' as ContentStatus, expiryDate: '', expiryTime: '', actionLabel: '', actionUrl: '' });
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -465,7 +465,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     setEditing(nextEditing);
     setForm(nextForm);
   };
-  const reset = () => applyForm(blank(), null);
+  const reset = () => { setDraftNumber(n => n + 1); applyForm(blank(), null); };
   const startEditing = (announcement: Announcement) => {
     const expiry = splitDateTime(announcement.expires_at);
     applyForm({
@@ -544,7 +544,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     <View>
       <EditorCard title={editing ? 'Edit notice' : 'New notice'} styles={styles}>
         <Field label="Title" value={form.title} onChangeText={(title) => setForm(current => ({ ...current, title }))} styles={styles} />
-        <Field label="Message" value={form.message} onChangeText={(message) => setForm(current => ({ ...current, message }))} multiline documentId={editing?.id || 'new-notice'} styles={styles} />
+        <Field label="Message" value={form.message} onChangeText={(message) => setForm(current => ({ ...current, message }))} multiline documentId={editing?.id || 'new-notice-' + draftNumber} styles={styles} />
         <Text style={styles.fieldLabel}>Status</Text>
         <ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
         <DateTimeField label="Expiry date (optional)" value={form.expiryDate} onChange={(expiryDate) => setForm(current => ({ ...current, expiryDate }))} mode="date" optional styles={styles} />
@@ -661,6 +661,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
   const blank = () => ({ name: '', scripture: '', date: '', start: '', end: '', description: '', location: '', status: 'draft' as ContentStatus });
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -677,7 +678,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     setEditing(nextEditing);
     setForm(nextForm);
   };
-  const reset = () => applyForm(blank(), null);
+  const reset = () => { setDraftNumber(n => n + 1); applyForm(blank(), null); };
   const startEditing = (study: BibleStudy) => {
     applyForm({ name: study.study_name, scripture: study.scripture_ref || '', date: study.study_date, start: study.start_time?.slice(0, 5) || '', end: study.end_time?.slice(0, 5) || '', description: study.description || '', location: study.location_or_url || '', status: study.status }, study);
   };
@@ -713,7 +714,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
       <DateTimeField label="Start time (optional)" value={form.start} onChange={(start) => setForm(current => ({ ...current, start }))} mode="time" optional styles={styles} />
       <DateTimeField label="End time (optional)" value={form.end} onChange={(end) => setForm(current => ({ ...current, end }))} mode="time" optional styles={styles} />
       <Field label="Location or HTTPS link (optional)" value={form.location} onChangeText={(location) => setForm(current => ({ ...current, location }))} styles={styles} />
-      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-study'} styles={styles} />
+      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-study-' + draftNumber} styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
       {editing ? <StudyImagesManager studyId={editing.id} administratorId={administratorId} styles={styles} /> : (
@@ -729,6 +730,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
   const blank = () => ({ name: '', year: '', description: '', status: 'draft' as ContentStatus });
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<ReadingPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -739,7 +741,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
     setLoading(false);
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const reset = () => { setEditing(null); setForm(blank()); };
+  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank()); };
   const edit = (plan: ReadingPlan) => { setEditing(plan); setForm({ name: plan.name, year: String(plan.plan_year), description: plan.description || '', status: plan.status }); };
   const save = async () => {
     const year = Number(form.year);
@@ -757,7 +759,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
     <EditorCard title={editing ? 'Edit reading plan' : 'New reading plan'} styles={styles}>
       <Field label="Plan name" value={form.name} onChangeText={(name) => setForm(current => ({ ...current, name }))} styles={styles} />
       <Field label="Plan year" value={form.year} onChangeText={(year) => setForm(current => ({ ...current, year }))} keyboardType="numeric" placeholder="2027" styles={styles} />
-      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-reading-plan'} styles={styles} />
+      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-reading-plan-' + draftNumber} styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
@@ -771,6 +773,7 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [readings, setReadings] = useState<DailyReading[]>([]);
   const [form, setForm] = useState(blank());
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<DailyReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -790,7 +793,7 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
     setLoading(false);
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const reset = () => { setEditing(null); setForm(blank(plans[0]?.id || '')); };
+  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank(plans[0]?.id || '')); };
   const edit = (reading: DailyReading) => {
     setEditing(reading);
     setForm({ planId: reading.plan_id, dayNumber: String(reading.day_number), date: reading.scheduled_date, scripture: reading.scripture_ref, reflection: reading.reflection || '', audioUrl: reading.audio_url || '', status: reading.status });
@@ -826,7 +829,7 @@ function ReadingsManager({ administratorId, styles }: { administratorId: string;
       <Field label="Day number (1–366)" value={form.dayNumber} onChangeText={(dayNumber) => setForm(current => ({ ...current, dayNumber }))} keyboardType="numeric" styles={styles} />
       <DateTimeField label="Scheduled date" value={form.date} onChange={(date) => setForm(current => ({ ...current, date }))} mode="date" styles={styles} />
       <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm(current => ({ ...current, scripture }))} placeholder="Psalms 107-111" styles={styles} />
-      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm(current => ({ ...current, reflection }))} multiline documentId={editing?.id || 'new-daily-reading'} styles={styles} />
+      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm(current => ({ ...current, reflection }))} multiline documentId={editing?.id || 'new-daily-reading-' + draftNumber} styles={styles} />
       <Field label="Audio HTTPS link (optional)" value={form.audioUrl} onChangeText={(audioUrl) => setForm(current => ({ ...current, audioUrl }))} keyboardType="url" styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />

@@ -13,8 +13,6 @@ type Props = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
-  /** Changes when the parent opens a different record for editing. */
-  documentId?: string;
   styles: any;
 };
 
@@ -31,14 +29,10 @@ export default function RichTextField({
   value,
   onChangeText,
   placeholder,
-  documentId = label,
   styles,
 }: Props) {
   const editor = useRef<WebViewHandle>(null);
-  const emittedValue = useRef(value);
-  const previousDocumentId = useRef(documentId);
   const [height, setHeight] = useState(246);
-  const [editorInstance, setEditorInstance] = useState(0);
   const [editorReady, setEditorReady] = useState(false);
   const [basicEditor, setBasicEditor] = useState(false);
   useEffect(() => {
@@ -46,26 +40,9 @@ export default function RichTextField({
     const timer = setTimeout(() => setBasicEditor(true), 3500);
     return () => clearTimeout(timer);
   }, [editorReady]);
-  const initialHtml = useMemo(() => editorHtmlForValue(value), [documentId]);
-
-  useEffect(() => {
-    if (previousDocumentId.current === documentId) return;
-    previousDocumentId.current = documentId;
-    emittedValue.current = value;
-    setEditorReady(false);
-    setEditorInstance((current) => current + 1);
-  }, [documentId]);
-
-  useEffect(() => {
-    if (value === emittedValue.current) return;
-    if (!editorReady) return;
-    emittedValue.current = value;
-    const html = JSON.stringify(editorHtmlForValue(value)).replace(/</g, '\\u003c');
-    editor.current?.injectJavaScript(`window.wamSetContent(${html}); true;`);
-  }, [editorReady, value]);
-
+  // The parent keys each editing session. During typing, the WebView owns its selection and text.
   const document = useMemo(() => buildEditorDocument({
-    initialHtml,
+    initialHtml: editorHtmlForValue(value),
     placeholder,
     primaryColor: styles.primaryColor,
     textColor: styles.textColor,
@@ -73,14 +50,12 @@ export default function RichTextField({
     surfaceColor: styles.surfaceColor,
     borderColor: styles.borderSoftColor,
   }), [
-    initialHtml,
     placeholder,
     styles.borderSoftColor,
     styles.primaryColor,
     styles.surfaceColor,
     styles.textColor,
     styles.textMutedColor,
-    editorInstance,
   ]);
 
   const onMessage = (event: WebViewMessageEvent) => {
@@ -91,7 +66,6 @@ export default function RichTextField({
 
       if (message.type === 'change' && typeof message.html === 'string') {
         const next = valueFromEditorHtml(message.html);
-        emittedValue.current = next;
         onChangeText(next);
       }
 
@@ -124,7 +98,6 @@ export default function RichTextField({
           accessibilityLabel={`${label} visual editor`}
           domStorageEnabled
           javaScriptEnabled
-          key={`wam-editor-toolbar-${editorInstance}`}
           nestedScrollEnabled
           onError={() => setBasicEditor(true)}
           onMessage={onMessage}
@@ -185,7 +158,7 @@ function buildEditorDocument({
     toolbar.addEventListener('mousedown', (event) => { if (toolbarButton(event)) event.preventDefault(); });
     toolbar.addEventListener('touchstart', (event) => { const button = toolbarButton(event); if (!button) return; event.preventDefault(); lastTouchCommandAt = Date.now(); window.wamRunCommand(button.dataset.command); }, { passive: false });
     toolbar.addEventListener('click', (event) => { const button = toolbarButton(event); if (!button || Date.now() - lastTouchCommandAt < 700) return; event.preventDefault(); window.wamRunCommand(button.dataset.command); });
-    editor.addEventListener('input', send); editor.addEventListener('mouseup', () => { captureRange(); updateToolbar(); }); editor.addEventListener('touchend', () => { captureRange(); updateToolbar(); }); editor.addEventListener('focus', () => { captureRange(); updateToolbar(); }); document.addEventListener('selectionchange', () => { captureRange(); updateToolbar(); }); window.wamSetContent = (html, silent) => { editor.innerHTML = html || ''; savedRange = null; updateToolbar(); if (silent) reportLayout(); else send(); }; setTimeout(() => { updateToolbar(); reportLayout(); }, 0);
+    editor.addEventListener('input', send); editor.addEventListener('mouseup', () => { captureRange(); updateToolbar(); }); editor.addEventListener('touchend', () => { captureRange(); updateToolbar(); }); editor.addEventListener('focus', () => { captureRange(); updateToolbar(); }); document.addEventListener('selectionchange', () => { captureRange(); updateToolbar(); }); setTimeout(() => { updateToolbar(); reportLayout(); }, 0);
     window.wamReportLayout = reportLayout;
     reportLayout();
     })();

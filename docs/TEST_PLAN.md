@@ -123,4 +123,4 @@ to Home on the `Mlibo_AP1` virtual device. Pastor's physical-device results
 are the next acceptance evidence; Admin visual formatting remains a specific
 physical-device check.
 
-On the borrowed Android phone, create a draft notice, type its last word, immediately change status back to Draft and save. Reopen it, verify the full body and status, edit the last line and save again. Repeat with formatted study notes. Physical-device result pending. The editor simulation also exercises a native bridge that becomes available after the HTML document loads.
+On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corruption in the admin notice editor. After the change to preserve the WebView selection during typing, USB-DRAFT-56-R2 saved both lines exactly. Editing added a third line. After a full app restart, the signed-in admin reopened the draft from Notices and all three lines matched exactly. Both test notices remained drafts. This check used the local USB debug app. Formatting commands, study editing, iOS and the release APK require separate verification.
