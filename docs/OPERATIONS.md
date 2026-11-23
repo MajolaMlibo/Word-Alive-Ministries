@@ -38,3 +38,7 @@ by this document.
 - Treat app releases as a separate decision from content refresh. Test changes
   before distributing an update and ship urgent fixes outside the monthly review
   when needed.
+
+### Native password recovery
+
+In the production Supabase project's Authentication URL Configuration, verify Redirect URLs includes wordalive-ministries://auth/callback and the Reset Password email template links to {{ .ConfirmationURL }}. Request a fresh email from the installed app. Open it on the same phone and verify that Reset Password opens, that the new password works, and that an expired link gives feedback. A blank browser before the app opens requires checking the redirect destination and installed app on the device. Never share the token-bearing URL.
