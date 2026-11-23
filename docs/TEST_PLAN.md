@@ -116,3 +116,7 @@ On 2026-11-21 it installed, launched, and restored a saved signed-in session
 to Home on the `Mlibo_AP1` virtual device. Pastor's physical-device results
 are the next acceptance evidence; Admin visual formatting remains a specific
 physical-device check.
+
+### Grouped admin readings
+
+Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On a device or browser, verify plan selection, month expansion, and that saving an entry reveals its dated row. Use a test database for writes.

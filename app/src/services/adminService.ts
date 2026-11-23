@@ -231,12 +231,19 @@ export async function saveReadingPlan(
   return { plan: (result.data as ReadingPlan | null) || null, error: result.error };
 }
 
-export async function getAdminDailyReadings() {
+// month is zero-based. UTC also handles December rolling into the next year.
+function monthStart(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+}
+
+export async function getAdminDailyReadings(planId: string, year: number, month: number) {
   const { data, error } = await supabase
     .from('daily_readings')
     .select('*')
-    .order('scheduled_date', { ascending: true })
-    .limit(500);
+    .eq('plan_id', planId)
+    .gte('scheduled_date', monthStart(year, month))
+    .lt('scheduled_date', monthStart(year, month + 1))
+    .order('scheduled_date', { ascending: true });
 
   return { readings: (data as DailyReading[]) || [], error };
 }
