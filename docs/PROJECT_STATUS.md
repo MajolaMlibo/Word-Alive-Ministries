@@ -448,3 +448,5 @@ Editor and reported `Success. No rows returned`.
 4. Create another Android build only after an approved, verified fix requires
    it. Defer Apple Developer enrolment, TestFlight, and iOS testing to the
    final-release milestone.
+
+Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.
