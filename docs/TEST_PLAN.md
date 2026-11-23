@@ -122,3 +122,5 @@ On 2026-11-21 it installed, launched, and restored a saved signed-in session
 to Home on the `Mlibo_AP1` virtual device. Pastor's physical-device results
 are the next acceptance evidence; Admin visual formatting remains a specific
 physical-device check.
+
+On the borrowed Android phone, create a draft notice, type its last word, immediately change status back to Draft and save. Reopen it, verify the full body and status, edit the last line and save again. Repeat with formatted study notes. Physical-device result pending. The editor simulation also exercises a native bridge that becomes available after the HTML document loads.

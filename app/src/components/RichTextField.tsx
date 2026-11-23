@@ -128,6 +128,7 @@ export default function RichTextField({
           nestedScrollEnabled
           onError={() => setBasicEditor(true)}
           onMessage={onMessage}
+          onLoadEnd={() => editor.current?.injectJavaScript('window.wamReportLayout?.(); true;')}
           originWhitelist={['*']}
           ref={editor}
           scrollEnabled={height >= MAX_EDITOR_HEIGHT}
@@ -176,7 +177,7 @@ function buildEditorDocument({
     function activeCommands() { return [document.queryCommandState('bold') && 'bold', document.queryCommandState('italic') && 'italic', document.queryCommandState('insertUnorderedList') && 'bullets', document.queryCommandState('insertOrderedList') && 'numbers', document.queryCommandValue('formatBlock').toLowerCase() === 'h2' && 'heading', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' && 'quote'].filter(Boolean); }
     function updateToolbar() { const active = activeCommands(); toolbar.querySelectorAll('button[data-command]').forEach((button) => button.classList.toggle('active', active.includes(button.dataset.command))); }
     function height() { return Math.max(246, Math.min(460, document.body.scrollHeight + 8)); }
-    function reportLayout() { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'layout', height: height() })); }
+    function reportLayout() { window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'layout', height: height() })); }
     function send() { window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'change', html: clean(), height: height() })); captureRange(); updateToolbar(); }
     function applyBlockFormat(tag) { document.execCommand('formatBlock', false, tag); if (document.queryCommandValue('formatBlock').toLowerCase() !== tag) document.execCommand('formatBlock', false, '<' + tag + '>'); }
     window.wamRunCommand = (command) => { restoreRange(); if (command === 'heading') applyBlockFormat('h2'); else if (command === 'quote') applyBlockFormat('blockquote'); else if (command === 'bullets') document.execCommand('insertUnorderedList', false, null); else if (command === 'numbers') document.execCommand('insertOrderedList', false, null); else if (command === 'clear') { document.execCommand('removeFormat', false, null); applyBlockFormat('p'); } else document.execCommand(command, false, null); send(); };
@@ -184,7 +185,8 @@ function buildEditorDocument({
     toolbar.addEventListener('mousedown', (event) => { if (toolbarButton(event)) event.preventDefault(); });
     toolbar.addEventListener('touchstart', (event) => { const button = toolbarButton(event); if (!button) return; event.preventDefault(); lastTouchCommandAt = Date.now(); window.wamRunCommand(button.dataset.command); }, { passive: false });
     toolbar.addEventListener('click', (event) => { const button = toolbarButton(event); if (!button || Date.now() - lastTouchCommandAt < 700) return; event.preventDefault(); window.wamRunCommand(button.dataset.command); });
-    editor.addEventListener('input', send); editor.addEventListener('keyup', send); editor.addEventListener('mouseup', () => { captureRange(); updateToolbar(); }); editor.addEventListener('touchend', () => { captureRange(); updateToolbar(); }); editor.addEventListener('focus', () => { captureRange(); updateToolbar(); }); document.addEventListener('selectionchange', () => { captureRange(); updateToolbar(); }); editor.addEventListener('blur', send); window.wamSetContent = (html, silent) => { editor.innerHTML = html || ''; savedRange = null; updateToolbar(); if (silent) reportLayout(); else send(); }; setTimeout(() => { updateToolbar(); reportLayout(); }, 0);
+    editor.addEventListener('input', send); editor.addEventListener('mouseup', () => { captureRange(); updateToolbar(); }); editor.addEventListener('touchend', () => { captureRange(); updateToolbar(); }); editor.addEventListener('focus', () => { captureRange(); updateToolbar(); }); document.addEventListener('selectionchange', () => { captureRange(); updateToolbar(); }); window.wamSetContent = (html, silent) => { editor.innerHTML = html || ''; savedRange = null; updateToolbar(); if (silent) reportLayout(); else send(); }; setTimeout(() => { updateToolbar(); reportLayout(); }, 0);
+    window.wamReportLayout = reportLayout;
     reportLayout();
     })();
   </script></body></html>`;

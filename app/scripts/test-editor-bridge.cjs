@@ -25,8 +25,13 @@ const window = {
   ReactNativeWebView: { postMessage: raw => messages.push(JSON.parse(raw)) },
   getSelection: () => null,
 };
+const bridge = window.ReactNativeWebView;
+delete window.ReactNativeWebView;
 vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], { window, document, setTimeout() {} });
 assert.equal(editor.innerHTML, saved);
+assert.equal(messages.length, 0);
+window.ReactNativeWebView = bridge;
+window.wamReportLayout();
 assert.equal(messages.at(-1).type, 'layout');
 editor.innerHTML = '<p>Draft message here .....1</p>';
 handlers.input();
