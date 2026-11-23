@@ -88,6 +88,11 @@ native behaviour.
 
 ## Required development-build checks
 
+Home notice regression: use three read notices and one short multiline message
+that wraps to four lines. Verify expansion reveals the last line, the counter
+advances and wraps, both swipe directions work on read cards, and tapping the
+counter advances the deck. Repeat with larger phone text. Device check pending.
+
 - Email confirmation automatically returns through
   `wordalive-ministries://auth/callback`.
 - App-specific iOS photo permission wording is displayed.
