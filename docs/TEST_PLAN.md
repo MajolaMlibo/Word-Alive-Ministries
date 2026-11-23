@@ -57,6 +57,12 @@ native behaviour.
 
 ## Required Android checks
 
+Notice editor readiness: run `node scripts/test-editor-bridge.cjs` from the app
+directory. In Expo Go reopen a saved notice, then create and reopen a Draft
+containing a final-line marker. If the visual editor fails to initialise, the
+basic editor should show the saved message and accept input. Verify persistence
+on device before publishing. The bridge test uses a simulated message sink.
+
 Notice editor regression: open an existing multiline notice, verify its last line, edit a draft, save and reopen it. The embedded editor script must parse before typing or formatting can report changes. Device verification pending.
 
 | Test | Expected result | Current evidence |
@@ -116,6 +122,8 @@ On 2026-11-21 it installed, launched, and restored a saved signed-in session
 to Home on the `Mlibo_AP1` virtual device. Pastor's physical-device results
 are the next acceptance evidence; Admin visual formatting remains a specific
 physical-device check.
+
+On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corruption in the admin notice editor. After the change to preserve the WebView selection during typing, USB-DRAFT-56-R2 saved both lines exactly. Editing added a third line. After a full app restart, the signed-in admin reopened the draft from Notices and all three lines matched exactly. Both test notices remained drafts. This check used the local USB debug app. The project owner then confirmed that notice formatting survived saving and reopening on the same Samsung. Coverage of individual toolbar commands, study editing, iOS and the release APK remains pending.
 
 ### Grouped admin readings
 

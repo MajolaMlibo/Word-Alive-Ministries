@@ -185,9 +185,9 @@ function Field({
   if (multiline) {
     return (
       <RichTextField
+        key={documentId || label}
         label={label}
         onChangeText={onChangeText}
-        documentId={documentId}
         placeholder={placeholder}
         styles={styles}
         value={value}
@@ -453,6 +453,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   const blank = () => ({ title: '', message: '', status: 'draft' as ContentStatus, expiryDate: '', expiryTime: '', actionLabel: '', actionUrl: '' });
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -473,7 +474,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     setEditing(nextEditing);
     setForm(nextForm);
   };
-  const reset = () => applyForm(blank(), null);
+  const reset = () => { setDraftNumber(n => n + 1); applyForm(blank(), null); };
   const startEditing = (announcement: Announcement) => {
     const expiry = splitDateTime(announcement.expires_at);
     applyForm({
@@ -551,14 +552,14 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   return (
     <View>
       <EditorCard title={editing ? 'Edit notice' : 'New notice'} styles={styles}>
-        <Field label="Title" value={form.title} onChangeText={(title) => setForm({ ...form, title })} styles={styles} />
-        <Field label="Message" value={form.message} onChangeText={(message) => setForm({ ...form, message })} multiline documentId={editing?.id || 'new-notice'} styles={styles} />
+        <Field label="Title" value={form.title} onChangeText={(title) => setForm(current => ({ ...current, title }))} styles={styles} />
+        <Field label="Message" value={form.message} onChangeText={(message) => setForm(current => ({ ...current, message }))} multiline documentId={editing?.id || 'new-notice-' + draftNumber} styles={styles} />
         <Text style={styles.fieldLabel}>Status</Text>
-        <ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
-        <DateTimeField label="Expiry date (optional)" value={form.expiryDate} onChange={(expiryDate) => setForm({ ...form, expiryDate })} mode="date" optional styles={styles} />
-        <DateTimeField label="Expiry time (optional)" value={form.expiryTime} onChange={(expiryTime) => setForm({ ...form, expiryTime })} mode="time" optional styles={styles} />
-        <Field label="Action button label (optional)" value={form.actionLabel} onChangeText={(actionLabel) => setForm({ ...form, actionLabel })} styles={styles} />
-        <Field label="Action HTTPS link (optional)" value={form.actionUrl} onChangeText={(actionUrl) => setForm({ ...form, actionUrl })} keyboardType="url" styles={styles} />
+        <ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
+        <DateTimeField label="Expiry date (optional)" value={form.expiryDate} onChange={(expiryDate) => setForm(current => ({ ...current, expiryDate }))} mode="date" optional styles={styles} />
+        <DateTimeField label="Expiry time (optional)" value={form.expiryTime} onChange={(expiryTime) => setForm(current => ({ ...current, expiryTime }))} mode="time" optional styles={styles} />
+        <Field label="Action button label (optional)" value={form.actionLabel} onChangeText={(actionLabel) => setForm(current => ({ ...current, actionLabel }))} styles={styles} />
+        <Field label="Action HTTPS link (optional)" value={form.actionUrl} onChangeText={(actionUrl) => setForm(current => ({ ...current, actionUrl }))} keyboardType="url" styles={styles} />
         <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
       </EditorCard>
       <Text style={styles.listTitle}>Existing notices</Text>
@@ -669,6 +670,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
   const blank = () => ({ name: '', scripture: '', date: '', start: '', end: '', description: '', location: '', status: 'draft' as ContentStatus });
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<BibleStudy | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -685,7 +687,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     setEditing(nextEditing);
     setForm(nextForm);
   };
-  const reset = () => applyForm(blank(), null);
+  const reset = () => { setDraftNumber(n => n + 1); applyForm(blank(), null); };
   const startEditing = (study: BibleStudy) => {
     applyForm({ name: study.study_name, scripture: study.scripture_ref || '', date: study.study_date, start: study.start_time?.slice(0, 5) || '', end: study.end_time?.slice(0, 5) || '', description: study.description || '', location: study.location_or_url || '', status: study.status }, study);
   };
@@ -715,14 +717,14 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
   const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Unable to delete study', 'Please try again.'); else { setStudies((current) => current.filter((item) => item.id !== study.id)); if (editing?.id === study.id) reset(); } } }]);
   return <View>
     <EditorCard title={editing ? 'Edit study or event' : 'New study or event'} styles={styles}>
-      <Field label="Study or event title" value={form.name} onChangeText={(name) => setForm({ ...form, name })} styles={styles} />
-      <Field label="Specific sermon verses (optional)" value={form.scripture} onChangeText={(scripture) => setForm({ ...form, scripture })} styles={styles} />
-      <DateTimeField label="Study date" value={form.date} onChange={(date) => setForm({ ...form, date })} mode="date" styles={styles} />
-      <DateTimeField label="Start time (optional)" value={form.start} onChange={(start) => setForm({ ...form, start })} mode="time" optional styles={styles} />
-      <DateTimeField label="End time (optional)" value={form.end} onChange={(end) => setForm({ ...form, end })} mode="time" optional styles={styles} />
-      <Field label="Location or HTTPS link (optional)" value={form.location} onChangeText={(location) => setForm({ ...form, location })} styles={styles} />
-      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline documentId={editing?.id || 'new-study'} styles={styles} />
-      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
+      <Field label="Study or event title" value={form.name} onChangeText={(name) => setForm(current => ({ ...current, name }))} styles={styles} />
+      <Field label="Specific sermon verses (optional)" value={form.scripture} onChangeText={(scripture) => setForm(current => ({ ...current, scripture }))} styles={styles} />
+      <DateTimeField label="Study date" value={form.date} onChange={(date) => setForm(current => ({ ...current, date }))} mode="date" styles={styles} />
+      <DateTimeField label="Start time (optional)" value={form.start} onChange={(start) => setForm(current => ({ ...current, start }))} mode="time" optional styles={styles} />
+      <DateTimeField label="End time (optional)" value={form.end} onChange={(end) => setForm(current => ({ ...current, end }))} mode="time" optional styles={styles} />
+      <Field label="Location or HTTPS link (optional)" value={form.location} onChangeText={(location) => setForm(current => ({ ...current, location }))} styles={styles} />
+      <Field label="Study notes or discussion summary (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-study-' + draftNumber} styles={styles} />
+      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
       {editing ? <StudyImagesManager studyId={editing.id} administratorId={administratorId} styles={styles} /> : (
         <Text style={styles.helperText}>Save this study first, then add its sermon-note images.</Text>
@@ -737,6 +739,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
   const blank = () => ({ name: '', year: '', description: '', status: 'draft' as ContentStatus });
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [form, setForm] = useState(blank);
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<ReadingPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -747,7 +750,7 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
     setLoading(false);
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const reset = () => { setEditing(null); setForm(blank()); };
+  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank()); };
   const edit = (plan: ReadingPlan) => { setEditing(plan); setForm({ name: plan.name, year: String(plan.plan_year), description: plan.description || '', status: plan.status }); };
   const save = async () => {
     const year = Number(form.year);
@@ -763,10 +766,10 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
   };
   return <View>
     <EditorCard title={editing ? 'Edit reading plan' : 'New reading plan'} styles={styles}>
-      <Field label="Plan name" value={form.name} onChangeText={(name) => setForm({ ...form, name })} styles={styles} />
-      <Field label="Plan year" value={form.year} onChangeText={(year) => setForm({ ...form, year })} keyboardType="numeric" placeholder="2027" styles={styles} />
-      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm({ ...form, description })} multiline documentId={editing?.id || 'new-reading-plan'} styles={styles} />
-      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
+      <Field label="Plan name" value={form.name} onChangeText={(name) => setForm(current => ({ ...current, name }))} styles={styles} />
+      <Field label="Plan year" value={form.year} onChangeText={(year) => setForm(current => ({ ...current, year }))} keyboardType="numeric" placeholder="2027" styles={styles} />
+      <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-reading-plan-' + draftNumber} styles={styles} />
+      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Reading plans</Text>
@@ -785,6 +788,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
   const [plansFailed, setPlansFailed] = useState(false);
   const [readings, setReadings] = useState<DailyReading[]>([]);
   const [form, setForm] = useState(blank());
+  const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<DailyReading | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -829,7 +833,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     return () => { active = false; };
   }, [form.planId, year, month, revision]);
 
-  const reset = () => { setEditing(null); setForm(blank(form.planId)); };
+  const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank(form.planId)); };
   const edit = (reading: DailyReading) => {
     scrollTo(sectionY.current);
     setEditing(reading);
@@ -873,12 +877,12 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
       <Text style={[styles.sectionTabText, form.planId === plan.id && styles.sectionTabTextActive]}>{plan.name} ({plan.plan_year})</Text>
     </TouchableOpacity>)}
     <EditorCard title={editing ? 'Edit daily reading' : 'New daily reading'} styles={styles}>
-      <Field label="Day number (1–366)" value={form.dayNumber} onChangeText={(dayNumber) => setForm({ ...form, dayNumber })} keyboardType="numeric" styles={styles} />
-      <DateTimeField label="Scheduled date" value={form.date} onChange={(date) => setForm({ ...form, date })} mode="date" styles={styles} />
-      <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm({ ...form, scripture })} placeholder="Psalms 107-111" styles={styles} />
-      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm({ ...form, reflection })} multiline documentId={editing?.id || 'new-daily-reading'} styles={styles} />
-      <Field label="Audio HTTPS link (optional)" value={form.audioUrl} onChangeText={(audioUrl) => setForm({ ...form, audioUrl })} keyboardType="url" styles={styles} />
-      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm({ ...form, status })} styles={styles} />
+      <Field label="Day number (1–366)" value={form.dayNumber} onChangeText={(dayNumber) => setForm(current => ({ ...current, dayNumber }))} keyboardType="numeric" styles={styles} />
+      <DateTimeField label="Scheduled date" value={form.date} onChange={(date) => setForm(current => ({ ...current, date }))} mode="date" styles={styles} />
+      <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm(current => ({ ...current, scripture }))} placeholder="Psalms 107-111" styles={styles} />
+      <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm(current => ({ ...current, reflection }))} multiline documentId={editing?.id || 'new-daily-reading-' + draftNumber} styles={styles} />
+      <Field label="Audio HTTPS link (optional)" value={form.audioUrl} onChangeText={(audioUrl) => setForm(current => ({ ...current, audioUrl }))} keyboardType="url" styles={styles} />
+      <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Scheduled readings</Text>
