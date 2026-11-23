@@ -449,4 +449,4 @@ Editor and reported `Success. No rows returned`.
    it. Defer Apple Developer enrolment, TestFlight, and iOS testing to the
    final-release milestone.
 
-23 November 2026 — Admin notice creation and editing passed the physical Galaxy A26 draft test on the PR #56 branch, including retrieval after app restart. See TEST_PLAN.md for scope and pending verification.
+23 November 2026 — Admin notice creation and editing passed the physical Galaxy A26 draft test on the PR #56 branch, including retrieval after app restart. The owner also verified notice formatting persisted after reopening. See TEST_PLAN.md for scope and pending verification.
