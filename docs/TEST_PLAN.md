@@ -57,6 +57,12 @@ native behaviour.
 
 ## Required Android checks
 
+Notice editor readiness: run `node scripts/test-editor-bridge.cjs` from the app
+directory. In Expo Go reopen a saved notice, then create and reopen a Draft
+containing a final-line marker. If the visual editor fails to initialise, the
+basic editor should show the saved message and accept input. Verify persistence
+on device before publishing. The bridge test uses a simulated message sink.
+
 Notice editor regression: open an existing multiline notice, verify its last line, edit a draft, save and reopen it. The embedded editor script must parse before typing or formatting can report changes. Device verification pending.
 
 | Test | Expected result | Current evidence |

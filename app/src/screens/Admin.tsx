@@ -185,6 +185,7 @@ function Field({
   if (multiline) {
     return (
       <RichTextField
+        key={documentId || label}
         label={label}
         onChangeText={onChangeText}
         documentId={documentId}
