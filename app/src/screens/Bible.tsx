@@ -9,6 +9,8 @@ import {
   Alert,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Share,
   type ScrollViewInstance,
 } from 'react-native';
@@ -1052,8 +1054,8 @@ function BibleReader({
         visible={isNoteEditorOpen}
         onRequestClose={() => setIsNoteEditorOpen(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.actionSheet}>
+        <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={styles.actionSheet} keyboardShouldPersistTaps="handled">
             <View style={styles.sheetHandle} />
             <View style={styles.sheetHeader}>
               <View>
@@ -1088,8 +1090,8 @@ function BibleReader({
             >
               <Text style={styles.saveNoteButtonText}>{savingVerseAction ? 'Saving...' : 'Save private note'}</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -1639,7 +1641,7 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
       borderWidth: 1,
       color: colors.text,
       fontSize: fonts.body,
-      minHeight: 150,
+      height: 150,
       padding: spacing.md,
     },
 
