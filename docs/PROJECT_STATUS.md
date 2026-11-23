@@ -449,4 +449,6 @@ Editor and reported `Success. No rows returned`.
    it. Defer Apple Developer enrolment, TestFlight, and iOS testing to the
    final-release milestone.
 
-2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production application and pastoral review are pending.
+2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production verification returned 365 draft readings dated 1 January through 31 December 2027. Pastoral review is pending.
+
+Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.
