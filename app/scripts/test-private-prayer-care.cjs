@@ -269,4 +269,3 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     console.log('PASS: deletion requests are private, repeatable, withdrawable, and listed only for the access manager.');
   } finally { await db.close(); }
 })().catch(error=>{ console.error(error); process.exitCode=1; });
-

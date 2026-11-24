@@ -143,7 +143,7 @@ function buildEditorDocument({
     #editor p { margin: 0 0 10px; } #editor h2 { color: ${primaryColor}; font-size: 21px; line-height: 1.3; margin: 8px 0; } #editor ul, #editor ol { margin: 6px 0; padding-left: 26px; } #editor blockquote { border-left: 3px solid ${primaryColor}; color: ${mutedColor}; margin: 8px 0; padding-left: 10px; }
   </style></head><body><div id="toolbar" aria-label="Writing tools" role="toolbar"><button aria-label="Bold selected text" data-command="bold" type="button">B</button><button aria-label="Italicise selected text" data-command="italic" type="button">I</button><button aria-label="Make selected text a heading" data-command="heading" type="button">H</button><button aria-label="Make a bulleted list" data-command="bullets" type="button">•≡</button><button aria-label="Make a numbered list" data-command="numbers" type="button">1≡</button><button aria-label="Make a quote" data-command="quote" type="button">❝</button><button aria-label="Clear selected formatting" data-command="clear" type="button">Tx</button></div><div id="editor" contenteditable="true" data-placeholder=${hint}></div><script>
     (() => {
-    const editor = document.getElementById('editor'); const toolbar = document.getElementById('toolbar'); 
+    const editor = document.getElementById('editor'); const toolbar = document.getElementById('toolbar');
     const safeTags = new Set(['P','DIV','BR','STRONG','B','EM','I','H2','H3','UL','OL','LI','BLOCKQUOTE','A']); let savedRange = null; let lastTouchCommandAt = 0;
     function safeCopy(source, destination) {
       for (const item of source.childNodes) {

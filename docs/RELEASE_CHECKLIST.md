@@ -43,23 +43,13 @@
   stakeholder acceptance. Obtain owner consent before external publication.
   Actual private-file restore rehearsal is still pending. See OPERATIONS.md.
 
-Read-only preflight for word-alive-prod:
-
-```sql
-select scheduled_date, count(*) from public.daily_readings
-where status = 'published' group by scheduled_date having count(*) > 1;
-select study_id, count(*) from public.study_media group by study_id having count(*) > 6;
-select count(*) as published_readings_in_hidden_plans
-from public.daily_readings r join public.reading_plans p on p.id=r.plan_id
-where r.status='published' and p.status<>'published';
-```
-
-
-## Reading history and editor safeguards
-
-- Apply the reading safeguards migration only after production approval. A completed reading or its parent plan cannot be deleted, including from an older client. Use Edit → Archived to keep history.
-- Members retain their own reading details. Directory-authorised staff see a selected member’s count. Test granting and revoking directory access on the combined app.
-- On Android and iOS, reopen the published Hebrews notes, verify quote and bold formatting, edit a draft and verify the keyboard and toolbar. Test navigation from a link inside the editor.
+In Supabase → word-alive-prod → SQL Editor → New query, run
+[supabase/checks/preflight_release_audit.sql](../supabase/checks/preflight_release_audit.sql).
+Expect a single row with three zeros. Request deployment approval separately.
+Expo Doctor passed 20/20 on this checkout. npm audit reported three moderate
+entries in the Expo fingerprint dependency chain, zero high and zero critical.
+The registry listed 58.0.26 as the latest patch within the configured Expo 58
+range; retain the supported version and recheck before distribution.
 
 ## Integrated reader and Study checks — 24 November 2026
 
