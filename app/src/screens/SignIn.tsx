@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { getRememberedEmail, forgetRememberedEmail } from '../services/rememberedAccount';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { AppColors } from '../theme/theme';
@@ -29,6 +30,8 @@ export default function SignIn() {
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
+  const [rememberedEmail, setRememberedEmail] = useState('');
+  const emailTouched = useRef(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +42,30 @@ export default function SignIn() {
 
   const isCreatingAccount = mode === 'signUp';
 
+  useEffect(() => {
+    let active = true;
+    void getRememberedEmail().then(saved => {
+      if (!active || !saved) return;
+      setRememberedEmail(saved);
+      if (!emailTouched.current) setEmail(saved);
+    });
+    return () => { active = false; };
+  }, []);
+
+  async function forgetAccount() {
+    if (!(await forgetRememberedEmail())) {
+      Alert.alert('Unable to forget this account', 'Please try again.');
+      return;
+    }
+    emailTouched.current = true;
+    setRememberedEmail('');
+    setEmail('');
+    setPassword('');
+  }
+
   function switchMode() {
+    emailTouched.current = true;
+    setEmail(isCreatingAccount ? rememberedEmail : '');
     setMode(isCreatingAccount ? 'signIn' : 'signUp');
     setPassword('');
     setConfirmPassword('');
@@ -237,18 +263,24 @@ export default function SignIn() {
           <TextInput
             accessibilityLabel="Email address"
             autoCapitalize="none"
-            autoComplete="email"
+            autoComplete={isCreatingAccount ? 'email' : 'username'}
             keyboardType="email-address"
-            onChangeText={(value) => setEmail(value.toLowerCase())}
+            onChangeText={(value) => { emailTouched.current = true; setEmail(value.toLowerCase()); }}
             onSubmitEditing={() => passwordInputRef.current?.focus()}
             placeholder="Email address"
             placeholderTextColor={colors.textMuted}
             ref={emailInputRef}
             returnKeyType="next"
             style={styles.input}
-            textContentType="emailAddress"
+            textContentType={isCreatingAccount ? 'emailAddress' : 'username'}
             value={email}
           />
+
+          {!isCreatingAccount && rememberedEmail !== '' && rememberedEmail === email && (
+            <TouchableOpacity accessibilityRole="button" onPress={forgetAccount} disabled={isSubmitting}>
+              <Text style={styles.passwordResetText}>Forget this account on this device</Text>
+            </TouchableOpacity>
+          )}
 
           <TextInput
             accessibilityLabel="Password"
