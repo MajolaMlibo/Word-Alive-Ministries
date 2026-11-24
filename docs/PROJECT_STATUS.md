@@ -462,3 +462,5 @@ Member-access management is implemented on feature/member-access-management, bas
 The owner confirmed the member-access migration succeeded in production and reported Prayer requests and Find a Member working on 24 November 2026. Compact search controls and member-detail header navigation are pending device verification.
 
 The owner confirmed production migrations 003 and 004 succeeded. The owner also confirmed migration 005 succeeded in word-alive-prod on 24 November 2026. Local permission tests passed. On Android, the owner confirmed that the dedicated administrator saw separate member-directory and private-prayer switches on an admin detail screen. Saving and verifying the resulting access from a test admin account remains pending on device.
+
+Admin Readings now uses the selected plan year for the form and all month queries. The year-plan control is inside the daily reading form. Local database verification with the repository imports found all 365 drafts through 31 December for admin and pastor, and none for an ordinary member. Confirmation on the pastor's installed version remains pending. No production readings were changed.

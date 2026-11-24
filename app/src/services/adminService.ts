@@ -194,6 +194,14 @@ export async function saveReadingPlan(
   return { plan: (result.data as ReadingPlan | null) || null, error: result.error };
 }
 
+// Calculate from the calendar so backfilled days and concurrent entries keep their correct number.
+export function readingDayNumber(date: string, year: number | undefined): number | null {
+  if (!year || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number(date.slice(0, 4)) !== year) return null;
+  const timestamp = Date.parse(date + 'T00:00:00Z');
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== date) return null;
+  return 1 + (timestamp - Date.UTC(year, 0, 1)) / 86400000;
+}
+
 // month is zero-based. UTC also handles December rolling into the next year.
 function monthStart(year: number, month: number) {
   return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);

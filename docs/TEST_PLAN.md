@@ -127,7 +127,7 @@ On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corru
 
 ### Grouped admin readings
 
-Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
+Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Simulated queries cover November and December 2026, every month of 2027, and an empty month. Checks also cover all 365 day numbers, a leap year and out-of-plan dates. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
 
 ### Private prayer care
 
@@ -152,3 +152,5 @@ Remembered sign-in: sign in, sign out, then reopen. Confirm only the last succes
 Member directory: compare the total across search, role filters and Load more. As pastor, check names and roles are visible with no email or editing controls. As an ordinary admin or member, verify the directory and count are unavailable.
 
 Verify the directory-only admin sees names, roles and count without access to private prayers. Local database tests passed for all four permission combinations, revocation, older clients, role changes and audit records.
+
+Admin Readings device check: at the top of New daily reading, tap the year-plan control and select the 2027 Align and Prosper plan. Open December and check 31 December, Day 365, MALACHI 1-4. Compare with the pastor on the same app revision. Check the gap below an expanded month for both populated and empty months. In a test plan verify selecting a date calculates the day and that a date outside the plan year cannot be saved.
