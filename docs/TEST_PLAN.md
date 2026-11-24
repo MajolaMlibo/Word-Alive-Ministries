@@ -137,4 +137,4 @@ Android keyboard regression check: with the keyboard open, scroll to the last pa
 
 Bible highlight contrast: in light and dark mode verify Gold, Green, Blue and Pink labels and each saved highlighted verse and verse number remain readable. Device check pending.
 
-Owner confirmed the verse tools stay at the bottom on the selection branch. Combined dark-mode and keyboard device checks are pending.
+Owner confirmed the verse tools stay at the bottom on the selection branch. On 24 November 2026, while testing the combined Bible changes, the owner confirmed that the private note text stayed visible with the keyboard open and that highlights were easier to see in dark mode. Saving with the keyboard open and reopening that note still require confirmation on this version.
