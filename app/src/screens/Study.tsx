@@ -238,15 +238,6 @@ export default function StudyScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Hero */}
-      <View style={styles.hero}>
-        <Ionicons name="library" size={34} color="#FFF" />
-        <Text style={styles.heroTitle}>Bible Study</Text>
-        <Text style={styles.heroSub}>
-          Grow together through scheduled teachings and Scripture.
-        </Text>
-      </View>
-
       {canSeeUpcoming && !roleLoading ? (
         <View style={styles.segment}>
           <TouchableOpacity
@@ -395,26 +386,6 @@ function makeStyles(colors: any, fonts: any) {
       flex: 1,
       backgroundColor: colors.background,
       padding: spacing.lg,
-    },
-
-    hero: {
-      backgroundColor: colors.primary,
-      borderRadius: 22,
-      padding: spacing.lg,
-      marginBottom: spacing.lg,
-    },
-
-    heroTitle: {
-      color: '#FFF',
-      fontSize: fonts.display,
-      fontWeight: '700',
-      marginTop: spacing.sm,
-    },
-
-    heroSub: {
-      color: '#DDF5E6',
-      marginTop: 6,
-      lineHeight: fonts.body * 1.5,
     },
 
     segment: {

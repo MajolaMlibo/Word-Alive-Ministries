@@ -4,6 +4,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
+const richTextSource = fs.readFileSync(path.join(__dirname, '../src/components/richText.ts'), 'utf8');
+const richText = {};
+vm.runInNewContext(ts.transpile(richTextSource, { module: ts.ModuleKind.CommonJS }), { exports: richText });
+const memberText = html => richText.displayText(richText.RICH_TEXT_PREFIX + html);
+assert.equal(memberText('<blockquote>Read Leviticus</blockquote><p>Context</p><p><b>Chapter 1-2:</b> Hebrews</p>'),
+  '> Read Leviticus\nContext\n**Chapter 1-2:** Hebrews');
+assert.equal(memberText('<b>First<br>Second</b><b></b>'), '**First**\n**Second**');
+assert.equal(memberText('<p>A<br>B <b>bold</b></p>'), 'A\nB **bold**');
+assert.equal(memberText('<p>Literal * text</p>'), 'Literal * text');
 const source = fs.readFileSync(path.join(__dirname, '../src/components/RichTextField.tsx'), 'utf8');
 const builder = source.slice(source.indexOf('function buildEditorDocument('));
 const js = ts.transpile(builder, { target: ts.ScriptTarget.ES2022 });

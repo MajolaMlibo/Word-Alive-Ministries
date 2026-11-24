@@ -1,5 +1,43 @@
 # Release Checklist
 
+## Integrated reader and Study checks — 24 November 2026
+
+The combined branch includes the fixes from #59 through #71. TypeScript, all
+three regression scripts and Android, iOS and web exports passed together.
+A regression fixture covers a quotation followed by a normal paragraph and a
+bold chapter heading. Existing rich-text notes use the repaired display path
+without editing their saved contents. The large Study introductory card was removed.
+
+On a phone running this combined revision, select a verse halfway down a
+chapter, open a private note, type several lines and tap Save while the keyboard
+is open. Open the published Hebrews study and check the quotation and bold
+chapter headings. Retain the outstanding password-recovery and Pastor account
+checks from the diagnostic below.
+
+## Pre-build diagnostic — 24 November 2026
+
+Tested the working copy at `8d93a74d` (#71). Remote `main` was `ebd6a9ea`.
+This is a branch-level result. The combined release and a physical-device
+upgrade still require verification.
+
+- Passed TypeScript, Expo Doctor (20/20), and local Android, iOS and web exports.
+- Passed all three regression scripts covering reading dates and plan isolation,
+  notice editor loading and typing, and private prayer and member access. The
+  database tests used local fixtures, including 107 prayer requests.
+- The configured Supabase Auth settings endpoint returned HTTP 200. This check
+  does not exercise a member session, email delivery or password recovery.
+- npm reported three moderate dependency entries tracing to one `minimatch`
+  advisory through `@expo/fingerprint` and `expo`. Review a compatible patch.
+- PRs #59–#71 were open. The tested branch includes the #63–#71 chain and lacks
+  #59–#62. Separate merge simulations found documentation conflicts in
+  `TEST_PLAN.md` (Bible and keyboard changes) and `OPERATIONS.md` (recovery).
+- The local Expo owner differs from committed `mlibo`. Confirm the project
+  owner before packaging. Android still uses version code 5, already issued.
+- Next verification on one integrated revision: install over build 5 on Android,
+  confirm session retention, complete a password reset from a fresh email, test
+  keyboard and Bible controls in both themes, and check the Pastor account can
+  see September through December 2027. No device was connected for this audit.
+
 ## MVP functionality
 
 - [x] Production Supabase project created.
