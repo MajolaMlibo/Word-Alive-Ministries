@@ -96,7 +96,8 @@ export default function RichTextField({
       <View style={styles.richEditorFrame} pointerEvents={editorReady ? 'auto' : 'none'}>
         <NativeWebView
           accessibilityLabel={`${label} visual editor`}
-          domStorageEnabled
+          onShouldStartLoadWithRequest={(request: { url: string }) => request.url === 'about:blank'}
+          setSupportMultipleWindows={false}
           javaScriptEnabled
           nestedScrollEnabled
           onError={() => setBasicEditor(true)}
@@ -142,9 +143,33 @@ function buildEditorDocument({
     #editor p { margin: 0 0 10px; } #editor h2 { color: ${primaryColor}; font-size: 21px; line-height: 1.3; margin: 8px 0; } #editor ul, #editor ol { margin: 6px 0; padding-left: 26px; } #editor blockquote { border-left: 3px solid ${primaryColor}; color: ${mutedColor}; margin: 8px 0; padding-left: 10px; }
   </style></head><body><div id="toolbar" aria-label="Writing tools" role="toolbar"><button aria-label="Bold selected text" data-command="bold" type="button">B</button><button aria-label="Italicise selected text" data-command="italic" type="button">I</button><button aria-label="Make selected text a heading" data-command="heading" type="button">H</button><button aria-label="Make a bulleted list" data-command="bullets" type="button">•≡</button><button aria-label="Make a numbered list" data-command="numbers" type="button">1≡</button><button aria-label="Make a quote" data-command="quote" type="button">❝</button><button aria-label="Clear selected formatting" data-command="clear" type="button">Tx</button></div><div id="editor" contenteditable="true" data-placeholder=${hint}></div><script>
     (() => {
-    const editor = document.getElementById('editor'); const toolbar = document.getElementById('toolbar'); editor.innerHTML = ${content};
+    const editor = document.getElementById('editor'); const toolbar = document.getElementById('toolbar'); 
     const safeTags = new Set(['P','DIV','BR','STRONG','B','EM','I','H2','H3','UL','OL','LI','BLOCKQUOTE','A']); let savedRange = null; let lastTouchCommandAt = 0;
-    function clean() { const clone = editor.cloneNode(true); clone.querySelectorAll('*').forEach((node) => { if (!safeTags.has(node.tagName)) { node.replaceWith(...node.childNodes); return; } const href = node.tagName === 'A' ? node.getAttribute('href') : ''; [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name)); if (node.tagName === 'A' && href && /^https:\/\//i.test(href)) node.setAttribute('href', href); else if (node.tagName === 'A') node.replaceWith(...node.childNodes); }); return clone.innerHTML; }
+    function safeCopy(source, destination) {
+      for (const item of source.childNodes) {
+        if (item.nodeType === 3) { destination.appendChild(document.createTextNode(item.data)); continue; }
+        if (item.nodeType !== 1 || item.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue;
+        if (['SCRIPT','STYLE','TEMPLATE','IFRAME','OBJECT'].includes(item.tagName)) continue;
+        const href = item.tagName === 'A' ? item.getAttribute('href') || '' : '';
+        if (!safeTags.has(item.tagName) || (item.tagName === 'A' && !/^https:\/\//i.test(href))) {
+          safeCopy(item, destination);
+          continue;
+        }
+        const cleanNode = document.createElement(item.tagName.toLowerCase());
+        if (href) cleanNode.setAttribute('href', href);
+        safeCopy(item, cleanNode);
+        destination.appendChild(cleanNode);
+      }
+    }
+    const saved = document.createElement('template');
+    saved.innerHTML = ${content};
+    safeCopy(saved.content, editor);
+    editor.addEventListener('click', event => { if (event.target.closest?.('a')) event.preventDefault(); });
+    function clean() {
+      const output = document.createElement('div');
+      safeCopy(editor, output);
+      return output.innerHTML;
+    }
     function captureRange() { const selection = window.getSelection(); if (selection && selection.rangeCount && editor.contains(selection.anchorNode)) { savedRange = selection.getRangeAt(0).cloneRange(); window.__wamSavedRange = savedRange; } }
     function restoreRange() { editor.focus(); const selection = window.getSelection(); const range = window.__wamSavedRange || savedRange; if (selection && range) { selection.removeAllRanges(); selection.addRange(range); } }
     function activeCommands() { return [document.queryCommandState('bold') && 'bold', document.queryCommandState('italic') && 'italic', document.queryCommandState('insertUnorderedList') && 'bullets', document.queryCommandState('insertOrderedList') && 'numbers', document.queryCommandValue('formatBlock').toLowerCase() === 'h2' && 'heading', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' && 'quote'].filter(Boolean); }

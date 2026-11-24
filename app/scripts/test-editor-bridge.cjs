@@ -16,33 +16,28 @@ assert.equal(memberText('<p>Literal * text</p>'), 'Literal * text');
 const source = fs.readFileSync(path.join(__dirname, '../src/components/RichTextField.tsx'), 'utf8');
 const builder = source.slice(source.indexOf('function buildEditorDocument('));
 const js = ts.transpile(builder, { target: ts.ScriptTarget.ES2022 });
-const saved = '<p>First line</p><p>Last line</p>';
+const { JSDOM } = require('jsdom');
+const allowed = '<blockquote>Hebrews</blockquote><p><b>Chapter 1</b><br><i>Text</i></p><ol><li>Verse</li></ol><a href="https://example.org/">Reference</a>';
+const saved = '<style>p {color:red}</style><section data-import="legacy"><b title="drop">Safe</b>' + allowed + '</section>';
 const html = vm.runInNewContext(js + '\nbuildEditorDocument({initialHtml: saved})', { saved });
-const handlers = {};
+const dom = new JSDOM(html, { runScripts: 'outside-only' });
+const { window } = dom;
+const { document } = window;
+const editor = document.getElementById('editor');
 const messages = [];
-const editor = {
-  addEventListener: (name, fn) => { handlers[name] = fn; },
-  cloneNode() { return { innerHTML: this.innerHTML, querySelectorAll: () => [] }; },
-};
-const toolbar = { addEventListener() {}, querySelectorAll: () => [] };
-const document = {
-  getElementById: id => id === 'toolbar' ? toolbar : editor,
-  body: { scrollHeight: 300 }, addEventListener() {},
-  queryCommandState: () => false, queryCommandValue: () => '',
-};
-const window = {
-  ReactNativeWebView: { postMessage: raw => messages.push(JSON.parse(raw)) },
-  getSelection: () => null,
-};
+window.ReactNativeWebView = { postMessage: raw => messages.push(JSON.parse(raw)) };
+document.queryCommandState = () => false;
+document.queryCommandValue = () => '';
 const bridge = window.ReactNativeWebView;
 delete window.ReactNativeWebView;
-vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], { window, document, setTimeout() {} });
-assert.equal(editor.innerHTML, saved);
+window.eval(document.querySelector('script').textContent);
+assert.equal(editor.innerHTML, '<b>Safe</b>' + allowed);
 assert.equal(messages.length, 0);
 window.ReactNativeWebView = bridge;
 window.wamReportLayout();
 assert.equal(messages.at(-1).type, 'layout');
 editor.innerHTML = '<p>Draft message here .....1</p>';
-handlers.input();
+editor.dispatchEvent(new window.Event('input'));
 assert.equal(messages.at(-1).html, editor.innerHTML);
+dom.window.close();
 console.log('Saved text loaded, readiness reported, and typed draft delivered.');

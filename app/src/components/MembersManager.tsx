@@ -72,7 +72,18 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
     return () => { active = false; };
   }, [revision, canEdit]);
 
+  const [progress, setProgress] = useState('Loading reading total…');
+  useEffect(() => {
+    if (!selected) return;
+    let active = true;
+    void supabase.rpc('member_reading_count', { target_member: selected.member_id }).then(({ data, error }) => {
+      if (active) setProgress(error ? 'Reading total unavailable' : 'Completed readings: ' + data);
+    });
+    return () => { active = false; };
+  }, [selected]);
+
   function open(member: Member) {
+    setProgress('Loading reading total…');
     select(member);
     setRole(member.member_role);
     setCare(member.prayer_access);
@@ -106,11 +117,16 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
       <Text style={[styles.statusOptionText, chosen && styles.statusOptionTextActive]}>{label(text)}</Text>
     </TouchableOpacity>;
   }
+  if (selected && !canEdit) return <View style={styles.itemCard}>
+    <Text style={styles.listTitle}>{selected.display_name}</Text>
+    <Text style={styles.itemMeta}>{progress}</Text>
+  </View>;
   if (selected && canEdit) {
     const self = selected.member_id === ownerId;
     return <View style={styles.itemCard}>
       <Text style={styles.listTitle}>{selected.display_name}</Text>
       <Text style={styles.itemMeta}>{selected.email}</Text>
+      <Text style={styles.itemMeta}>{progress}</Text>
       <Text style={styles.fieldLabel}>Role</Text>
       <View style={styles.statusPicker}>{assignable.map(next => choice(next, next === role, () => {
         setRole(next);
@@ -142,13 +158,10 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
       onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
       onClearFilters={() => { setFilter('all'); restart(); }} />
     <View style={styles.statusPicker}>{filters.map(item => choice(item, item === filter, () => { setFilter(item); restart(); }))}</View>
-    {rows.map(member => canEdit ? <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
+    {rows.map(member => <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
       <Text style={styles.itemTitle}>{member.display_name}</Text>
       <Text style={styles.itemMeta}>{label(member.member_role)}</Text>
-    </TouchableOpacity> : <View key={member.member_id} style={styles.itemCard}>
-      <Text style={styles.itemTitle}>{member.display_name}</Text>
-      <Text style={styles.itemMeta}>{label(member.member_role)}</Text>
-    </View>)}
+    </TouchableOpacity>)}
     {loading && <ActivityIndicator />}
     {error && button('Retry loading members', () => refresh(n => n + 1))}
     {!loading && !error && !rows.length && <Text style={styles.panelHint}>No matching members.</Text>}

@@ -749,7 +749,18 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     reset();
     setRevision(v => v + 1);
   };
-  const remove = (reading: DailyReading) => Alert.alert('Delete daily reading?', 'This removes the scheduled reading and cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteDailyReading(reading.id); if (error) Alert.alert('Unable to delete reading', 'Please try again.'); else { setReadings((current) => current.filter((item) => item.id !== reading.id)); if (editing?.id === reading.id) reset(); } } }]);
+  const remove = (reading: DailyReading) => Alert.alert('Delete unused draft?', 'A reading with member completions must be archived instead.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Delete draft', style: 'destructive', onPress: async () => {
+      const { error } = await deleteDailyReading(reading.id);
+      if (error) {
+        Alert.alert('Reading kept', error.code === '23503' ? 'Members have completed this reading. Tap Edit and select Archived to preserve their history.' : 'Refresh the list and try again.');
+        return;
+      }
+      setReadings(current => current.filter(item => item.id !== reading.id));
+      if (editing?.id === reading.id) reset();
+    } },
+  ]);
   if (plansFailed) return <EmptyState icon="alert-circle-outline" message="Could not load reading plans. Pull down to refresh." styles={styles} />;
   if (!plans) return <ActivityIndicator color={styles.primaryColor} />;
   if (!plans.length) return <EmptyState icon="book-outline" message="Create a reading plan in Plans to schedule readings." styles={styles} />;
@@ -793,7 +804,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
               }
             }}>
               <ContentListCard title={reading.scripture_ref} subtitle={`${reading.scheduled_date} • Day ${reading.day_number} • ${titleCase(reading.status)}`}
-                onEdit={() => edit(reading)} onDelete={() => remove(reading)} styles={styles} />
+                onEdit={() => edit(reading)} onDelete={reading.status === 'draft' ? () => remove(reading) : undefined} styles={styles} />
             </View>) : <EmptyState icon="book-outline" message={`No readings scheduled for ${name} ${year}.`} styles={styles} />)}
       </React.Fragment>)}
     </>}

@@ -184,5 +184,31 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     const logged=(await rows('select * from member_access_history order by id desc limit 1'))[0];
     assert.equal(logged.new_directory_access,false);
     console.log('PASS: four independent admin permission combinations, revocation, owner-only writes, stale saves, audit and older client compatibility.');
+    await db.exec(migration('202611250001_reading_safeguards.sql'));
+    const plan = randomUUID(), reading = randomUUID(), unused = randomUUID();
+    await rows("insert into reading_plans(id,name,plan_year) values($1,'Test',2026)", [plan]);
+    await rows("insert into daily_readings(id,plan_id,day_number,scheduled_date,scripture_ref,status) values($1,$3,1,'2026-01-01','John 1','published'),($2,$3,2,'2026-01-02','John 2','draft')",[reading,unused,plan]);
+    await rows("insert into reading_completions(reading_id,user_id) values($1,$2)",[reading,member]);
+    await signIn(manager);
+    await assert.rejects(rows('delete from daily_readings where id=$1',[reading]), /archive/i);
+    await rows("update daily_readings set status='archived' where id=$1",[reading]);
+    await rows("update daily_readings set status='draft' where id=$1",[reading]);
+    await assert.rejects(rows('delete from daily_readings where id=$1',[reading]), /foreign key/);
+    await assert.rejects(rows('delete from reading_plans where id=$1',[plan]), /foreign key/);
+    assert.equal((await rows('delete from daily_readings where id=$1 returning id',[unused])).length,1);
+    const count = () => rows('select member_reading_count($1) as n',[member]);
+    for (const id of [manager,pastor,admin,member,other]) {
+      await signIn(id);
+      assert.equal((await rows('select id from reading_completions')).length,id===member ? 1 : 0);
+      if (id===manager || id===pastor || id===other) assert.equal(Number((await count())[0].n),1);
+      else await assert.rejects(count(),/Access denied/);
+    }
+    await signIn(manager);
+    await rows("select save_member_access($1,'admin',false,'admin',false,false,true)",[admin]);
+    await signIn(admin);
+    assert.equal(Number((await count())[0].n),1);
+    assert.equal((await rows('select id from reading_completions')).length,0);
+    console.log('PASS: completion history survives archive, draft and parent deletion; directory summaries follow permissions.');
   } finally { await db.close(); }
-})().catch(error=>{ console.error(error.message); process.exitCode=1; });
+})().catch(error=>{ console.error(error); process.exitCode=1; });
+
