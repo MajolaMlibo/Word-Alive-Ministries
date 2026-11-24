@@ -42,16 +42,12 @@ by this document.
 
 Apply supabase/migrations/202611240001_private_prayer_care.sql once in word-alive-prod before testing the updated app. Existing published prayers become private immediately. Previously approved or reviewed requests move to Needs reply. Closed requests stay closed. Older installed clients can still submit private prayers, but their old public-sharing and moderation controls cannot perform those actions.
 
-The pastor automatically has prayer-care and access-management rights. In More → Admin → Prayer → Manage prayer-care access the pastor selects existing admins. An ordinary admin starts without access. Role changes clear delegated prayer permissions. Have the app refresh after access changes.
+### Deploy member access management
 
-To provision the developer's designated management account, first verify the exact account UUID and identity in Authentication → Users and confirm it is the designated admin. As database owner, run the following after substituting its verified UUID. One returned row confirms the assignment. Zero rows means the account does not have the admin role. This grants delegation and preserves the account's existing reading permission.
+After the private prayer migration, run supabase/migrations/202611240002_member_access_management.sql once in word-alive-prod. The first migration was confirmed in production on 24 November. The second migration restricts the previous access-management endpoints immediately. Use the updated app for access changes.
 
-```sql
-insert into public.prayer_care_access (user_id, may_delegate)
-select user_id, true from public.user_roles
-where user_id = '<verified-admin-uuid>'::uuid and role = 'admin'
-on conflict (user_id) do update set may_delegate = true
-returning user_id, may_read, may_delegate;
-```
+Sign into the dedicated administrator account. In More → Admin, scroll the section tabs past Links and tap Members. Search by name or email, tap a member, verify the email, choose a role, then review the before-and-after permissions and confirm Save changes. Pastors automatically get prayer care. An admin requires a separate prayer-care grant. Changes are recorded in public.member_access_history with actor, target, time, and old and new permissions. Pull to refresh or reopen Admin after a change.
+
+Only the verified dedicated account UUID can manage roles and access. Its own role is protected. Existing prayer-care selections remain in effect. If the account is lost, recover the same account through Supabase Auth. Replacing it with a new UUID requires a reviewed database change.
 
 Member replies appear inside My requests when the member opens or refreshes the screen. This feature sends no email or push notifications. Prayer requests and replies have no automatic expiry.

@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { PrayerReply, PrayerRequestStatus, prayerStatusLabel } from '../services/database';
 import { supabase } from '../services/supabase';
 
-type Access = { may_read: boolean; may_delegate: boolean };
 type InboxRow = { id: string; member_name: string; user_id: string; description: string; created_at: string };
-type CareAdmin = { admin_id: string; display_name: string; selected: boolean };
 type Props = { styles: any };
 const pageSize = 25;
 
@@ -13,38 +11,6 @@ function Button({ label, press, disabled, styles }: Props & { label: string; pre
   return <TouchableOpacity accessibilityRole="button" disabled={disabled} onPress={press} style={styles.outlineButton}>
     <Text style={styles.outlineButtonText}>{label}</Text>
   </TouchableOpacity>;
-}
-
-function AccessList({ styles }: Props) {
-  const [admins, setAdmins] = useState<CareAdmin[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(false);
-  async function load() {
-    if (open) { setOpen(false); return; }
-    setBusy(true);
-    const { data, error } = await supabase.rpc('prayer_care_admins');
-    setBusy(false);
-    if (error) { Alert.alert('Unable to load administrators', 'Try again.'); return; }
-    setAdmins(data ?? []);
-    setOpen(true);
-  }
-  async function grant(admin: CareAdmin, enabled: boolean) {
-    setBusy(true);
-    const { error } = await supabase.rpc('set_prayer_care_access', { target: admin.admin_id, enabled });
-    setBusy(false);
-    if (error) { Alert.alert('Access change failed', 'Refresh and try again.'); return; }
-    setAdmins(current => current.map(row => row.admin_id === admin.admin_id ? { ...row, selected: enabled } : row));
-  }
-  return <View>
-    <Button styles={styles} label={open ? 'Hide prayer-care access' : 'Manage prayer-care access'} press={load} disabled={busy} />
-    {open && <Text style={styles.panelHint}>Selected administrators can read and reply to all private prayers. The pastor already has access.</Text>}
-    {open && admins.map(admin => <View key={admin.admin_id} style={styles.switchRow}>
-      <Text style={styles.switchLabel}>{admin.display_name}</Text>
-      <Switch accessibilityLabel={'Prayer-care access for ' + admin.display_name} disabled={busy} value={admin.selected}
-        onValueChange={enabled => Alert.alert(enabled ? 'Grant prayer-care access?' : 'Remove prayer-care access?', admin.display_name,
-          [{ text: 'Cancel', style: 'cancel' }, { text: 'Confirm', onPress: () => void grant(admin, enabled) }])} />
-    </View>)}
-  </View>;
 }
 
 function Conversation({ row, bucket, changed, styles }: Props & { row: InboxRow; bucket: PrayerRequestStatus; changed: () => void }) {
@@ -125,7 +91,7 @@ function Conversation({ row, bucket, changed, styles }: Props & { row: InboxRow;
   </View>;
 }
 
-export default function PrayerInbox({ access, styles }: Props & { access: Access }) {
+export default function PrayerInbox({ styles }: Props) {
   const [bucket, setBucket] = useState<PrayerRequestStatus>('pending');
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
@@ -140,7 +106,6 @@ export default function PrayerInbox({ access, styles }: Props & { access: Access
     select(null); setRows([]); setCursor(null); setMore(false); setBusy(true); refresh(v => v + 1);
   }
   useEffect(() => {
-    if (!access.may_read) return;
     let active = true;
     setBusy(true); setFailed(false);
     void supabase.rpc('prayer_inbox', { bucket, search_name: search, before_time: cursor?.created_at ?? null, before_id: cursor?.id ?? null })
@@ -153,7 +118,7 @@ export default function PrayerInbox({ access, styles }: Props & { access: Access
         setRows(previous => (cursor ? previous : []).concat(batch.slice(0,pageSize)));
       });
     return () => { active = false; };
-  }, [access.may_read, bucket, search, cursor, revision]);
+  }, [bucket, search, cursor, revision]);
 
   const groups = new Map<string, InboxRow[]>();
   for (const row of rows) {
@@ -163,8 +128,7 @@ export default function PrayerInbox({ access, styles }: Props & { access: Access
   }
   const searchMembers = () => { setSearch(input.trim()); restart(); };
   return <View>
-    {access.may_delegate && <AccessList styles={styles} />}
-    {access.may_read && <>
+
       <Text style={styles.listTitle}>Private prayer inbox</Text>
       <TextInput accessibilityLabel="Search by member name" placeholder="Search by member name" placeholderTextColor={styles.placeholderColor}
         style={styles.field} value={input} onChangeText={setInput} returnKeyType="search" onSubmitEditing={searchMembers} />
@@ -191,6 +155,5 @@ export default function PrayerInbox({ access, styles }: Props & { access: Access
       {failed && <Button styles={styles} label="Retry loading requests" press={() => refresh(v => v + 1)} />}
       {!busy && !failed && !rows.length && <Text style={styles.panelHint}>No matching requests.</Text>}
       {!busy && !failed && more && <Button styles={styles} label="Load more" press={() => setCursor(rows[rows.length-1])} />}
-    </>}
   </View>;
 }

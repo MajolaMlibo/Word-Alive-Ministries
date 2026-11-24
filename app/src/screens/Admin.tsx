@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MembersManager from '../components/MembersManager';
 import PrayerInbox from '../components/PrayerInbox';
 import RichTextField from '../components/RichTextField';
 import {
@@ -58,7 +59,7 @@ import {
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links';
+type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links' | 'members';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -69,6 +70,7 @@ const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.
   { key: 'readings', label: 'Readings', icon: 'book-outline' },
   { key: 'streams', label: 'Streams', icon: 'videocam-outline' },
   { key: 'links', label: 'Links', icon: 'link-outline' },
+  { key: 'members', label: 'Members', icon: 'people-outline' },
 ];
 
 function titleCase(value: string) {
@@ -894,20 +896,23 @@ export default function AdminScreen() {
   const [administratorId, setAdministratorId] = useState<string | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [prayerAccess, setPrayerAccess] = useState({ may_read: false, may_delegate: false });
+  const [manageMembers, setManageMembers] = useState(false);
   const [allowed, setAllowed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const checkAccess = useCallback(async () => {
     setCheckingAccess(true);
-    const [roleResult, userResult, accessResult] = await Promise.all([
+    const [roleResult, userResult, accessResult, membersResult] = await Promise.all([
       getCurrentUserRole(),
       supabase.auth.getUser(),
       supabase.rpc('prayer_care_capabilities').single(),
+      supabase.rpc('can_manage_members'),
     ]);
     const permissions = accessResult.data as typeof prayerAccess | null;
     const access = permissions ?? { may_read: false, may_delegate: false };
     setPrayerAccess(access);
-    if (!access.may_read && !access.may_delegate) setSection(current => current === 'prayer' ? 'announcements' : current);
+    setManageMembers(membersResult.data === true);
+    setSection(current => (current === 'prayer' && !access.may_read) || (current === 'members' && membersResult.data !== true) ? 'announcements' : current);
     setAllowed(isAdminRole(roleResult.role));
     setAdministratorId(userResult.data.user?.id || null);
     setCheckingAccess(false);
@@ -931,14 +936,15 @@ export default function AdminScreen() {
     >
       <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
-        {SECTIONS.filter(item => item.key !== 'prayer' || prayerAccess.may_read || prayerAccess.may_delegate).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
+        {SECTIONS.filter(item => (item.key !== 'prayer' || prayerAccess.may_read) && (item.key !== 'members' || manageMembers)).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
       </ScrollView>
-      {section === 'prayer' ? <PrayerInbox access={prayerAccess} styles={styles} /> : null}
+      {section === 'prayer' && prayerAccess.may_read ? <PrayerInbox styles={styles} /> : null}
       {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
       {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'members' && manageMembers ? <MembersManager styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>
   </KeyboardAvoidingView>;

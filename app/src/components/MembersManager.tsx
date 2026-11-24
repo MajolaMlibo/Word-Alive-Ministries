@@ -1,0 +1,131 @@
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppRole } from '../services/database';
+import { supabase } from '../services/supabase';
+
+type Member = { member_id: string; display_name: string; email: string; member_role: AppRole; prayer_access: boolean };
+const assignable: AppRole[] = ['member', 'admin', 'pastor'];
+const filters = ['all', ...assignable, 'editor'] as const;
+type Filter = typeof filters[number];
+const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+const permissions = (role: AppRole, care: boolean) => {
+  if (role === 'pastor') return 'Manage ministry content and read and reply to private prayers.';
+  if (role === 'admin') return 'Manage ministry content.' + (care ? ' Can read and reply to private prayers.' : ' No staff prayer access.');
+  if (role === 'editor') return 'Legacy editor permissions.';
+  return 'Use member features and view their own prayer requests.';
+};
+
+export default function MembersManager({ styles, ownerId, onSelfChange }: { styles: any; ownerId: string; onSelfChange: () => void }) {
+  const [input, setInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [rows, setRows] = useState<Member[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [revision, refresh] = useState(0);
+  const [selected, select] = useState<Member | null>(null);
+  const [role, setRole] = useState<AppRole>('member');
+  const [care, setCare] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  function restart() {
+    select(null);
+    setRows([]);
+    setMore(false);
+    setCursor(null);
+    setLoading(true);
+    refresh(n => n + 1);
+  }
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(false);
+    void supabase.rpc('member_directory', { search_term: search, filter_role: filter === 'all' ? null : filter, after_id: cursor })
+      .then(({ data, error: failure }) => {
+        if (!active) return;
+        setLoading(false);
+        setError(Boolean(failure));
+        if (failure) return;
+        const page: Member[] = data ?? [];
+        setMore(page.length > 25);
+        setRows(old => (cursor ? old : []).concat(page.slice(0, 25)));
+      });
+    return () => { active = false; };
+  }, [search, filter, cursor, revision]);
+
+  function open(member: Member) {
+    select(member);
+    setRole(member.member_role);
+    setCare(member.prayer_access);
+  }
+  async function save(member: Member) {
+    setSaving(true);
+    const { error: failure } = await supabase.rpc('save_member_access', {
+      target: member.member_id, expected_role: member.member_role, expected_prayer: member.prayer_access,
+      wanted_role: role, wanted_prayer: care,
+    });
+    setSaving(false);
+    if (failure) {
+      Alert.alert('Access change could not be confirmed', 'Reload this member and check their current access.',
+        [{ text: 'Reload members', onPress: restart }]);
+      return;
+    }
+    restart();
+    if (member.member_id === ownerId) onSelfChange();
+    Alert.alert('Member access saved');
+  }
+  function button(text: string, press: () => void, disabled = false) {
+    return <TouchableOpacity accessibilityRole="button" disabled={disabled} style={styles.outlineButton} onPress={press}>
+      <Text style={styles.outlineButtonText}>{text}</Text>
+    </TouchableOpacity>;
+  }
+  function choice(text: string, chosen: boolean, press: () => void, disabled = false) {
+    return <TouchableOpacity key={text} accessibilityRole="button" accessibilityState={{ selected: chosen, disabled }}
+      onPress={press} disabled={disabled} style={[styles.statusOption, chosen && styles.statusOptionActive]}>
+      <Text style={[styles.statusOptionText, chosen && styles.statusOptionTextActive]}>{label(text)}</Text>
+    </TouchableOpacity>;
+  }
+  if (selected) {
+    const self = selected.member_id === ownerId;
+    return <View style={styles.itemCard}>
+      {button('Back to members', () => select(null), saving)}
+      <Text style={styles.listTitle}>{selected.display_name}</Text>
+      <Text style={styles.itemMeta}>{selected.email}</Text>
+      <Text style={styles.fieldLabel}>Role</Text>
+      <View style={styles.statusPicker}>{assignable.map(next => choice(next, next === role, () => {
+        setRole(next);
+        setCare(next === 'pastor' || (next === 'admin' && selected.member_role === 'admin' && selected.prayer_access));
+      }, saving || (self && next !== 'admin')))}</View>
+      {role === 'admin' && <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>Can read and reply to private prayers</Text>
+        <Switch accessibilityLabel="Can read and reply to private prayers" value={care} onValueChange={setCare} disabled={saving} />
+      </View>}
+      <Text style={styles.panelHint}>{permissions(role, care)}</Text>
+      {button(saving ? 'Saving…' : 'Save changes', () => Alert.alert('Change member access?', [
+        selected.display_name, selected.email,
+        'Current: ' + label(selected.member_role) + '. ' + permissions(selected.member_role, selected.prayer_access),
+        'After saving: ' + label(role) + '. ' + permissions(role, care),
+      ].join('\n'), [{ text: 'Cancel', style: 'cancel' }, { text: 'Save changes', onPress: () => void save(selected) }]),
+      saving || (role === selected.member_role && care === selected.prayer_access))}
+    </View>;
+  }
+  const submit = () => { setSearch(input.trim()); restart(); };
+  return <View>
+    <Text style={styles.listTitle}>Members</Text>
+    <TextInput accessibilityLabel="Search by name or email" placeholder="Search by name or email" value={input}
+      placeholderTextColor={styles.placeholderColor} onChangeText={setInput} style={styles.field}
+      autoCapitalize="none" returnKeyType="search" onSubmitEditing={submit} />
+    {button('Search', submit)}
+    <View style={styles.statusPicker}>{filters.map(item => choice(item, item === filter, () => { setFilter(item); restart(); }))}</View>
+    {rows.map(member => <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
+      <Text style={styles.itemTitle}>{member.display_name}</Text>
+      <Text style={styles.itemMeta}>{label(member.member_role)}</Text>
+    </TouchableOpacity>)}
+    {loading && <ActivityIndicator />}
+    {error && button('Retry loading members', () => refresh(n => n + 1))}
+    {!loading && !error && !rows.length && <Text style={styles.panelHint}>No matching members.</Text>}
+    {!loading && !error && more && button('Load more', () => setCursor(rows[rows.length - 1].member_id))}
+  </View>;
+}

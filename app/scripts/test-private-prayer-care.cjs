@@ -8,7 +8,8 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
 
 (async () => {
   const db = new PGlite();
-  const [member, other, pastor, admin, manager] = Array.from({ length: 5 }, randomUUID);
+  const [member, other, pastor, admin] = Array.from({ length: 4 }, randomUUID);
+  const manager = '838f92e1-815a-417d-b393-80356c84a72d';
   const target = randomUUID();
   const rows = async (sql, args = []) => (await db.query(sql, args)).rows;
   const signIn = async id => {
@@ -86,5 +87,47 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     await signIn(manager); await grant(false);
     await signIn(admin); assert.equal((await thread()).length,0); assert.equal((await read()).length,0);
     console.log('PASS: legacy privacy, roles, access delegation/revocation, replies and retry, closure, search and pagination across 107 requests.');
+
+    await db.exec('reset role');
+    await rows("insert into auth.users(id,email) select gen_random_uuid(),'Extra'||n||'@example.invalid' from generate_series(1,30) n");
+    await db.exec(migration('202611240002_member_access_management.sql'));
+    const directory = (search='',filter=null,cursor=null) => rows('select * from member_directory($1,$2,$3)',[search,filter,cursor]);
+    const change = (id,oldRole,oldCare,newRole,newCare) => rows('select save_member_access($1,$2,$3,$4,$5)',[id,oldRole,oldCare,newRole,newCare]);
+    for (const id of [member,pastor,admin]) {
+      await signIn(id);
+      await assert.rejects(directory(), /Access denied/);
+      await assert.rejects(change(other,'member',false,'admin',true), /Access denied/);
+      await assert.rejects(grant(true), /permission denied/);
+      assert.equal((await rows('select id from profiles')).length,1);
+      assert.equal((await rows('select user_id from user_roles')).length,1);
+    }
+    await signIn(pastor);
+    assert((await rows("select * from prayer_inbox('closed','older')")).some(r=>r.id===target));
+    await signIn(manager);
+    assert.equal((await read()).length,0);
+    assert.equal((await directory('Older Member@example.invalid'))[0].member_id,member);
+    assert((await directory('','admin')).every(r=>r.member_role==='admin'));
+    const firstPage=await directory();
+    const secondPage=await directory('',null,firstPage[24].member_id);
+    assert.equal(firstPage.length,26);
+    assert.equal(new Set([...firstPage.slice(0,25),...secondPage].map(r=>r.member_id)).size,35);
+    await assert.rejects(change(manager,'admin',false,'member',false), /must remain an admin/);
+    await change(other,'member',false,'admin',false);
+    await change(other,'admin',false,'admin',true);
+    await assert.rejects(change(other,'admin',false,'member',false), /Reload the member/);
+    await signIn(other); assert.equal((await read()).length,1);
+    await assert.rejects(directory(),/Access denied/);
+    await signIn(manager);
+    await change(other,'admin',true,'member',false);
+    await signIn(other); assert.equal((await read()).length,0);
+    await signIn(manager);
+    await change(other,'member',false,'pastor',true);
+    await signIn(other); assert.equal((await read()).length,1);
+    await assert.rejects(directory(),/Access denied/);
+    await db.exec('reset role');
+    const history=await rows('select * from member_access_history order by id');
+    assert.equal(history.length,4);
+    assert(history.every(entry=>entry.actor_id===manager && entry.member_id===other));
+    console.log('PASS: owner-only directory and access changes, historic endpoints disabled, retained prayer inbox, pagination, role changes, self protection, stale edits and audit history.');
   } finally { await db.close(); }
 })().catch(error=>{ console.error(error.message); process.exitCode=1; });
