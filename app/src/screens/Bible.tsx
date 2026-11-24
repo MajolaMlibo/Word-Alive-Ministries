@@ -858,38 +858,6 @@ function BibleReader({
             </View>
           ) : null}
 
-          {selectedVerses.length > 0 && (
-            <View style={styles.verseTools}>
-              <Text style={styles.selectionCount}>{selectedVerses.length} selected</Text>
-              <TouchableOpacity
-                accessibilityLabel="Highlight selected verses"
-                disabled={savingVerseAction}
-                style={[styles.toolButton, savingVerseAction && styles.disabledToolButton]}
-                onPress={() => void saveHighlights('gold')}
-              >
-                <Ionicons name="color-fill-outline" size={18} color="#FFF" />
-                <Text style={styles.toolButtonText}>Highlight</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityLabel="Open selected verse actions"
-                disabled={savingVerseAction}
-                style={styles.moreButton}
-                onPress={() => setIsVerseActionsOpen(true)}
-              >
-                <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
-                <Text style={styles.moreButtonText}>More</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityLabel="Clear selected verses"
-                disabled={savingVerseAction}
-                style={styles.clearSelectionButton}
-                onPress={() => setSelectedVerses([])}
-              >
-                <Ionicons name="close" size={18} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          )}
-
           {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => {
             const verseSave = verseSaveByNumber.get(v.verse);
             return (
@@ -928,6 +896,40 @@ function BibleReader({
         </View>
       )}
       </ScrollView>
+
+      {selectedVerses.length > 0 && (
+        <View style={styles.verseTools}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Verse actions, ${selectedVerses.length} selected`}
+            disabled={savingVerseAction}
+            style={styles.moreButton}
+            onPress={() => setIsVerseActionsOpen(true)}
+          >
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+            <Text style={styles.moreButtonText}>Verse actions ({selectedVerses.length})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Highlight selected verses in gold"
+            disabled={savingVerseAction}
+            style={[styles.toolButton, savingVerseAction && styles.disabledToolButton]}
+            onPress={() => void saveHighlights('gold')}
+          >
+            <Ionicons name="color-fill-outline" size={18} color="#FFF" />
+            <Text style={styles.toolButtonText}>Highlight</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Clear selected verses"
+            disabled={savingVerseAction}
+            style={styles.clearSelectionButton}
+            onPress={() => setSelectedVerses([])}
+          >
+            <Ionicons name="close" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal
         animationType="slide"
@@ -1447,23 +1449,18 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
 
     verseTools: {
       alignItems: 'center',
-      backgroundColor: colors.background,
-      borderRadius: 14,
+      justifyContent: 'space-between',
+      backgroundColor: colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.borderSoft,
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: spacing.sm,
-      marginBottom: spacing.md,
-      padding: spacing.sm,
-    },
-
-    selectionCount: {
-      color: colors.textMuted,
-      fontSize: fonts.body,
-      fontWeight: '600',
-      marginRight: 'auto',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
     },
 
     toolButton: {
+      minHeight: 48,
       alignItems: 'center',
       backgroundColor: colors.primary,
       borderRadius: 10,
@@ -1483,6 +1480,7 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     },
 
     moreButton: {
+      minHeight: 48,
       alignItems: 'center',
       flexDirection: 'row',
       gap: 3,
@@ -1498,8 +1496,8 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     clearSelectionButton: {
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 36,
-      minWidth: 36,
+      minHeight: 48,
+      minWidth: 48,
     },
 
     verse: {

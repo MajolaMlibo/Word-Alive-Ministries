@@ -128,3 +128,7 @@ On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corru
 ### Grouped admin readings
 
 Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
+
+### Bible verse selection controls
+
+On Android, scroll to the last verse of a long chapter and select it. Verify Verse actions (1) appears above the app tabs, select another verse to check the count, open and dismiss the actions, then clear the selection. Check the final verse is reachable and the chapter stays at the same reading position. TypeScript and simulated control checks passed on 24 November 2026. Physical verification pending.
