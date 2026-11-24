@@ -149,5 +149,40 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     assert.equal(history.length,4);
     assert(history.every(entry=>entry.actor_id===manager && entry.member_id===other));
     console.log('PASS: owner-only directory and access changes, historic endpoints disabled, retained prayer inbox, pagination, role changes, self protection, stale edits and audit history.');
+
+    await db.exec(migration('202611240005_admin_directory_permission.sql'));
+    let priorDirectory=false, priorCare=false;
+    for (const [directoryOn,careOn] of [[false,false],[true,false],[true,true],[false,true],[false,false]]) {
+      await signIn(manager);
+      await rows("select save_member_access($1,'admin',$2,'admin',$3,$4,$5)",
+        [admin,priorCare,careOn,priorDirectory,directoryOn]);
+      const saved=(await directory('Care Admin'))[0];
+      assert.equal(saved.directory_access,directoryOn);
+      assert.equal(saved.prayer_access,careOn);
+      await signIn(admin);
+      if(directoryOn) {
+        assert.equal((await rows("select * from member_directory_names('older')")).length,1);
+        assert.equal(Number((await rows('select registered_member_count() as n'))[0].n),35);
+      } else {
+        await assert.rejects(rows('select * from member_directory_names()'),/Access denied/);
+        await assert.rejects(rows('select registered_member_count()'),/Access denied/);
+      }
+      assert.equal((await read()).length,careOn ? 1 : 0);
+      await assert.rejects(directory(),/Access denied/);
+      await assert.rejects(rows("select save_member_access($1,'admin',false,'admin',false,false,true)",[admin]),/Access denied/);
+      priorCare=careOn; priorDirectory=directoryOn;
+    }
+    await signIn(manager);
+    await rows("select save_member_access($1,'admin',false,'admin',false,false,true)",[admin]);
+    await change(admin,'admin',false,'admin',true);
+    assert.equal((await directory('Care Admin'))[0].directory_access,true);
+    await assert.rejects(rows("select save_member_access($1,'admin',true,'admin',true,false,false)",[admin]), /Reload the member/);
+    await change(admin,'admin',true,'member',false);
+    await change(admin,'member',false,'admin',false);
+    assert.equal((await directory('Care Admin'))[0].directory_access,false);
+    await db.exec('reset role');
+    const logged=(await rows('select * from member_access_history order by id desc limit 1'))[0];
+    assert.equal(logged.new_directory_access,false);
+    console.log('PASS: four independent admin permission combinations, revocation, owner-only writes, stale saves, audit and older client compatibility.');
   } finally { await db.close(); }
 })().catch(error=>{ console.error(error.message); process.exitCode=1; });

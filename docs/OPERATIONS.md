@@ -53,3 +53,5 @@ Only the verified dedicated account UUID can manage roles and access. Its own ro
 Member replies appear inside My requests when the member opens or refreshes the screen. This feature sends no email or push notifications. Prayer requests and replies have no automatic expiry.
 
 Apply 202611240003_prayer_inbox_all.sql and 202611240004_pastor_member_directory.sql after the Members migration. Pastors now have a separate read-only Members view with name, role and total registered accounts. Email lookup, permission changes and the full management directory remain restricted to the designated account.
+
+After migration 202611240005_admin_directory_permission.sql, the dedicated administrator can select an admin in Members and grant directory viewing separately from prayer care. Existing prayer access is preserved. Refresh Admin after changes.

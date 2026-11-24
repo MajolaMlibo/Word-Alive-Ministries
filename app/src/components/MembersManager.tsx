@@ -4,14 +4,14 @@ import AdminSearchBar from './AdminSearchBar';
 import { AppRole } from '../services/database';
 import { supabase } from '../services/supabase';
 
-type Member = { member_id: string; display_name: string; email: string; member_role: AppRole; prayer_access: boolean };
+type Member = { member_id: string; display_name: string; email: string; member_role: AppRole; prayer_access: boolean; directory_access: boolean };
 const assignable: AppRole[] = ['member', 'admin', 'pastor'];
 const filters = ['all', ...assignable, 'editor'] as const;
 type Filter = typeof filters[number];
 const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-const permissions = (role: AppRole, care: boolean) => {
-  if (role === 'pastor') return 'Manage ministry content and read and reply to private prayers.';
-  if (role === 'admin') return 'Manage ministry content.' + (care ? ' Can read and reply to private prayers.' : ' No staff prayer access.');
+const permissions = (role: AppRole, care: boolean, directory: boolean) => {
+  if (role === 'pastor') return 'View the member directory, manage ministry content and read and reply to private prayers.';
+  if (role === 'admin') return 'Manage ministry content.' + (directory ? ' Can view members.' : ' No directory access.') + (care ? ' Can read and reply to private prayers.' : ' No staff prayer access.');
   if (role === 'editor') return 'Legacy editor permissions.';
   return 'Use member features and view their own prayer requests.';
 };
@@ -29,6 +29,7 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
   const [revision, refresh] = useState(0);
   const [selected, select] = useState<Member | null>(null);
   const [role, setRole] = useState<AppRole>('member');
+  const [directory, setDirectory] = useState(false);
   const [care, setCare] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -75,11 +76,13 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
     select(member);
     setRole(member.member_role);
     setCare(member.prayer_access);
+    setDirectory(member.directory_access);
   }
   async function save(member: Member) {
     setSaving(true);
     const { error: failure } = await supabase.rpc('save_member_access', {
       target: member.member_id, expected_role: member.member_role, expected_prayer: member.prayer_access,
+      expected_directory: member.directory_access, wanted_directory: directory,
       wanted_role: role, wanted_prayer: care,
     });
     setSaving(false);
@@ -111,19 +114,24 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
       <Text style={styles.fieldLabel}>Role</Text>
       <View style={styles.statusPicker}>{assignable.map(next => choice(next, next === role, () => {
         setRole(next);
+        setDirectory(self || next === 'pastor' || (next === 'admin' && selected.member_role === 'admin' && selected.directory_access));
         setCare(next === 'pastor' || (next === 'admin' && selected.member_role === 'admin' && selected.prayer_access));
       }, saving || (self && next !== 'admin')))}</View>
+      {role === 'admin' && !self && <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>Can view member directory</Text>
+        <Switch accessibilityLabel="Can view member directory" value={directory} onValueChange={setDirectory} disabled={saving} />
+      </View>}
       {role === 'admin' && <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Can read and reply to private prayers</Text>
         <Switch accessibilityLabel="Can read and reply to private prayers" value={care} onValueChange={setCare} disabled={saving} />
       </View>}
-      <Text style={styles.panelHint}>{permissions(role, care)}</Text>
+      <Text style={styles.panelHint}>{permissions(role, care, directory)}</Text>
       {button(saving ? 'Saving…' : 'Save changes', () => Alert.alert('Change member access?', [
         selected.display_name, selected.email,
-        'Current: ' + label(selected.member_role) + '. ' + permissions(selected.member_role, selected.prayer_access),
-        'After saving: ' + label(role) + '. ' + permissions(role, care),
+        'Current: ' + label(selected.member_role) + '. ' + permissions(selected.member_role, selected.prayer_access, selected.directory_access),
+        'After saving: ' + label(role) + '. ' + permissions(role, care, directory),
       ].join('\n'), [{ text: 'Cancel', style: 'cancel' }, { text: 'Save changes', onPress: () => void save(selected) }]),
-      saving || (role === selected.member_role && care === selected.prayer_access))}
+      saving || (role === selected.member_role && care === selected.prayer_access && directory === selected.directory_access))}
     </View>;
   }
   const submit = () => { setSearch(input.trim()); restart(); };
