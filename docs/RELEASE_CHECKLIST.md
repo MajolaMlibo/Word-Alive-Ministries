@@ -12,7 +12,11 @@ without editing their saved contents. The large Study introductory card was remo
   expected after the keyboard fix.
 - [x] Project owner confirmed the reported rich-text formatting fault in the
   member view is fixed.
-- [ ] Open a fresh password-reset email on the phone, set a password and sign in.
+- [x] Project owner reported that Forgot password works.
+- [x] Project owner compared the old Android emulator installation with the
+  updated app. The old list stopped in May (15 May 2027, day 135). The updated
+  app showed all months, with December expanded to show draft readings for
+  1–3 December (days 335–337).
 - [ ] After Pastor installs the updated app, confirm he can open the draft
   readings for September through December 2027.
 
