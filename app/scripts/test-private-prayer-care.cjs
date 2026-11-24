@@ -131,6 +131,20 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     await signIn(other); assert.equal((await read()).length,1);
     await assert.rejects(directory(),/Access denied/);
     await db.exec('reset role');
+    await db.exec(migration('202611240004_pastor_member_directory.sql'));
+    for (const id of [pastor,manager]) {
+      await signIn(id);
+      assert.equal(Number((await rows('select registered_member_count() as n'))[0].n),35);
+      const result=await rows("select * from member_directory_names('Older')");
+      assert.equal(result.length,1);
+      assert.deepEqual(Object.keys(result[0]).sort(),['display_name','member_id','member_role']);
+    }
+    for (const id of [member,admin]) {
+      await signIn(id);
+      await assert.rejects(rows('select registered_member_count()'),/Access denied/);
+      await assert.rejects(rows('select * from member_directory_names()'),/Access denied/);
+    }
+    await db.exec('reset role');
     const history=await rows('select * from member_access_history order by id');
     assert.equal(history.length,4);
     assert(history.every(entry=>entry.actor_id===manager && entry.member_id===other));

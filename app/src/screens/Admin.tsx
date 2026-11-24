@@ -896,6 +896,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
   const [administratorId, setAdministratorId] = useState<string | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [prayerAccess, setPrayerAccess] = useState({ may_read: false, may_delegate: false });
+  const [viewMembers, setViewMembers] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
   const [allowed, setAllowed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -911,8 +912,10 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
     const permissions = accessResult.data as typeof prayerAccess | null;
     const access = permissions ?? { may_read: false, may_delegate: false };
     setPrayerAccess(access);
+    const mayView = membersResult.data === true || roleResult.role === 'pastor';
+    setViewMembers(mayView);
     setManageMembers(membersResult.data === true);
-    setSection(current => (current === 'prayer' && !access.may_read) || (current === 'members' && membersResult.data !== true) ? 'announcements' : current);
+    setSection(current => (current === 'prayer' && !access.may_read) || (current === 'members' && !mayView) ? 'announcements' : current);
     setAllowed(isAdminRole(roleResult.role));
     setAdministratorId(userResult.data.user?.id || null);
     setCheckingAccess(false);
@@ -936,7 +939,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
     >
       <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
-        {SECTIONS.filter(item => (item.key !== 'prayer' || prayerAccess.may_read) && (item.key !== 'members' || manageMembers)).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
+        {SECTIONS.filter(item => (item.key !== 'prayer' || prayerAccess.may_read) && (item.key !== 'members' || viewMembers)).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
       </ScrollView>
       {section === 'prayer' && prayerAccess.may_read ? <PrayerInbox styles={styles} /> : null}
       {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
@@ -944,7 +947,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
       {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
-      {section === 'members' && manageMembers ? <MembersManager registerMemberBack={registerMemberBack} styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
+      {section === 'members' && viewMembers ? <MembersManager canEdit={manageMembers} registerMemberBack={registerMemberBack} styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>
   </KeyboardAvoidingView>;

@@ -16,10 +16,11 @@ const permissions = (role: AppRole, care: boolean) => {
   return 'Use member features and view their own prayer requests.';
 };
 
-export default function MembersManager({ styles, ownerId, onSelfChange, registerMemberBack }: { styles: any; ownerId: string; onSelfChange: () => void; registerMemberBack: (action: (() => void) | null) => void }) {
+export default function MembersManager({ canEdit, styles, ownerId, onSelfChange, registerMemberBack }: { canEdit: boolean; styles: any; ownerId: string; onSelfChange: () => void; registerMemberBack: (action: (() => void) | null) => void }) {
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [total, setTotal] = useState<number | null>(null);
   const [rows, setRows] = useState<Member[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -49,7 +50,7 @@ export default function MembersManager({ styles, ownerId, onSelfChange, register
     let active = true;
     setLoading(true);
     setError(false);
-    void supabase.rpc('member_directory', { search_term: search, filter_role: filter === 'all' ? null : filter, after_id: cursor })
+    void supabase.rpc(canEdit ? 'member_directory' : 'member_directory_names', { search_term: search, filter_role: filter === 'all' ? null : filter, after_id: cursor })
       .then(({ data, error: failure }) => {
         if (!active) return;
         setLoading(false);
@@ -60,7 +61,15 @@ export default function MembersManager({ styles, ownerId, onSelfChange, register
         setRows(old => (cursor ? old : []).concat(page.slice(0, 25)));
       });
     return () => { active = false; };
-  }, [search, filter, cursor, revision]);
+  }, [search, filter, cursor, revision, canEdit]);
+
+  useEffect(() => {
+    let active = true;
+    void supabase.rpc('registered_member_count').then(({ data, error }) => {
+      if (active) setTotal(error ? null : Number(data));
+    });
+    return () => { active = false; };
+  }, [revision, canEdit]);
 
   function open(member: Member) {
     select(member);
@@ -94,7 +103,7 @@ export default function MembersManager({ styles, ownerId, onSelfChange, register
       <Text style={[styles.statusOptionText, chosen && styles.statusOptionTextActive]}>{label(text)}</Text>
     </TouchableOpacity>;
   }
-  if (selected) {
+  if (selected && canEdit) {
     const self = selected.member_id === ownerId;
     return <View style={styles.itemCard}>
       <Text style={styles.listTitle}>{selected.display_name}</Text>
@@ -119,16 +128,19 @@ export default function MembersManager({ styles, ownerId, onSelfChange, register
   }
   const submit = () => { setSearch(input.trim()); restart(); };
   return <View>
-    <Text style={styles.listTitle}>Members</Text>
-    <AdminSearchBar placeholder="Search by name or email" value={input} appliedSearch={search}
+    <Text style={styles.listTitle}>Members{total !== null ? ` (${total})` : ''}</Text>
+    <AdminSearchBar placeholder={canEdit ? 'Search by name or email' : 'Search by name'} value={input} appliedSearch={search}
       filterActive={filter !== 'all'} onChange={setInput} onSearch={submit}
       onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
       onClearFilters={() => { setFilter('all'); restart(); }} />
     <View style={styles.statusPicker}>{filters.map(item => choice(item, item === filter, () => { setFilter(item); restart(); }))}</View>
-    {rows.map(member => <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
+    {rows.map(member => canEdit ? <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
       <Text style={styles.itemTitle}>{member.display_name}</Text>
       <Text style={styles.itemMeta}>{label(member.member_role)}</Text>
-    </TouchableOpacity>)}
+    </TouchableOpacity> : <View key={member.member_id} style={styles.itemCard}>
+      <Text style={styles.itemTitle}>{member.display_name}</Text>
+      <Text style={styles.itemMeta}>{label(member.member_role)}</Text>
+    </View>)}
     {loading && <ActivityIndicator />}
     {error && button('Retry loading members', () => refresh(n => n + 1))}
     {!loading && !error && !rows.length && <Text style={styles.panelHint}>No matching members.</Text>}
