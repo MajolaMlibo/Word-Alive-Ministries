@@ -209,6 +209,46 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     assert.equal(Number((await count())[0].n),1);
     assert.equal((await rows('select id from reading_completions')).length,0);
     console.log('PASS: completion history survives archive, draft and parent deletion; directory summaries follow permissions.');
+    await db.exec('reset role');
+    await db.exec(migration('202611250002_reading_publication_and_streak.sql'));
+    await db.exec(migration('202611200003_add_study_media.sql').split('insert into storage.buckets')[0] + 'commit;');
+    await db.exec(migration('202611250003_study_media_limits.sql'));
+    await signIn(manager);
+    await assert.rejects(rows("update daily_readings set status='published' where id=$1",[reading]), /Publish the reading plan/);
+    await rows("update reading_plans set status='published' where id=$1",[plan]);
+    await rows("update daily_readings set status='published' where id=$1",[reading]);
+    const otherPlan=randomUUID();
+    await rows("insert into reading_plans(id,name,plan_year,status) values($1,'Second',2026,'published')",[otherPlan]);
+    await assert.rejects(rows("insert into daily_readings(plan_id,day_number,scheduled_date,scripture_ref,status) values($1,1,'2026-01-01','Psalm 1','published')",[otherPlan]), /one_published_reading_per_date/);
+    await rows("update reading_plans set status='archived' where id=$1",[plan]);
+    await signIn(member);
+    assert.equal((await rows('select id from daily_readings where id=$1',[reading])).length,0);
+    for (const [daysAgo,expected] of [[1,1],[2,0],[0,1]]) {
+      await db.exec('reset role');
+      await rows("update reading_completions set completed_at=(((now() at time zone 'Africa/Johannesburg')::date-$1::int+time '12:00') at time zone 'Africa/Johannesburg') where user_id=$2",[daysAgo,member]);
+      await signIn(member);
+      assert.equal((await rows('select refresh_daily_reading_streak() as n'))[0].n,expected);
+    }
+    await signIn(manager);
+    await rows("insert into bible_studies(study_name,study_date,status) select 'Lesson '||n, current_date+n,'published' from generate_series(1,101) n");
+    const pages = [];
+    for (const offset of [0,25,50,75,100]) pages.push(...(await rows("select id from admin_study_page('', $1)",[offset])).slice(0,25));
+    assert.equal(new Set(pages.map(row=>row.id)).size,101);
+    assert.equal((await rows("select * from admin_study_page('Lesson 101',0)")).length,1);
+    const study=pages[0].id;
+    await rows("insert into study_media(study_id,storage_path,upload_pending) select $1,'fixture/'||n,n=6 from generate_series(1,6) n",[study]);
+    await assert.rejects(rows("insert into study_media(study_id,storage_path) values($1,'seventh')",[study]), /six images/);
+    await assert.rejects(rows('delete from bible_studies where id=$1',[study]), /foreign key/);
+    await signIn(member);
+    assert.equal((await rows('select id from study_media where study_id=$1',[study])).length,5);
+    await db.exec('reset role');
+    const recovered = new PGlite({ loadDataDir: await db.dumpDataDir() });
+    try {
+      assert.equal((await recovered.query('select count(*)::int as n from study_media where study_id=$1',[study])).rows[0].n,6);
+      assert.equal((await recovered.query('select role from user_roles where user_id=$1',[manager])).rows[0].role,'admin');
+      assert.equal((await recovered.query('select count(*)::int as n from prayer_requests')).rows[0].n,(await rows('select count(*)::int as n from prayer_requests'))[0].n);
+    } finally { await recovered.close(); }
+    console.log('PASS: plan visibility, date collisions, streak day boundaries, 101 studies, upload capacity, and local fixture restore.');
   } finally { await db.close(); }
 })().catch(error=>{ console.error(error); process.exitCode=1; });
 

@@ -28,7 +28,8 @@ export function getSouthAfricaDate(date: Date = new Date()) {
 export async function getTodaysDailyReading() {
   const { data, error } = await supabase
     .from('daily_readings')
-    .select('*')
+    .select('*, reading_plans!inner(status)')
+    .eq('reading_plans.status', 'published')
     .eq('scheduled_date', getSouthAfricaDate())
     .eq('status', 'published')
     .maybeSingle();

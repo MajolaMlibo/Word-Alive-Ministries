@@ -1,5 +1,49 @@
 # Release Checklist
 
+## November release audit follow-up
+
+- Expo project verified as @mlibo/word-alive-ministries, project ID
+  966c4966-bf09-4419-8652-2c5642b7503f. Latest successful Android build was
+  version 1.0.2, code 5. The retained APK and default EAS Android certificate
+  reported the same SHA-256 fingerprint. The upcoming internal profile uses
+  the existing package, project and signing identity with local version code 6.
+- Verified the preview environment points to word-alive-prod and its configured
+  publishable key receives HTTP 200 from Auth settings. These checks do not
+  establish external email delivery. Confirm the production profile separately
+  if preparing a store bundle.
+- Run npm ci and npm run test:release from app. This checks code, editor DOM,
+  reading dates, prayer and member permissions, archiving, publication,
+  streak boundaries, 101 study records, image capacity, a synthetic database
+  restore, and cached versus uncached Bible passages. The PR workflow runs for
+  public repositories; private repositories opt in with ENABLE_RELEASE_CHECKS.
+- Deployment order, after explicit production approval: apply
+  202611250001_reading_safeguards.sql, 202611250002_reading_publication_and_streak.sql
+  and 202611250003_study_media_limits.sql before distributing a new client.
+  Preview the pending duplicate-date and image-capacity checks below first.
+  If either returns rows, review the content with the administrator before
+  applying migrations. No automatic edits to the church plan or files.
+- Pending phone checks: install the authorised signed APK over build 5, confirm
+  session retention and Pastor's December 2027 readings, open/correct rich
+  notes, retry a failed image upload, and open one cached and one uncached
+  chapter in airplane mode. Ordinary-member signup and recovery are independent
+  of the recorded project-owner recovery pass.
+- Store gates: church-approved support contact and retention policy; published
+  privacy and account-deletion URLs; verified Play Console testing eligibility;
+  stakeholder acceptance. Obtain owner consent before external publication.
+  Actual private-file restore rehearsal is still pending. See OPERATIONS.md.
+
+Read-only preflight for word-alive-prod:
+
+```sql
+select scheduled_date, count(*) from public.daily_readings
+where status = 'published' group by scheduled_date having count(*) > 1;
+select study_id, count(*) from public.study_media group by study_id having count(*) > 6;
+select count(*) as published_readings_in_hidden_plans
+from public.daily_readings r join public.reading_plans p on p.id=r.plan_id
+where r.status='published' and p.status<>'published';
+```
+
+
 ## Reading history and editor safeguards
 
 - Apply the reading safeguards migration only after production approval. A completed reading or its parent plan cannot be deleted, including from an older client. Use Edit → Archived to keep history.

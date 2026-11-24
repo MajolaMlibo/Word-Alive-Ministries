@@ -90,21 +90,6 @@ export default function StudyScreen() {
       const loadedStudies = (studiesResult.data as BibleStudy[]) || [];
       setTodayStudies(loadedTodayStudies);
       setStudies(loadedStudies);
-      const loadedStudyIds = [...new Set([
-        ...loadedTodayStudies.map((study) => study.id),
-        ...loadedStudies.map((study) => study.id),
-      ])];
-      const { media, error: mediaError } = await getStudyMedia(loadedStudyIds);
-      if (mediaError) {
-        console.warn('Unable to load study images.', mediaError.message);
-        setStudyMedia([]);
-        setStudyMediaUrls({});
-      } else {
-        const { urls, error: urlError } = await getStudyMediaUrls(media);
-        if (urlError) console.warn('Unable to sign study images.', urlError.message);
-        setStudyMedia(media);
-        setStudyMediaUrls(urls);
-      }
     } catch (error) {
       console.warn('Unexpected error while loading Bible studies.', error);
       setTodayStudies([]);
@@ -148,6 +133,28 @@ export default function StudyScreen() {
 
     loadStudies(filter, canSeeUpcoming);
   }, [canSeeUpcoming, filter, loadStudies, roleLoading]);
+
+  const [mediaIssue, setMediaIssue] = useState(false);
+  const [mediaAttempt, retryMedia] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setStudyMedia([]);
+    setStudyMediaUrls({});
+    setMediaIssue(false);
+    if (expandedId) void (async () => {
+      try {
+        const { media, error } = await getStudyMedia([expandedId]);
+        if (error) throw error;
+        const result = await getStudyMediaUrls(media);
+        if (active) {
+          setStudyMedia(media);
+          setStudyMediaUrls(result.urls);
+          setMediaIssue(Boolean(result.error));
+        }
+      } catch { if (active) setMediaIssue(true); }
+    })();
+    return () => { active = false; };
+  }, [expandedId, mediaAttempt]);
 
   const renderStudyCard = (study: BibleStudy) => {
     const open = expandedId === study.id;
@@ -205,6 +212,9 @@ export default function StudyScreen() {
               text={study.description || 'No additional notes have been provided for this Bible study.'}
             />
 
+            {mediaIssue && <TouchableOpacity onPress={() => retryMedia(n => n + 1)} accessibilityRole="button">
+              <Text style={styles.detailTitle}>Retry loading study images</Text>
+            </TouchableOpacity>}
             {mediaForStudy.length ? (
               <>
                 <Text style={styles.imageHint}>Tap an image to view it full screen.</Text>

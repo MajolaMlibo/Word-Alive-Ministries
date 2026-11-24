@@ -32,6 +32,26 @@ function getFirstVerseReference(scriptureRef: string) {
   return `${match[1]} ${match[2]}:1`;
 }
 
+async function readCached<T>(key: string): Promise<T | null> {
+  try {
+    const cached = await AsyncStorage.getItem(key);
+    return cached ? JSON.parse(cached) : null;
+  } catch { return null; }
+}
+
+async function requestScripture(reference: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(
+      `https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`,
+      { signal: controller.signal }
+    );
+    if (!response.ok) throw new Error('Unable to download Scripture.');
+    return await response.json();
+  } finally { clearTimeout(timeout); }
+}
+
 export async function getDailyVersePreview(scriptureRef: string) {
   const verseReference = getFirstVerseReference(scriptureRef);
 
@@ -44,16 +64,10 @@ export async function getDailyVersePreview(scriptureRef: string) {
 
   const cacheKey = getCacheKey(`kjv_preview_${verseReference}`);
 
+  const cached = await readCached<DailyVersePreview>(cacheKey);
+  if (cached?.text) return { preview: cached, error: null };
   try {
-    const response = await fetch(
-      `https://bible-api.com/${encodeURIComponent(verseReference)}?translation=kjv`
-    );
-
-    if (!response.ok) {
-      throw new Error('Unable to load the daily verse preview.');
-    }
-
-    const data = await response.json();
+    const data = await requestScripture(verseReference);
     const text = typeof data.text === 'string' ? data.text.trim() : '';
 
     if (!text) {
@@ -66,25 +80,10 @@ export async function getDailyVersePreview(scriptureRef: string) {
       text,
     };
 
-    await AsyncStorage.setItem(cacheKey, JSON.stringify(preview));
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(preview)).catch(() => undefined);
 
     return { preview, error: null };
   } catch (error) {
-    console.warn('Unable to load daily verse preview, checking cache:', error);
-
-    try {
-      const cachedPreview = await AsyncStorage.getItem(cacheKey);
-
-      if (cachedPreview) {
-        return {
-          preview: JSON.parse(cachedPreview) as DailyVersePreview,
-          error: null,
-        };
-      }
-    } catch (cacheError) {
-      console.warn('Unable to read daily verse preview cache:', cacheError);
-    }
-
     return {
       preview: null,
       error:
@@ -98,40 +97,15 @@ export async function getDailyVersePreview(scriptureRef: string) {
 export async function fetchScripture(reference: string) {
   const cacheKey = getCacheKey(reference);
 
+  const cached = await readCached<{ reference: string; text: string; verses?: any[] }>(cacheKey);
+  if (cached?.text) return cached;
   try {
-    // Always try the network first so the user gets fresh scripture.
-    const response = await fetch(
-      `https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch scripture from network');
-    }
-
-    const data = await response.json();
-
-    // 2. Save the fresh data to AsyncStorage for future offline access
-    await AsyncStorage.setItem(cacheKey, JSON.stringify(data));
-
+    const data = await requestScripture(reference);
+    if (!data?.text) throw new Error('Empty Scripture response.');
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(data)).catch(() => undefined);
     return data;
-  } catch (error) {
-    console.warn('Unable to fetch scripture, checking cache:', error);
-
-    // 3. Network failed (offline, timeout, bad reference, etc) — fall back to cache
-    try {
-      const cachedData = await AsyncStorage.getItem(cacheKey);
-      if (cachedData) {
-        return JSON.parse(cachedData);
-      }
-    } catch (cacheError) {
-      console.warn('Unable to read scripture cache:', cacheError);
-    }
-
-    // 4. Nothing cached either — return a clear fallback structure
-    return {
-      reference,
-      text: 'Unable to load scripture. Please check your connection or ensure this passage has been viewed previously.',
-    };
+  } catch {
+    return { reference, text: 'This passage has not been downloaded. Connect to the internet and try again.' };
   }
 }
 

@@ -91,6 +91,7 @@ export interface BibleStudy {
 }
 
 export interface StudyMedia {
+  upload_pending: boolean;
   id: string;
   study_id: string;
   storage_path: string;
