@@ -106,8 +106,6 @@ function Conversation({ row, bucket, changed, styles }: Props & { row: InboxRow;
     changed();
   }
   return <View style={styles.itemCard}>
-    <Text style={styles.itemTitle}>{row.member_name}</Text>
-    <Text style={styles.itemDescription}>{row.description}</Text>
     {replies.map(reply => <View key={reply.id} style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{reply.author_name} · {new Date(reply.created_at).toLocaleDateString()}</Text>
       <Text style={styles.itemDescription}>{reply.body}</Text>
@@ -184,7 +182,7 @@ export default function PrayerInbox({ access, styles }: Props & { access: Access
           <TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:selected === row.id}}
             onPress={() => select(selected === row.id ? null : row.id)} style={styles.fieldWrap}>
             <Text style={styles.itemMeta}>{new Date(row.created_at).toLocaleDateString()}</Text>
-            <Text numberOfLines={2} style={styles.itemDescription}>{row.description}</Text>
+            <Text numberOfLines={selected === row.id ? undefined : 2} style={styles.itemDescription}>{row.description}</Text>
           </TouchableOpacity>
           {selected === row.id && <Conversation styles={styles} row={row} bucket={bucket} changed={restart} />}
         </View>)}

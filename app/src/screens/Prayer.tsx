@@ -33,7 +33,7 @@ function formatRequestedAt(value: string) {
 }
 
 export default function PrayerScreen() {
-  const { colors, fonts } = useAccessibility();
+  const { colors, fonts, colorScheme } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [requests, setRequests] = useState<PrayerRequest[]>([]);
   const [description, setDescription] = useState('');
@@ -255,9 +255,19 @@ export default function PrayerScreen() {
         requests.map((request) => (
           <View key={request.id} style={styles.requestCard}>
             <View style={styles.requestHeader}>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{prayerStatusLabel[request.status]}</Text>
-              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={'Prayer status: ' + prayerStatusLabel[request.status]}
+                onPress={() => Alert.alert('Prayer status', prayerStatusLabel[request.status])}
+                hitSlop={8}
+                style={styles.statusBadge}
+              >
+                <Ionicons
+                  name={request.status === 'closed' ? 'checkmark' : 'checkmark-done'}
+                  color={request.status === 'reviewed' ? (colorScheme === 'dark' ? '#89C6FF' : '#155EA5') : colors.textMuted}
+                  size={24}
+                />
+              </TouchableOpacity>
               <Text style={styles.requestDate}>{formatRequestedAt(request.created_at)}</Text>
             </View>
             <Text style={styles.requestDescription}>{request.description}</Text>
