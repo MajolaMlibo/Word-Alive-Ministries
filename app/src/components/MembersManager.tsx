@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
+import AdminSearchBar from './AdminSearchBar';
 import { AppRole } from '../services/database';
 import { supabase } from '../services/supabase';
 
@@ -15,7 +16,7 @@ const permissions = (role: AppRole, care: boolean) => {
   return 'Use member features and view their own prayer requests.';
 };
 
-export default function MembersManager({ styles, ownerId, onSelfChange }: { styles: any; ownerId: string; onSelfChange: () => void }) {
+export default function MembersManager({ styles, ownerId, onSelfChange, registerMemberBack }: { styles: any; ownerId: string; onSelfChange: () => void; registerMemberBack: (action: (() => void) | null) => void }) {
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -29,6 +30,12 @@ export default function MembersManager({ styles, ownerId, onSelfChange }: { styl
   const [role, setRole] = useState<AppRole>('member');
   const [care, setCare] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!selected) return;
+    registerMemberBack(() => { if (!saving) select(null); });
+    return () => registerMemberBack(null);
+  }, [selected, saving, registerMemberBack]);
 
   function restart() {
     select(null);
@@ -90,7 +97,6 @@ export default function MembersManager({ styles, ownerId, onSelfChange }: { styl
   if (selected) {
     const self = selected.member_id === ownerId;
     return <View style={styles.itemCard}>
-      {button('Back to members', () => select(null), saving)}
       <Text style={styles.listTitle}>{selected.display_name}</Text>
       <Text style={styles.itemMeta}>{selected.email}</Text>
       <Text style={styles.fieldLabel}>Role</Text>
@@ -114,10 +120,10 @@ export default function MembersManager({ styles, ownerId, onSelfChange }: { styl
   const submit = () => { setSearch(input.trim()); restart(); };
   return <View>
     <Text style={styles.listTitle}>Members</Text>
-    <TextInput accessibilityLabel="Search by name or email" placeholder="Search by name or email" value={input}
-      placeholderTextColor={styles.placeholderColor} onChangeText={setInput} style={styles.field}
-      autoCapitalize="none" returnKeyType="search" onSubmitEditing={submit} />
-    {button('Search', submit)}
+    <AdminSearchBar placeholder="Search by name or email" value={input} appliedSearch={search}
+      filterActive={filter !== 'all'} onChange={setInput} onSearch={submit}
+      onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
+      onClearFilters={() => { setFilter('all'); restart(); }} />
     <View style={styles.statusPicker}>{filters.map(item => choice(item, item === filter, () => { setFilter(item); restart(); }))}</View>
     {rows.map(member => <TouchableOpacity accessibilityRole="button" key={member.member_id} onPress={() => open(member)} style={styles.itemCard}>
       <Text style={styles.itemTitle}>{member.display_name}</Text>
