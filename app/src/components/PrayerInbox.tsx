@@ -4,7 +4,9 @@ import AdminSearchBar from './AdminSearchBar';
 import { PrayerReply, PrayerRequestStatus, prayerStatusLabel } from '../services/database';
 import { supabase } from '../services/supabase';
 
-type InboxRow = { id: string; member_name: string; user_id: string; description: string; created_at: string };
+type PrayerFilter = PrayerRequestStatus | 'all';
+const filterLabels = { all: 'All', ...prayerStatusLabel };
+type InboxRow = { status: PrayerRequestStatus; id: string; member_name: string; user_id: string; description: string; created_at: string };
 type Props = { styles: any };
 const pageSize = 25;
 
@@ -93,7 +95,7 @@ function Conversation({ row, bucket, changed, styles }: Props & { row: InboxRow;
 }
 
 export default function PrayerInbox({ styles }: Props) {
-  const [bucket, setBucket] = useState<PrayerRequestStatus>('pending');
+  const [bucket, setBucket] = useState<PrayerFilter>('pending');
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<InboxRow[]>([]);
@@ -109,7 +111,7 @@ export default function PrayerInbox({ styles }: Props) {
   useEffect(() => {
     let active = true;
     setBusy(true); setFailed(false);
-    void supabase.rpc('prayer_inbox', { bucket, search_name: search, before_time: cursor?.created_at ?? null, before_id: cursor?.id ?? null })
+    void supabase.rpc('prayer_inbox', { bucket: bucket === 'all' ? null : bucket, search_name: search, before_time: cursor?.created_at ?? null, before_id: cursor?.id ?? null })
       .then(({ data, error }) => {
         if (!active) return;
         setBusy(false); setFailed(Boolean(error));
@@ -132,14 +134,14 @@ export default function PrayerInbox({ styles }: Props) {
 
       <Text style={styles.listTitle}>Private prayer inbox</Text>
       <AdminSearchBar placeholder="Search by member name" value={input} appliedSearch={search}
-        filterActive={bucket !== 'pending'} onChange={setInput} onSearch={searchMembers}
+        filterActive={bucket !== 'all'} onChange={setInput} onSearch={searchMembers}
         onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
-        onClearFilters={() => { setBucket('pending'); restart(); }} />
+        onClearFilters={() => { setBucket('all'); restart(); }} />
       <View style={styles.statusPicker}>
-        {(Object.keys(prayerStatusLabel) as PrayerRequestStatus[]).map(key => <TouchableOpacity
+        {(Object.keys(filterLabels) as PrayerFilter[]).map(key => <TouchableOpacity
           key={key} accessibilityRole="button" accessibilityState={{selected:key === bucket}}
           onPress={() => {setBucket(key); restart();}} style={[styles.statusOption,key === bucket && styles.statusOptionActive]}>
-          <Text style={[styles.statusOptionText,key === bucket && styles.statusOptionTextActive]}>{prayerStatusLabel[key]}</Text>
+          <Text style={[styles.statusOptionText,key === bucket && styles.statusOptionTextActive]}>{filterLabels[key]}</Text>
         </TouchableOpacity>)}
       </View>
       {Array.from(groups, ([id, group]) => <View key={id} style={styles.itemCard}>
@@ -147,10 +149,10 @@ export default function PrayerInbox({ styles }: Props) {
         {group.map(row => <View key={row.id}>
           <TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:selected === row.id}}
             onPress={() => select(selected === row.id ? null : row.id)} style={styles.fieldWrap}>
-            <Text style={styles.itemMeta}>{new Date(row.created_at).toLocaleDateString()}</Text>
+            <Text style={styles.itemMeta}>{new Date(row.created_at).toLocaleDateString()}{bucket === 'all' ? ' · ' + prayerStatusLabel[row.status] : ''}</Text>
             <Text numberOfLines={selected === row.id ? undefined : 2} style={styles.itemDescription}>{row.description}</Text>
           </TouchableOpacity>
-          {selected === row.id && <Conversation styles={styles} row={row} bucket={bucket} changed={restart} />}
+          {selected === row.id && <Conversation styles={styles} row={row} bucket={row.status} changed={restart} />}
         </View>)}
       </View>)}
       {busy && <ActivityIndicator />}

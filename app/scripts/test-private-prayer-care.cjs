@@ -91,6 +91,12 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     await db.exec('reset role');
     await rows("insert into auth.users(id,email) select gen_random_uuid(),'Extra'||n||'@example.invalid' from generate_series(1,30) n");
     await db.exec(migration('202611240002_member_access_management.sql'));
+    await db.exec(migration('202611240003_prayer_inbox_all.sql'));
+    await signIn(pastor);
+    const mixed = await rows("select * from prayer_inbox(null,'older')");
+    assert.deepEqual(mixed.map(r=>r.status).sort(),['closed','pending']);
+    await signIn(member);
+    assert.equal((await rows("select * from prayer_inbox(null,'')")).length,0);
     const directory = (search='',filter=null,cursor=null) => rows('select * from member_directory($1,$2,$3)',[search,filter,cursor]);
     const change = (id,oldRole,oldCare,newRole,newCare) => rows('select save_member_access($1,$2,$3,$4,$5)',[id,oldRole,oldCare,newRole,newCare]);
     for (const id of [member,pastor,admin]) {
