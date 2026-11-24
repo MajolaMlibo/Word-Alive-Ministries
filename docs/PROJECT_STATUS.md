@@ -461,4 +461,4 @@ Member-access management is implemented on feature/member-access-management, bas
 
 The owner confirmed the member-access migration succeeded in production and reported Prayer requests and Find a Member working on 24 November 2026. Compact search controls and member-detail header navigation are pending device verification.
 
-The owner confirmed production migrations 003 and 004 succeeded. The independent admin directory permission migration 005 passed local tests and awaits production rollout and Android verification.
+The owner confirmed production migrations 003 and 004 succeeded. The owner also confirmed migration 005 succeeded in word-alive-prod on 24 November 2026. Local permission tests passed. Verification of the two switches in the Android app is pending.
