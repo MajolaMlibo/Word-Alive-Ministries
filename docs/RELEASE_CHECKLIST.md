@@ -8,11 +8,13 @@ A regression fixture covers a quotation followed by a normal paragraph and a
 bold chapter heading. Existing rich-text notes use the repaired display path
 without editing their saved contents. The large Study introductory card was removed.
 
-On a phone running this combined revision, select a verse halfway down a
-chapter, open a private note, type several lines and tap Save while the keyboard
-is open. Open the published Hebrews study and check the quotation and bold
-chapter headings. Retain the outstanding password-recovery and Pastor account
-checks from the diagnostic below.
+- [x] Project owner confirmed the bottom verse tools and private notes work as
+  expected after the keyboard fix.
+- [x] Project owner confirmed the reported rich-text formatting fault in the
+  member view is fixed.
+- [ ] Open a fresh password-reset email on the phone, set a password and sign in.
+- [ ] After Pastor installs the updated app, confirm he can open the draft
+  readings for September through December 2027.
 
 ## Pre-build diagnostic — 24 November 2026
 
