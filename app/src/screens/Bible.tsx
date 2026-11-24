@@ -9,6 +9,8 @@ import {
   Alert,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Share,
   type ScrollViewInstance,
 } from 'react-native';
@@ -69,6 +71,8 @@ const BIBLE_HIGHLIGHT_OPTIONS: {
   { key: 'blue', label: 'Blue', color: '#C9E3F6' },
   { key: 'pink', label: 'Pink', color: '#F8D2DE' },
 ];
+
+const HIGHLIGHT_INK = '#17241B';
 
 const HIGHLIGHT_COLOR_BY_KEY = Object.fromEntries(
   BIBLE_HIGHLIGHT_OPTIONS.map((option) => [option.key, option.color])
@@ -361,7 +365,7 @@ function BibleReader({
 }: {
   dailyReadingReference?: string;
 }) {
-  const { colors, fonts } = useAccessibility();
+  const { colors, fonts, colorScheme } = useAccessibility();
   const dailyReadingStart = getFirstChapterFromReference(dailyReadingReference);
   const isGuidedDailyReading = Boolean(dailyReadingStart);
 
@@ -858,40 +862,9 @@ function BibleReader({
             </View>
           ) : null}
 
-          {selectedVerses.length > 0 && (
-            <View style={styles.verseTools}>
-              <Text style={styles.selectionCount}>{selectedVerses.length} selected</Text>
-              <TouchableOpacity
-                accessibilityLabel="Highlight selected verses"
-                disabled={savingVerseAction}
-                style={[styles.toolButton, savingVerseAction && styles.disabledToolButton]}
-                onPress={() => void saveHighlights('gold')}
-              >
-                <Ionicons name="color-fill-outline" size={18} color="#FFF" />
-                <Text style={styles.toolButtonText}>Highlight</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityLabel="Open selected verse actions"
-                disabled={savingVerseAction}
-                style={styles.moreButton}
-                onPress={() => setIsVerseActionsOpen(true)}
-              >
-                <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
-                <Text style={styles.moreButtonText}>More</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityLabel="Clear selected verses"
-                disabled={savingVerseAction}
-                style={styles.clearSelectionButton}
-                onPress={() => setSelectedVerses([])}
-              >
-                <Ionicons name="close" size={18} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          )}
-
           {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => {
             const verseSave = verseSaveByNumber.get(v.verse);
+            const useHighlightInk = colorScheme === 'dark' && verseSave?.highlight_color && !selectedVerses.includes(v.verse);
             return (
               <TouchableOpacity
                 accessibilityLabel={`Verse ${v.verse}${verseSave?.is_bookmarked ? ', bookmarked' : ''}${verseSave?.note ? ', has a note' : ''}`}
@@ -908,8 +881,8 @@ function BibleReader({
                   selectedVerses.includes(v.verse) && styles.selectedVerse,
                 ]}
               >
-                <Text style={styles.verseText}>
-                  <Text style={styles.verseNum}>{v.verse} </Text>
+                <Text style={[styles.verseText, useHighlightInk ? styles.highlightInk : null]}>
+                  <Text style={[styles.verseNum, useHighlightInk ? styles.highlightInk : null]}>{v.verse} </Text>
                   {v.text}
                 </Text>
                 {verseSave?.is_bookmarked || verseSave?.note ? (
@@ -928,6 +901,40 @@ function BibleReader({
         </View>
       )}
       </ScrollView>
+
+      {selectedVerses.length > 0 && (
+        <View style={styles.verseTools}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Verse actions, ${selectedVerses.length} selected`}
+            disabled={savingVerseAction}
+            style={styles.moreButton}
+            onPress={() => setIsVerseActionsOpen(true)}
+          >
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+            <Text style={styles.moreButtonText}>Verse actions ({selectedVerses.length})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Highlight selected verses in gold"
+            disabled={savingVerseAction}
+            style={[styles.toolButton, savingVerseAction && styles.disabledToolButton]}
+            onPress={() => void saveHighlights('gold')}
+          >
+            <Ionicons name="color-fill-outline" size={18} color="#FFF" />
+            <Text style={styles.toolButtonText}>Highlight</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Clear selected verses"
+            disabled={savingVerseAction}
+            style={styles.clearSelectionButton}
+            onPress={() => setSelectedVerses([])}
+          >
+            <Ionicons name="close" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal
         animationType="slide"
@@ -962,7 +969,7 @@ function BibleReader({
                   onPress={() => void saveHighlights(option.key)}
                   style={[styles.highlightOption, { backgroundColor: option.color }]}
                 >
-                  <Text style={styles.highlightOptionText}>{option.label}</Text>
+                  <Text style={[styles.highlightOptionText, colorScheme === 'dark' && styles.highlightInk]}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1052,8 +1059,8 @@ function BibleReader({
         visible={isNoteEditorOpen}
         onRequestClose={() => setIsNoteEditorOpen(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.actionSheet}>
+        <KeyboardAvoidingView style={styles.modalBackdrop} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={styles.actionSheet} keyboardShouldPersistTaps="handled">
             <View style={styles.sheetHandle} />
             <View style={styles.sheetHeader}>
               <View>
@@ -1088,8 +1095,8 @@ function BibleReader({
             >
               <Text style={styles.saveNoteButtonText}>{savingVerseAction ? 'Saving...' : 'Save private note'}</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -1447,23 +1454,18 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
 
     verseTools: {
       alignItems: 'center',
-      backgroundColor: colors.background,
-      borderRadius: 14,
+      justifyContent: 'space-between',
+      backgroundColor: colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.borderSoft,
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: spacing.sm,
-      marginBottom: spacing.md,
-      padding: spacing.sm,
-    },
-
-    selectionCount: {
-      color: colors.textMuted,
-      fontSize: fonts.body,
-      fontWeight: '600',
-      marginRight: 'auto',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
     },
 
     toolButton: {
+      minHeight: 48,
       alignItems: 'center',
       backgroundColor: colors.primary,
       borderRadius: 10,
@@ -1483,6 +1485,7 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     },
 
     moreButton: {
+      minHeight: 48,
       alignItems: 'center',
       flexDirection: 'row',
       gap: 3,
@@ -1498,8 +1501,8 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     clearSelectionButton: {
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 36,
-      minWidth: 36,
+      minHeight: 48,
+      minWidth: 48,
     },
 
     verse: {
@@ -1611,6 +1614,8 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
       justifyContent: 'center',
     },
 
+    highlightInk: { color: HIGHLIGHT_INK },
+
     highlightOptionText: {
       color: colors.text,
       fontSize: fonts.caption,
@@ -1639,7 +1644,7 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
       borderWidth: 1,
       color: colors.text,
       fontSize: fonts.body,
-      minHeight: 150,
+      height: 150,
       padding: spacing.md,
     },
 
