@@ -133,6 +133,12 @@ Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. F
 
 The disposable PostgreSQL test in app/scripts/test-private-prayer-care.cjs uses the actual baseline prayer tables, the migration, simulated Supabase identities and the authenticated database role. Supply @electric-sql/pglite on NODE_PATH and run node app/scripts/test-private-prayer-care.cjs. It checks legacy conversion, owner-only pending edits, private submission, delegation separate from reading, revocation, reply retry, closure, history, name search and pagination across 107 requests.
 
-Android acceptance pending: submit a fictional prayer as a member, reply as pastor, reopen My requests as the submitting member, and confirm the reply text, responder and date. Confirm ordinary admins have no Prayer section, selected admins can search, and access managers without reading permission see only access controls. Test a failed send and retry with the keyboard visible. Use fictional text only.
+Android acceptance pending: submit a fictional prayer as a member, reply as pastor, reopen My requests as the submitting member, and confirm the reply text, responder and date. Confirm ordinary admins have no Prayer section, selected admins can search, and the dedicated admin without prayer-care access sees Members and has no Prayer inbox. Test a failed send and retry with the keyboard visible. Use fictional text only.
 
 Prayer card check: expand and collapse a long staff request. Its text appears once in both states. In My requests, pending shows two grey ticks, replied shows two blue ticks, and closed shows one grey tick. Tap the ticks or use the screen reader to hear the status. Staff filters retain text labels.
+
+### Member management
+
+The disposable database test applies the Members migration after the prayer-care scenarios. It covers the owner, pastor, ordinary admin and member, the old grant endpoint, direct profile list visibility, search by email, role filtering, two directory pages across 35 accounts, self-demotion, conflicting edits, grants and revocations, audit rows and continued pastoral prayer access.
+
+Device check pending: verify Members appears after Links only for the dedicated account, inspect a test member, cancel a proposed change, then save a test change. Refresh the target account to verify the effect. Restore the test member's original access afterwards.

@@ -123,7 +123,7 @@ visible links; Row Level Security prevents members from changing any link.
 
 ## Prayer-request flow
 
-Members submit private requests and can edit or delete their own pending requests. My requests shows each reply with its author and date. Pull to refresh for new replies. Only the author, pastor and selected prayer-care administrators can read a thread. Access managers can select administrators independently of inbox access. Database policies enforce these boundaries for previously published requests as well.
+Members submit private requests and can edit or delete their own pending requests. My requests shows each reply with its author and date. Pull to refresh for new replies. Only the author, pastor and selected prayer-care administrators can read a thread. Only the dedicated administrator can select prayer-care administrators in Members. Directory access is independent of prayer inbox access. Database policies enforce these boundaries for previously published requests as well.
 
 Staff search by member name and browse Needs reply, Replied, or Closed. The inbox uses date and ID pagination, displaying 25 requests at a time grouped by member ID. Sending a reply and moving the request to Replied occur together. Follow-up replies retain the thread history. Closed threads remain readable. Internally the existing reviewed status represents Replied after migration.
 
@@ -136,7 +136,7 @@ database to manage announcements, Bible studies,
 scheduled daily readings, and livestream links.
 It also manages permanent ministry links.
 Prayer-care staff may delete a request and its replies after confirmation.
-Role assignment is deliberately excluded from the mobile app.
+The Members section checks the dedicated account UUID on the server. Only that account can list members, assign roles and grant admin prayer-care access. Access changes compare the saved permissions with those the operator reviewed and write an audit record in the same transaction.
 
 The prior `home_encouragement` database table and its content are intentionally
 retained for a possible future release, but no member or Admin screen currently
