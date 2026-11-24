@@ -144,3 +144,5 @@ The disposable database test applies the Members migration after the prayer-care
 Device check pending: verify Members appears after Links only for the dedicated account, inspect a test member, cancel a proposed change, then save a test change. Refresh the target account to verify the effect. Restore the test member's original access afterwards.
 
 Admin search: in Prayer and Members, search with the magnifier or keyboard, select a filter, and clear each control independently. Clearing text keeps the filter; clearing filters restores Needs reply or All and keeps the applied search. From member details the header arrow returns to the filtered list; tapping it again opens More.
+
+Prayer opens on Needs reply. All includes every status, preserves per-request reply and close controls, and is the target of Clear filters. Confirm both the magnifier and keyboard Search dismiss the keyboard and run the query.

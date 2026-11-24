@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Keyboard, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '../theme/AccessibilityContext';
 
@@ -16,6 +16,10 @@ type Props = {
 
 export default function AdminSearchBar(props: Props) {
   const { colors, fonts } = useAccessibility();
+  function submit() {
+    Keyboard.dismiss();
+    props.onSearch();
+  }
   return <View style={styles.row}>
     <View style={[styles.field, { borderColor: colors.borderSoft, backgroundColor: colors.surface }]}>
       <TextInput
@@ -28,7 +32,7 @@ export default function AdminSearchBar(props: Props) {
         clearButtonMode="never"
         value={props.value}
         onChangeText={props.onChange}
-        onSubmitEditing={props.onSearch}
+        onSubmitEditing={submit}
       />
       {(props.value.length > 0 || props.appliedSearch.length > 0) && <TouchableOpacity
         accessibilityRole="button" accessibilityLabel="Clear search" onPress={props.onClearSearch} style={styles.control}>
@@ -40,7 +44,7 @@ export default function AdminSearchBar(props: Props) {
         <Ionicons name="close-circle" size={13} color={colors.text} style={[styles.filterX, { backgroundColor: colors.surface }]} />
       </TouchableOpacity>}
     </View>
-    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Search" onPress={props.onSearch}
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Search" onPress={submit}
       style={[styles.control, styles.submit, { backgroundColor: colors.primary }]}>
       <Ionicons name="search" size={21} color="#FFFFFF" />
     </TouchableOpacity>
