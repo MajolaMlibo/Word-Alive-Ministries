@@ -249,6 +249,24 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
       assert.equal((await recovered.query('select count(*)::int as n from prayer_requests')).rows[0].n,(await rows('select count(*)::int as n from prayer_requests'))[0].n);
     } finally { await recovered.close(); }
     console.log('PASS: plan visibility, date collisions, streak day boundaries, 101 studies, upload capacity, and local fixture restore.');
+    await db.exec(migration('202611250004_account_deletion_requests.sql'));
+    await signIn(member);
+    await rows('select request_account_deletion()');
+    const pending = await rows('select * from account_deletion_requests');
+    await rows('select request_account_deletion()');
+    assert.deepEqual(await rows('select * from account_deletion_requests'),pending);
+    for (const id of [other,pastor,admin]) {
+      await signIn(id);
+      assert.equal((await rows('select * from account_deletion_requests')).length,0);
+      await assert.rejects(rows('select * from pending_account_deletions()'),/Access denied/);
+    }
+    await signIn(manager);
+    assert.equal((await rows('select * from pending_account_deletions()'))[0].member_id, member);
+    await signIn(member);
+    await rows('delete from account_deletion_requests where user_id=$1',[member]);
+    await signIn(manager);
+    assert.equal((await rows('select * from pending_account_deletions()')).length,0);
+    console.log('PASS: deletion requests are private, repeatable, withdrawable, and listed only for the access manager.');
   } finally { await db.close(); }
 })().catch(error=>{ console.error(error); process.exitCode=1; });
 

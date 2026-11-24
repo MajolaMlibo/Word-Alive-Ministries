@@ -1,5 +1,16 @@
 # Release Checklist
 
+## Public account deletion acceptance
+
+- Production approval required for 202611250004_account_deletion_requests.sql
+  after the three preceding audit migrations. Check submission, duplicate taps,
+  withdrawal, dedicated administrator visibility and privacy using synthetic
+  accounts. Confirm no deletion occurs merely by requesting one.
+- Before public store submission, approve the contact inbox, retention periods
+  and response owner, deploy the web app, and verify its HTTPS deletion link
+  (site root with ?account=delete). A website has not been published as part of
+  this audit.
+
 ## November release audit follow-up
 
 - Expo project verified as @mlibo/word-alive-ministries, project ID

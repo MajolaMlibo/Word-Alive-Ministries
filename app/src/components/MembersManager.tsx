@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { DeletionQueue } from './AccountDeletion';
 import AdminSearchBar from './AdminSearchBar';
 import { AppRole } from '../services/database';
 import { supabase } from '../services/supabase';
@@ -153,6 +154,7 @@ export default function MembersManager({ canEdit, styles, ownerId, onSelfChange,
   const submit = () => { setSearch(input.trim()); restart(); };
   return <View>
     <Text style={styles.listTitle}>Members{total !== null ? ` (${total})` : ''}</Text>
+    {canEdit && <DeletionQueue />}
     <AdminSearchBar placeholder={canEdit ? 'Search by name or email' : 'Search by name'} value={input} appliedSearch={search}
       filterActive={filter !== 'all'} onChange={setInput} onSearch={submit}
       onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
