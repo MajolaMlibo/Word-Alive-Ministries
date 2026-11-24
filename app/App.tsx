@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 
+import { rememberSignInEmail } from './src/services/rememberedAccount';
 import { supabase } from './src/services/supabase';
 import {
   AccessibilityProvider,
@@ -144,6 +145,10 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) {
         return;
+      }
+
+      if (nextSession?.user.email && ['INITIAL_SESSION', 'SIGNED_IN', 'USER_UPDATED'].includes(event)) {
+        void rememberSignInEmail(nextSession.user.email);
       }
 
       if (event === 'PASSWORD_RECOVERY') {

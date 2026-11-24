@@ -146,3 +146,5 @@ Device check pending: verify Members appears after Links only for the dedicated 
 Admin search: in Prayer and Members, search with the magnifier or keyboard, select a filter, and clear each control independently. Clearing text keeps the filter; clearing filters restores Needs reply or All and keeps the applied search. From member details the header arrow returns to the filtered list; tapping it again opens More.
 
 Prayer opens on Needs reply. All includes every status, preserves per-request reply and close controls, and is the target of Clear filters. Confirm both the magnifier and keyboard Search dismiss the keyboard and run the query.
+
+Remembered sign-in: sign in, sign out, then reopen. Confirm only the last successful email is prefilled. Change account, try a failed sign-in, use Forget this account, and check Create Account opens with a blank email. Test password-manager suggestions on an enrolled phone; saving and unlocking credentials are controlled by the phone.
