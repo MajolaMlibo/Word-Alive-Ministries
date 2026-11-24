@@ -17,12 +17,3 @@ export async function getRememberedEmail() {
     return null;
   }
 }
-
-export async function forgetRememberedEmail() {
-  try {
-    await AsyncStorage.removeItem(emailKey);
-    return true;
-  } catch {
-    return false;
-  }
-}
