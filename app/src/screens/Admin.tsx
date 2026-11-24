@@ -888,7 +888,7 @@ function EmptyState({ icon, message, styles }: { icon: keyof typeof Ionicons.gly
   return <View style={styles.emptyCard}><Ionicons color={styles.textMutedColor} name={icon} size={38} /><Text style={styles.emptyText}>{message}</Text></View>;
 }
 
-export default function AdminScreen() {
+export default function AdminScreen({ registerMemberBack }: { registerMemberBack: (action: (() => void) | null) => void }) {
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
@@ -944,7 +944,7 @@ export default function AdminScreen() {
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
       {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
-      {section === 'members' && manageMembers ? <MembersManager styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
+      {section === 'members' && manageMembers ? <MembersManager registerMemberBack={registerMemberBack} styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>
   </KeyboardAvoidingView>;

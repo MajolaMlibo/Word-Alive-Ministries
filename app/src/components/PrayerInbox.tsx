@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AdminSearchBar from './AdminSearchBar';
 import { PrayerReply, PrayerRequestStatus, prayerStatusLabel } from '../services/database';
 import { supabase } from '../services/supabase';
 
@@ -130,9 +131,10 @@ export default function PrayerInbox({ styles }: Props) {
   return <View>
 
       <Text style={styles.listTitle}>Private prayer inbox</Text>
-      <TextInput accessibilityLabel="Search by member name" placeholder="Search by member name" placeholderTextColor={styles.placeholderColor}
-        style={styles.field} value={input} onChangeText={setInput} returnKeyType="search" onSubmitEditing={searchMembers} />
-      <Button label="Search" styles={styles} press={searchMembers} />
+      <AdminSearchBar placeholder="Search by member name" value={input} appliedSearch={search}
+        filterActive={bucket !== 'pending'} onChange={setInput} onSearch={searchMembers}
+        onClearSearch={() => { setInput(''); setSearch(''); restart(); }}
+        onClearFilters={() => { setBucket('pending'); restart(); }} />
       <View style={styles.statusPicker}>
         {(Object.keys(prayerStatusLabel) as PrayerRequestStatus[]).map(key => <TouchableOpacity
           key={key} accessibilityRole="button" accessibilityState={{selected:key === bucket}}
