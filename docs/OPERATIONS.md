@@ -6,8 +6,7 @@
   backups, test recovery, manage deployments and account access, and verify
   automated jobs. Record device, version, role, expected result, and actual
   result when testing reveals a recurring maintenance task.
-- Administrator: publish and archive church content, review prayer requests
-  privately, report problems, and confirm which content should remain available.
+- Administrator: publish and archive church content, handle prayers only with explicit prayer-care access, report problems, and confirm which content should remain available.
 - Pastor or church owner: approve retention rules and decide what belongs in
   the long-term ministry archive before the developer enables deletion.
 
@@ -38,3 +37,25 @@ by this document.
 - Treat app releases as a separate decision from content refresh. Test changes
   before distributing an update and ship urgent fixes outside the monthly review
   when needed.
+
+### Deploy private prayer care
+
+Apply supabase/migrations/202611240001_private_prayer_care.sql once in word-alive-prod before testing the updated app. Existing published prayers become private immediately. Previously approved or reviewed requests move to Needs reply. Closed requests stay closed. Older installed clients can still submit private prayers, but their old public-sharing and moderation controls cannot perform those actions.
+
+### Deploy member access management
+
+After the private prayer migration, run supabase/migrations/202611240002_member_access_management.sql once in word-alive-prod. The first migration was confirmed in production on 24 November. The second migration restricts the previous access-management endpoints immediately. Use the updated app for access changes.
+
+Sign into the dedicated administrator account. In More → Admin, scroll the section tabs past Links and tap Members. Search by name or email, tap a member, verify the email, choose a role, then review the before-and-after permissions and confirm Save changes. Pastors automatically get prayer care. An admin requires a separate prayer-care grant. Changes are recorded in public.member_access_history with actor, target, time, and old and new permissions. Pull to refresh or reopen Admin after a change.
+
+Only the verified dedicated account UUID can manage roles and access. Its own role is protected. Existing prayer-care selections remain in effect. If the account is lost, recover the same account through Supabase Auth. Replacing it with a new UUID requires a reviewed database change.
+
+Member replies appear inside My requests when the member opens or refreshes the screen. This feature sends no email or push notifications. Prayer requests and replies have no automatic expiry.
+
+Apply 202611240003_prayer_inbox_all.sql and 202611240004_pastor_member_directory.sql after the Members migration. Pastors now have a separate read-only Members view with name, role and total registered accounts. Email lookup, permission changes and the full management directory remain restricted to the designated account.
+
+After migration 202611240005_admin_directory_permission.sql, the dedicated administrator can select an admin in Members and grant directory viewing separately from prayer care. Existing prayer access is preserved. Refresh Admin after changes.
+
+### Native password recovery
+
+In the production Supabase project's Authentication URL Configuration, verify Redirect URLs includes wordalive-ministries://auth/callback and the Reset Password email template links to {{ .ConfirmationURL }}. Request a fresh email from the installed app. Open it on the same phone and verify that Reset Password opens, that the new password works, and that an expired link gives feedback. A blank browser before the app opens requires checking the redirect destination and installed app on the device. Never share the token-bearing URL.

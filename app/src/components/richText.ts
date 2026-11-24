@@ -72,11 +72,19 @@ export function markdownToEditorHtml(value: string) {
   return output.join('');
 }
 
+// Keep inline markers on the same line as their text. The editor may wrap
+// several paragraphs in a single bold element or leave an empty bold element.
+function markInlineText(content: string, marker: string) {
+  return content.split(/(<[^>]+>|\r?\n)/g).map(part =>
+    part.startsWith('<') || !decodeHtml(part).trim() ? part : marker + part + marker
+  ).join('');
+}
+
 function richHtmlToMarkdown(value: string) {
   const body = value
     .replace(/<a\s+[^>]*href=(['"])(https:\/\/[^'"\s]+)\1[^>]*>([\s\S]*?)<\/a>/gi, '[$3]($2)')
-    .replace(/<(strong|b)[^>]*>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
-    .replace(/<(em|i)[^>]*>([\s\S]*?)<\/(em|i)>/gi, '_$2_')
+    .replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _tag, content) => markInlineText(content, '**'))
+    .replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _tag, content) => markInlineText(content, '_'))
     .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '## $1\n')
     .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '> $1\n')
     .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, items) => String(items).replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n'))

@@ -454,3 +454,15 @@ Editor and reported `Success. No rows returned`.
 2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production verification returned 365 draft readings dated 1 January through 31 December 2027. Pastoral review is pending.
 
 Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.
+
+Private prayer care is implemented on feature/private-prayer-care. On 24 November 2026 the owner confirmed the migration succeeded in word-alive-prod and the dedicated administrator returned may_delegate=true and may_read=false. In-app verification with separate member and staff accounts remains pending. See OPERATIONS.md and TEST_PLAN.md.
+
+Member-access management is implemented on feature/member-access-management, based on the private prayer-care branch. The follow-up database migration and device verification are pending. The new rollout supersedes PR #63's pastor delegation control and preserves selected admins' existing prayer access.
+
+The owner confirmed the member-access migration succeeded in production and reported Prayer requests and Find a Member working on 24 November 2026. Compact search controls and member-detail header navigation are pending device verification.
+
+The owner confirmed production migrations 003 and 004 succeeded. The owner also confirmed migration 005 succeeded in word-alive-prod on 24 November 2026. Local permission tests passed. On Android, the owner confirmed that the dedicated administrator saw separate member-directory and private-prayer switches on an admin detail screen. Saving and verifying the resulting access from a test admin account remains pending on device.
+
+Admin Readings now uses the selected plan year for the form and all month queries. The year-plan control is inside the daily reading form. Local database verification with the repository imports found all 365 drafts through 31 December for admin and pastor, and none for an ordinary member. Confirmation on the pastor's installed version remains pending. No production readings were changed.
+
+On 24 November 2026 the project owner accepted the Sign In cleanup (PR #70) and Admin Readings changes (PR #71). The pastor's device check for the reported August cutoff remains pending.

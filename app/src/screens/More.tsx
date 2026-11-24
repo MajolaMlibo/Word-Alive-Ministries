@@ -71,6 +71,8 @@ export default function MoreScreen() {
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [page, setPage] = useState<MorePage>('menu');
+  const [memberBack, setMemberBack] = useState<(() => void) | null>(null);
+  const registerMemberBack = useCallback((action: (() => void) | null) => setMemberBack(() => action), []);
   const [isAdmin, setIsAdmin] = useState(false);
   const [links, setLinks] = useState<MinistryLink[]>([]);
   const [linksError, setLinksError] = useState(false);
@@ -172,8 +174,8 @@ export default function MoreScreen() {
           ? undefined
           : () => (
               <TouchableOpacity
-                accessibilityLabel="Back to More"
-                onPress={() => setPage('menu')}
+                accessibilityLabel={memberBack ? "Back to members" : "Back to More"}
+                onPress={memberBack ?? (() => setPage('menu'))}
                 style={styles.headerBackButton}
               >
                 <Ionicons color="#FDFCF0" name="chevron-back" size={28} />
@@ -188,7 +190,7 @@ export default function MoreScreen() {
               ? 'Admin'
             : 'More',
     });
-  }, [navigation, page, styles.headerBackButton]);
+  }, [navigation, page, memberBack, styles.headerBackButton]);
 
   if (page === 'Profile') {
     return <ProfileScreen />;
@@ -199,7 +201,7 @@ export default function MoreScreen() {
   }
 
   if (page === 'Admin') {
-    return <AdminScreen />;
+    return <AdminScreen registerMemberBack={registerMemberBack} />;
   }
 
   const menuItems = isAdmin ? [...MORE_ITEMS, ADMIN_ITEM] : MORE_ITEMS;

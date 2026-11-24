@@ -127,4 +127,41 @@ On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corru
 
 ### Grouped admin readings
 
+Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Simulated queries cover November and December 2026, every month of 2027, and an empty month. Checks also cover all 365 day numbers, a leap year and out-of-plan dates. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
+
+### Private prayer care
+
+The disposable PostgreSQL test in app/scripts/test-private-prayer-care.cjs uses the actual baseline prayer tables, the migration, simulated Supabase identities and the authenticated database role. Supply @electric-sql/pglite on NODE_PATH and run node app/scripts/test-private-prayer-care.cjs. It checks legacy conversion, owner-only pending edits, private submission, delegation separate from reading, revocation, reply retry, closure, history, name search and pagination across 107 requests.
+
+Android acceptance pending: submit a fictional prayer as a member, reply as pastor, reopen My requests as the submitting member, and confirm the reply text, responder and date. Confirm ordinary admins have no Prayer section, selected admins can search, and the dedicated admin without prayer-care access sees Members and has no Prayer inbox. Test a failed send and retry with the keyboard visible. Use fictional text only.
+
+Prayer card check: expand and collapse a long staff request. Its text appears once in both states. In My requests, pending shows two grey ticks, replied shows two blue ticks, and closed shows one grey tick. Tap the ticks or use the screen reader to hear the status. Staff filters retain text labels.
+
+### Member management
+
+The disposable database test applies the Members migration after the prayer-care scenarios. It covers the owner, pastor, ordinary admin and member, the old grant endpoint, direct profile list visibility, search by email, role filtering, two directory pages across 35 accounts, self-demotion, conflicting edits, grants and revocations, audit rows and continued pastoral prayer access.
+
+Device check pending: verify Members appears after Links only for the dedicated account, inspect a test member, cancel a proposed change, then save a test change. Refresh the target account to verify the effect. Restore the test member's original access afterwards.
+
+Admin search: in Prayer and Members, search with the magnifier or keyboard, select a filter, and clear each control independently. Clearing text keeps the filter; clearing filters restores Needs reply or All and keeps the applied search. From member details the header arrow returns to the filtered list; tapping it again opens More.
+
+Prayer opens on Needs reply. All includes every status, preserves per-request reply and close controls, and is the target of Clear filters. Confirm both the magnifier and keyboard Search dismiss the keyboard and run the query.
+
+Remembered sign-in: sign in, sign out, then reopen. Confirm only the last successful email is prefilled. Change account, try a failed sign-in, verify the prefilled email remains editable, and check Create Account opens with a blank email. Test password-manager suggestions on an enrolled phone; saving and unlocking credentials are controlled by the phone.
+
+Member directory: compare the total across search, role filters and Load more. As pastor, check names and roles are visible with no email or editing controls. As an ordinary admin or member, verify the directory and count are unavailable.
+
+Verify the directory-only admin sees names, roles and count without access to private prayers. Local database tests passed for all four permission combinations, revocation, older clients, role changes and audit records.
+
+Admin Readings device check: at the top of New daily reading, tap the year-plan control and select the 2027 Align and Prosper plan. Open December and check 31 December, Day 365, MALACHI 1-4. Compare with the pastor on the same app revision. Check the gap below an expanded month for both populated and empty months. In a test plan verify selecting a date calculates the day and that a date outside the plan year cannot be saved.
 Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
+
+### Bible verse selection controls
+
+On Android, scroll to the last verse of a long chapter and select it. Verify Verse actions (1) appears above the app tabs, select another verse to check the count, open and dismiss the actions, then clear the selection. Check the final verse is reachable and the chapter stays at the same reading position. TypeScript and simulated control checks passed. On 24 November 2026 the owner also reported that selecting two verses at chapter end showed the correct count, opening and closing the tools preserved the reading position, and clearing the selection hid the toolbar.
+
+Android keyboard checks, 24 November 2026: the owner confirmed the Confirm password field stayed visible while typing and the Create account button could be scrolled into view with the keyboard open. This check covered layout only. On Sign In, the owner confirmed that one tap on the on-screen Sign In button with the keyboard open took an existing account to Home. Check 4 (large system text) remains pending. Checks 5 and 6 (email link opens Reset Password, password fields and save remain reachable, and sign-in succeeds with the changed password) await a physical Android test on a version containing PR #61. The private Bible note result is recorded below.
+
+On 24 November 2026 the owner reported that the open reader followed both Android theme changes without reopening. Gold, Green, Blue and Pink labels, highlighted words and verse numbers passed the readability check in both themes.
+
+Owner confirmed the verse tools stay at the bottom on the selection branch. On 24 November 2026, while testing the combined Bible changes, the owner confirmed that the private note text stayed visible with the keyboard open and that highlights were easier to see in dark mode. The owner also tapped Save private note with the keyboard open, reopened the same verse, and confirmed both lines matched the text entered.

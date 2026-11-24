@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   AppState,
   StyleSheet,
   View,
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 
+import { rememberSignInEmail } from './src/services/rememberedAccount';
 import { supabase } from './src/services/supabase';
 import {
   AccessibilityProvider,
@@ -79,40 +81,28 @@ function MainTabs() {
   );
 }
 
-function valueFromFragment(url: string, key: string) {
-  const fragment = url.split('#')[1];
-  if (!fragment) {
-    return null;
-  }
+async function establishSessionFromAuthUrl(raw: string) {
+  const url = new URL(raw);
+  if (url.protocol !== 'wordalive-ministries:' || url.host !== 'auth' || url.pathname !== '/callback') return false;
 
-  return new URLSearchParams(fragment).get(key);
-}
+  const fragment = new URLSearchParams(url.hash.slice(1));
+  const param = (key: string) => fragment.get(key) ?? url.searchParams.get(key);
+  if (param('error') || param('error_code')) throw new Error('Invalid email link');
 
-async function establishSessionFromAuthUrl(url: string) {
-  const { queryParams } = Linking.parse(url);
-  const code = queryParams?.code;
-
-  if (typeof code === 'string') {
+  const code = param('code');
+  if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
-      console.warn('Unable to complete the email confirmation.', error.message);
-    }
-    return;
+    if (error) throw error;
+    return param('type') === 'recovery';
   }
 
-  const accessToken = valueFromFragment(url, 'access_token');
-  const refreshToken = valueFromFragment(url, 'refresh_token');
+  const accessToken = param('access_token');
+  const refreshToken = param('refresh_token');
+  if (!accessToken || !refreshToken) throw new Error('Incomplete email link');
 
-  if (accessToken && refreshToken) {
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-
-    if (error) {
-      console.warn('Unable to restore the email-confirmed session.', error.message);
-    }
-  }
+  const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  if (error) throw error;
+  return param('type') === 'recovery';
 }
 
 export default function App() {
@@ -146,6 +136,10 @@ export default function App() {
         return;
       }
 
+      if (nextSession?.user.email && ['INITIAL_SESSION', 'SIGNED_IN', 'USER_UPDATED'].includes(event)) {
+        void rememberSignInEmail(nextSession.user.email);
+      }
+
       if (event === 'PASSWORD_RECOVERY') {
         setSession(nextSession);
         setIsPasswordRecovery(Boolean(nextSession));
@@ -167,18 +161,17 @@ export default function App() {
       setLoading(false);
     });
 
-    async function completeInitialAuthRedirect() {
-      const initialUrl = await Linking.getInitialURL();
-      if (initialUrl) {
-        await establishSessionFromAuthUrl(initialUrl);
+    async function handleAuthUrl(url: string) {
+      try {
+        const recovery = await establishSessionFromAuthUrl(url);
+        if (isMounted && recovery) setIsPasswordRecovery(true);
+      } catch {
+        if (isMounted) Alert.alert('Unable to open email link', 'Request a fresh email and open the newest link on the phone with Word Alive Ministries installed.');
       }
     }
 
-    void completeInitialAuthRedirect();
-
-    const linkSubscription = Linking.addEventListener('url', ({ url }) => {
-      void establishSessionFromAuthUrl(url);
-    });
+    void Linking.getInitialURL().then(url => { if (isMounted && url) void handleAuthUrl(url); });
+    const linkSubscription = Linking.addEventListener('url', ({ url }) => { void handleAuthUrl(url); });
 
     return () => {
       isMounted = false;

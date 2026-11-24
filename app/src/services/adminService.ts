@@ -5,8 +5,6 @@ import {
   DailyReading,
   LiveStream,
   MinistryLink,
-  PrayerRequest,
-  PrayerRequestStatus,
   ReadingPlan,
 } from './database';
 import { supabase } from './supabase';
@@ -66,41 +64,6 @@ export type MinistryLinkInput = {
 function publishedAtForStatus(status: ContentStatus, publishedAt: string | null) {
   if (status !== 'published') return null;
   return publishedAt || new Date().toISOString();
-}
-
-export async function getAdminPrayerRequests() {
-  const { data, error } = await supabase
-    .from('prayer_requests')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100);
-
-  return { requests: (data as PrayerRequest[]) || [], error };
-}
-
-export async function moderatePrayerRequest(
-  requestId: string,
-  administratorId: string,
-  status: PrayerRequestStatus,
-  isPublic: boolean
-) {
-  const { data, error } = await supabase
-    .from('prayer_requests')
-    .update({
-      status,
-      is_public: isPublic,
-      moderated_at: new Date().toISOString(),
-      moderated_by: administratorId,
-    })
-    .eq('id', requestId)
-    .select('*')
-    .single();
-
-  return { request: (data as PrayerRequest | null) || null, error };
-}
-
-export async function deletePrayerRequest(requestId: string) {
-  return supabase.from('prayer_requests').delete().eq('id', requestId);
 }
 
 export async function getAdminAnnouncements() {
@@ -229,6 +192,14 @@ export async function saveReadingPlan(
         .single();
 
   return { plan: (result.data as ReadingPlan | null) || null, error: result.error };
+}
+
+// Calculate from the calendar so backfilled days and concurrent entries keep their correct number.
+export function readingDayNumber(date: string, year: number | undefined): number | null {
+  if (!year || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number(date.slice(0, 4)) !== year) return null;
+  const timestamp = Date.parse(date + 'T00:00:00Z');
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== date) return null;
+  return 1 + (timestamp - Date.UTC(year, 0, 1)) / 86400000;
 }
 
 // month is zero-based. UTC also handles December rolling into the next year.

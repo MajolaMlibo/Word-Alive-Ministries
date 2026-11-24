@@ -4,8 +4,9 @@ import { supabase } from './supabase';
 export async function getMyPrayerRequests(userId: string) {
   const { data, error } = await supabase
     .from('prayer_requests')
-    .select('*')
+    .select('*, prayer_replies(id,author_name,body,created_at)')
     .eq('user_id', userId)
+    .order('created_at', { referencedTable: 'prayer_replies', ascending: true })
     .order('created_at', { ascending: false });
 
   return {
@@ -16,12 +17,11 @@ export async function getMyPrayerRequests(userId: string) {
 
 export async function createPrayerRequest(
   userId: string,
-  description: string,
-  isPublic: boolean
+  description: string
 ) {
   const { data, error } = await supabase
     .from('prayer_requests')
-    .insert({ user_id: userId, description, is_public: isPublic })
+    .insert({ user_id: userId, description })
     .select('*')
     .single();
 
@@ -33,12 +33,11 @@ export async function createPrayerRequest(
 
 export async function updateMyPrayerRequest(
   requestId: string,
-  description: string,
-  isPublic: boolean
+  description: string
 ) {
   const { data, error } = await supabase
     .from('prayer_requests')
-    .update({ description, is_public: isPublic })
+    .update({ description })
     .eq('id', requestId)
     .select('*')
     .single();
@@ -50,5 +49,5 @@ export async function updateMyPrayerRequest(
 }
 
 export async function deleteMyPrayerRequest(requestId: string) {
-  return supabase.from('prayer_requests').delete().eq('id', requestId);
+  return supabase.from('prayer_requests').delete().eq('id', requestId).select('id').single();
 }

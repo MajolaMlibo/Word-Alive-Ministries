@@ -8,7 +8,7 @@
 
 export type AppRole = 'pastor' | 'admin' | 'editor' | 'member';
 export type ContentStatus = 'draft' | 'published' | 'archived';
-export type PrayerRequestStatus = 'pending' | 'reviewed' | 'approved' | 'closed';
+export type PrayerRequestStatus = 'pending' | 'reviewed' | 'closed';
 
 export interface Profile {
   id: string;
@@ -107,7 +107,19 @@ export interface ReadingCompletion {
   created_at: string;
 }
 
+export interface PrayerReply {
+  id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
+export const prayerStatusLabel: Record<PrayerRequestStatus, string> = {
+  pending: 'Needs reply', reviewed: 'Replied', closed: 'Closed',
+};
+
 export interface PrayerRequest {
+  prayer_replies?: PrayerReply[];
   id: string;
   user_id: string;
   description: string;

@@ -5,14 +5,13 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PrayerRequest } from '../services/database';
+import { PrayerRequest, prayerStatusLabel } from '../services/database';
 import {
   createPrayerRequest,
   deleteMyPrayerRequest,
@@ -33,16 +32,11 @@ function formatRequestedAt(value: string) {
   });
 }
 
-function formatStatus(status: PrayerRequest['status']) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
 export default function PrayerScreen() {
-  const { colors, fonts } = useAccessibility();
+  const { colors, fonts, colorScheme } = useAccessibility();
   const styles = makeStyles(colors, fonts);
   const [requests, setRequests] = useState<PrayerRequest[]>([]);
   const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,7 +77,6 @@ export default function PrayerScreen() {
 
   const resetForm = () => {
     setDescription('');
-    setIsPublic(false);
     setEditingRequestId(null);
   };
 
@@ -115,8 +108,8 @@ export default function PrayerScreen() {
     setSaving(true);
 
     const result = editingRequestId
-      ? await updateMyPrayerRequest(editingRequestId, trimmedDescription, isPublic)
-      : await createPrayerRequest(user.id, trimmedDescription, isPublic);
+      ? await updateMyPrayerRequest(editingRequestId, trimmedDescription)
+      : await createPrayerRequest(user.id, trimmedDescription);
 
     setSaving(false);
 
@@ -147,7 +140,6 @@ export default function PrayerScreen() {
   const beginEdit = (request: PrayerRequest) => {
     setEditingRequestId(request.id);
     setDescription(request.description);
-    setIsPublic(request.is_public);
   };
 
   const removeRequest = (request: PrayerRequest) => {
@@ -208,7 +200,7 @@ export default function PrayerScreen() {
           {editingRequestId ? 'Edit prayer request' : 'Share a prayer request'}
         </Text>
         <Text style={styles.helperText}>
-          Requests are private unless pastoral staff approve a public request.
+          Only you, the pastor and selected prayer-care administrators can read this request and its replies.
         </Text>
         <TextInput
           accessibilityLabel="Prayer request"
@@ -224,15 +216,6 @@ export default function PrayerScreen() {
         <Text style={styles.characterCount}>
           {description.length}/{MAX_PRAYER_REQUEST_LENGTH}
         </Text>
-        <View style={styles.publicRow}>
-          <View style={styles.publicTextWrap}>
-            <Text style={styles.publicLabel}>May this be shared publicly?</Text>
-            <Text style={styles.helperText}>
-              Staff must still approve it before other members can see it.
-            </Text>
-          </View>
-          <Switch value={isPublic} onValueChange={setIsPublic} />
-        </View>
         <TouchableOpacity
           accessibilityRole="button"
           disabled={saving}
@@ -272,15 +255,29 @@ export default function PrayerScreen() {
         requests.map((request) => (
           <View key={request.id} style={styles.requestCard}>
             <View style={styles.requestHeader}>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{formatStatus(request.status)}</Text>
-              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={'Prayer status: ' + prayerStatusLabel[request.status]}
+                onPress={() => Alert.alert('Prayer status', prayerStatusLabel[request.status])}
+                hitSlop={8}
+                style={styles.statusBadge}
+              >
+                <Ionicons
+                  name={request.status === 'closed' ? 'checkmark' : 'checkmark-done'}
+                  color={request.status === 'reviewed' ? (colorScheme === 'dark' ? '#89C6FF' : '#155EA5') : colors.textMuted}
+                  size={24}
+                />
+              </TouchableOpacity>
               <Text style={styles.requestDate}>{formatRequestedAt(request.created_at)}</Text>
             </View>
             <Text style={styles.requestDescription}>{request.description}</Text>
-            <Text style={styles.visibilityText}>
-              {request.is_public ? 'Public sharing requested' : 'Private request'}
-            </Text>
+            {request.prayer_replies?.map(reply => (
+              <View key={reply.id} style={styles.reply}>
+                <Text style={styles.statusText}>Private reply from {reply.author_name}</Text>
+                <Text style={styles.requestDate}>{formatRequestedAt(reply.created_at)}</Text>
+                <Text style={styles.requestDescription}>{reply.body}</Text>
+              </View>
+            ))}
             {request.status === 'pending' ? (
               <View style={styles.requestActions}>
                 <TouchableOpacity onPress={() => beginEdit(request)}>
@@ -333,9 +330,6 @@ function makeStyles(colors: any, fonts: any) {
       padding: spacing.sm,
     },
     characterCount: { color: colors.textMuted, fontSize: fonts.caption, marginTop: 4, textAlign: 'right' },
-    publicRow: { alignItems: 'center', flexDirection: 'row', marginTop: spacing.sm },
-    publicTextWrap: { flex: 1, paddingRight: spacing.sm },
-    publicLabel: { color: colors.text, fontSize: fonts.body, fontWeight: '600' },
     primaryButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', marginTop: spacing.md, paddingVertical: 14 },
     disabledButton: { opacity: 0.65 },
     primaryButtonText: { color: '#FFF', fontSize: fonts.body, fontWeight: '700', marginLeft: spacing.xs },
@@ -354,7 +348,7 @@ function makeStyles(colors: any, fonts: any) {
     statusText: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700' },
     requestDate: { color: colors.textMuted, fontSize: fonts.caption },
     requestDescription: { color: colors.text, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.sm },
-    visibilityText: { color: colors.textMuted, fontSize: fonts.caption, marginTop: spacing.sm },
+    reply: { marginTop: spacing.md, borderLeftWidth: 2, borderLeftColor: colors.primary, paddingLeft: spacing.md },
     requestActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.sm },
     editText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700', marginRight: spacing.md },
     deleteText: { color: colors.danger, fontSize: fonts.body, fontWeight: '700' },
