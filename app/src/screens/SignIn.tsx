@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { getRememberedEmail, forgetRememberedEmail } from '../services/rememberedAccount';
+import { getRememberedEmail } from '../services/rememberedAccount';
 import { supabase } from '../services/supabase';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { AppColors } from '../theme/theme';
@@ -51,17 +51,6 @@ export default function SignIn() {
     });
     return () => { active = false; };
   }, []);
-
-  async function forgetAccount() {
-    if (!(await forgetRememberedEmail())) {
-      Alert.alert('Unable to forget this account', 'Please try again.');
-      return;
-    }
-    emailTouched.current = true;
-    setRememberedEmail('');
-    setEmail('');
-    setPassword('');
-  }
 
   function switchMode() {
     emailTouched.current = true;
@@ -275,12 +264,6 @@ export default function SignIn() {
             textContentType={isCreatingAccount ? 'emailAddress' : 'username'}
             value={email}
           />
-
-          {!isCreatingAccount && rememberedEmail !== '' && rememberedEmail === email && (
-            <TouchableOpacity accessibilityRole="button" onPress={forgetAccount} disabled={isSubmitting}>
-              <Text style={styles.passwordResetText}>Forget this account on this device</Text>
-            </TouchableOpacity>
-          )}
 
           <TextInput
             accessibilityLabel="Password"

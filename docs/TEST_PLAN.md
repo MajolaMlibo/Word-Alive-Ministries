@@ -147,7 +147,7 @@ Admin search: in Prayer and Members, search with the magnifier or keyboard, sele
 
 Prayer opens on Needs reply. All includes every status, preserves per-request reply and close controls, and is the target of Clear filters. Confirm both the magnifier and keyboard Search dismiss the keyboard and run the query.
 
-Remembered sign-in: sign in, sign out, then reopen. Confirm only the last successful email is prefilled. Change account, try a failed sign-in, use Forget this account, and check Create Account opens with a blank email. Test password-manager suggestions on an enrolled phone; saving and unlocking credentials are controlled by the phone.
+Remembered sign-in: sign in, sign out, then reopen. Confirm only the last successful email is prefilled. Change account, try a failed sign-in, verify the prefilled email remains editable, and check Create Account opens with a blank email. Test password-manager suggestions on an enrolled phone; saving and unlocking credentials are controlled by the phone.
 
 Member directory: compare the total across search, role filters and Load more. As pastor, check names and roles are visible with no email or editing controls. As an ordinary admin or member, verify the directory and count are unavailable.
 
