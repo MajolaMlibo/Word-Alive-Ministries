@@ -72,6 +72,8 @@ const BIBLE_HIGHLIGHT_OPTIONS: {
   { key: 'pink', label: 'Pink', color: '#F8D2DE' },
 ];
 
+const HIGHLIGHT_INK = '#17241B';
+
 const HIGHLIGHT_COLOR_BY_KEY = Object.fromEntries(
   BIBLE_HIGHLIGHT_OPTIONS.map((option) => [option.key, option.color])
 ) as Record<BibleHighlightColor, string>;
@@ -363,7 +365,7 @@ function BibleReader({
 }: {
   dailyReadingReference?: string;
 }) {
-  const { colors, fonts } = useAccessibility();
+  const { colors, fonts, colorScheme } = useAccessibility();
   const dailyReadingStart = getFirstChapterFromReference(dailyReadingReference);
   const isGuidedDailyReading = Boolean(dailyReadingStart);
 
@@ -862,6 +864,7 @@ function BibleReader({
 
           {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => {
             const verseSave = verseSaveByNumber.get(v.verse);
+            const useHighlightInk = colorScheme === 'dark' && verseSave?.highlight_color && !selectedVerses.includes(v.verse);
             return (
               <TouchableOpacity
                 accessibilityLabel={`Verse ${v.verse}${verseSave?.is_bookmarked ? ', bookmarked' : ''}${verseSave?.note ? ', has a note' : ''}`}
@@ -878,8 +881,8 @@ function BibleReader({
                   selectedVerses.includes(v.verse) && styles.selectedVerse,
                 ]}
               >
-                <Text style={styles.verseText}>
-                  <Text style={styles.verseNum}>{v.verse} </Text>
+                <Text style={[styles.verseText, useHighlightInk ? styles.highlightInk : null]}>
+                  <Text style={[styles.verseNum, useHighlightInk ? styles.highlightInk : null]}>{v.verse} </Text>
                   {v.text}
                 </Text>
                 {verseSave?.is_bookmarked || verseSave?.note ? (
@@ -966,7 +969,7 @@ function BibleReader({
                   onPress={() => void saveHighlights(option.key)}
                   style={[styles.highlightOption, { backgroundColor: option.color }]}
                 >
-                  <Text style={styles.highlightOptionText}>{option.label}</Text>
+                  <Text style={[styles.highlightOptionText, colorScheme === 'dark' && styles.highlightInk]}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1610,6 +1613,8 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
       paddingHorizontal: spacing.sm,
       justifyContent: 'center',
     },
+
+    highlightInk: { color: HIGHLIGHT_INK },
 
     highlightOptionText: {
       color: colors.text,
