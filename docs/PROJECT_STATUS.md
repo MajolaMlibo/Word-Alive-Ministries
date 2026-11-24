@@ -460,3 +460,5 @@ Private prayer care is implemented on feature/private-prayer-care. On 24 Novembe
 Member-access management is implemented on feature/member-access-management, based on the private prayer-care branch. The follow-up database migration and device verification are pending. The new rollout supersedes PR #63's pastor delegation control and preserves selected admins' existing prayer access.
 
 The owner confirmed the member-access migration succeeded in production and reported Prayer requests and Find a Member working on 24 November 2026. Compact search controls and member-detail header navigation are pending device verification.
+
+The owner confirmed production migrations 003 and 004 succeeded. The independent admin directory permission migration 005 passed local tests and awaits production rollout and Android verification.

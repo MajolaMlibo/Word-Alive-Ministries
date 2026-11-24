@@ -150,3 +150,5 @@ Prayer opens on Needs reply. All includes every status, preserves per-request re
 Remembered sign-in: sign in, sign out, then reopen. Confirm only the last successful email is prefilled. Change account, try a failed sign-in, use Forget this account, and check Create Account opens with a blank email. Test password-manager suggestions on an enrolled phone; saving and unlocking credentials are controlled by the phone.
 
 Member directory: compare the total across search, role filters and Load more. As pastor, check names and roles are visible with no email or editing controls. As an ordinary admin or member, verify the directory and count are unavailable.
+
+Verify the directory-only admin sees names, roles and count without access to private prayers. Local database tests passed for all four permission combinations, revocation, older clients, role changes and audit records.

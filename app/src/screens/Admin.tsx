@@ -903,16 +903,17 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
 
   const checkAccess = useCallback(async () => {
     setCheckingAccess(true);
-    const [roleResult, userResult, accessResult, membersResult] = await Promise.all([
+    const [roleResult, userResult, accessResult, membersResult, directoryResult] = await Promise.all([
       getCurrentUserRole(),
       supabase.auth.getUser(),
       supabase.rpc('prayer_care_capabilities').single(),
       supabase.rpc('can_manage_members'),
+      supabase.rpc('can_view_member_directory'),
     ]);
     const permissions = accessResult.data as typeof prayerAccess | null;
     const access = permissions ?? { may_read: false, may_delegate: false };
     setPrayerAccess(access);
-    const mayView = membersResult.data === true || roleResult.role === 'pastor';
+    const mayView = directoryResult.data === true;
     setViewMembers(mayView);
     setManageMembers(membersResult.data === true);
     setSection(current => (current === 'prayer' && !access.may_read) || (current === 'members' && !mayView) ? 'announcements' : current);
