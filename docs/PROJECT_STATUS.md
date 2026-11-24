@@ -455,4 +455,4 @@ Editor and reported `Success. No rows returned`.
 
 Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.
 
-Private prayer care is implemented on feature/private-prayer-care. The database migration, designated-manager provisioning, and testing with separate member and staff accounts in the updated app remain pending. See OPERATIONS.md and TEST_PLAN.md.
+Private prayer care is implemented on feature/private-prayer-care. On 24 November 2026 the owner confirmed the migration succeeded in word-alive-prod and the dedicated administrator returned may_delegate=true and may_read=false. In-app verification with separate member and staff accounts remains pending. See OPERATIONS.md and TEST_PLAN.md.
