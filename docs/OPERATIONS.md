@@ -55,3 +55,7 @@ Member replies appear inside My requests when the member opens or refreshes the 
 Apply 202611240003_prayer_inbox_all.sql and 202611240004_pastor_member_directory.sql after the Members migration. Pastors now have a separate read-only Members view with name, role and total registered accounts. Email lookup, permission changes and the full management directory remain restricted to the designated account.
 
 After migration 202611240005_admin_directory_permission.sql, the dedicated administrator can select an admin in Members and grant directory viewing separately from prayer care. Existing prayer access is preserved. Refresh Admin after changes.
+
+### Native password recovery
+
+In the production Supabase project's Authentication URL Configuration, verify Redirect URLs includes wordalive-ministries://auth/callback and the Reset Password email template links to {{ .ConfirmationURL }}. Request a fresh email from the installed app. Open it on the same phone and verify that Reset Password opens, that the new password works, and that an expired link gives feedback. A blank browser before the app opens requires checking the redirect destination and installed app on the device. Never share the token-bearing URL.
