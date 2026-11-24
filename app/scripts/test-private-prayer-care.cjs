@@ -1,0 +1,90 @@
+// Run against a disposable in-memory database with PGlite on NODE_PATH.
+const { PGlite } = require('@electric-sql/pglite');
+const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
+const { resolve } = require('node:path');
+const { randomUUID } = require('node:crypto');
+const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrations', file), 'utf8');
+
+(async () => {
+  const db = new PGlite();
+  const [member, other, pastor, admin, manager] = Array.from({ length: 5 }, randomUUID);
+  const target = randomUUID();
+  const rows = async (sql, args = []) => (await db.query(sql, args)).rows;
+  const signIn = async id => {
+    await db.exec('reset role');
+    await rows("select set_config('test.uid',$1,false)", [id]);
+    await db.exec('set role authenticated');
+  };
+  try {
+    await db.exec(`create role anon; create role authenticated;
+      create schema auth; grant usage on schema auth to authenticated;
+      create function auth.uid() returns uuid language sql stable as
+      $$ select nullif(current_setting('test.uid',true),'')::uuid $$;
+      create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);`);
+    const baseline = migration('202611070001_initial_schema.sql');
+    await db.exec(baseline.split('insert into storage.buckets')[0]
+      .replace('create extension if not exists pgcrypto;', '') + 'commit;');
+    for (const [id,name,role] of [[member,'Older Member','member'],[other,'Other Member','member'],
+      [pastor,'Test Pastor','pastor'],[admin,'Care Admin','admin'],[manager,'Access Manager','admin']]) {
+      await rows('insert into auth.users values($1,$2,null)', [id, name+'@example.invalid']);
+      await rows('update public.user_roles set role=$2 where user_id=$1',[id,role]);
+    }
+    await rows("insert into prayer_requests(id,user_id,description,status,is_public) values($1,$2,'legacy','approved',true)",[target,member]);
+    await rows("insert into prayer_requests(user_id,description) select $1,'Example '||n from generate_series(1,105) n",[other]);
+    await db.exec(migration('202611240001_private_prayer_care.sql'));
+    await rows('insert into prayer_care_access(user_id,may_delegate) values($1,true)',[manager]);
+    const thread = () => rows('select * from prayer_replies where request_id=$1 order by created_at,id',[target]);
+    const read = () => rows('select * from prayer_requests where id=$1',[target]);
+    const send = (message, previous=null) => rows('select send_prayer_reply($1,$2,$3)',[target,message,previous]);
+    const grant = enabled => rows('select set_prayer_care_access($1,$2)',[admin,enabled]);
+    await signIn(other);
+    assert.equal((await read()).length,0);
+    await signIn(member);
+    assert.equal((await read())[0].status,'pending');
+    assert.equal((await read())[0].is_public,false);
+    await assert.rejects(rows('update prayer_requests set is_public=true where id=$1',[target]), /check constraint/);
+    await rows("insert into prayer_requests(user_id,description) values($1,'Private test')",[member]);
+    await rows("update prayer_requests set description='Edited privately' where id=$1",[target]);
+    assert.equal((await read())[0].description,'Edited privately');
+    await signIn(other);
+    assert.equal((await rows("update prayer_requests set description='Other' where id=$1 returning id",[target])).length,0);
+    await signIn(admin);
+    assert.equal((await read()).length,0);
+    await assert.rejects(grant(true), /Access denied/);
+    await signIn(manager);
+    assert.equal((await read()).length,0);
+    await grant(true);
+    await signIn(admin);
+    assert.equal((await read()).length,1);
+    const found=await rows("select * from prayer_inbox('pending','older')");
+    assert(found.some(r=>r.id===target));
+    let batch=await rows("select * from prayer_inbox('pending','')");
+    const ids=[];
+    while(batch.length) {
+      const page=batch.slice(0,25); ids.push(...page.map(r=>r.id));
+      const last=page.at(-1);
+      batch=await rows("select * from prayer_inbox('pending','',$1,$2)",[last.created_at,last.id]);
+    }
+    assert.equal(new Set(ids).size,107); assert.equal(ids.length,107);
+    await assert.rejects(send('   '), /check constraint/);
+    assert.equal((await read())[0].status,'pending');
+    await send('First reply'); await send('First reply');
+    const first=(await thread())[0];
+    assert.equal((await thread()).length,1);
+    assert.equal(first.author_name,'Care Admin');
+    await signIn(pastor);
+    await assert.rejects(send('Follow-up'), /conversation changed/);
+    await send('Follow-up',first.id);
+    await rows('select close_prayer_request($1)',[target]);
+    await assert.rejects(send('Late reply'), /closed/);
+    await signIn(member);
+    assert.equal((await read())[0].status,'closed');
+    assert.equal((await rows("update prayer_requests set description='Closed edit' where id=$1 returning id",[target])).length,0);
+    assert.deepEqual((await thread()).map(r=>r.body),['First reply','Follow-up']);
+    await signIn(other); assert.equal((await thread()).length,0);
+    await signIn(manager); await grant(false);
+    await signIn(admin); assert.equal((await thread()).length,0); assert.equal((await read()).length,0);
+    console.log('PASS: legacy privacy, roles, access delegation/revocation, replies and retry, closure, search and pagination across 107 requests.');
+  } finally { await db.close(); }
+})().catch(error=>{ console.error(error.message); process.exitCode=1; });

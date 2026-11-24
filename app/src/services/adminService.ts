@@ -5,8 +5,6 @@ import {
   DailyReading,
   LiveStream,
   MinistryLink,
-  PrayerRequest,
-  PrayerRequestStatus,
   ReadingPlan,
 } from './database';
 import { supabase } from './supabase';
@@ -66,41 +64,6 @@ export type MinistryLinkInput = {
 function publishedAtForStatus(status: ContentStatus, publishedAt: string | null) {
   if (status !== 'published') return null;
   return publishedAt || new Date().toISOString();
-}
-
-export async function getAdminPrayerRequests() {
-  const { data, error } = await supabase
-    .from('prayer_requests')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100);
-
-  return { requests: (data as PrayerRequest[]) || [], error };
-}
-
-export async function moderatePrayerRequest(
-  requestId: string,
-  administratorId: string,
-  status: PrayerRequestStatus,
-  isPublic: boolean
-) {
-  const { data, error } = await supabase
-    .from('prayer_requests')
-    .update({
-      status,
-      is_public: isPublic,
-      moderated_at: new Date().toISOString(),
-      moderated_by: administratorId,
-    })
-    .eq('id', requestId)
-    .select('*')
-    .single();
-
-  return { request: (data as PrayerRequest | null) || null, error };
-}
-
-export async function deletePrayerRequest(requestId: string) {
-  return supabase.from('prayer_requests').delete().eq('id', requestId);
 }
 
 export async function getAdminAnnouncements() {

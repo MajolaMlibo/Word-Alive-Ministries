@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import PrayerInbox from '../components/PrayerInbox';
 import RichTextField from '../components/RichTextField';
 import {
   Announcement,
@@ -24,8 +25,6 @@ import {
   DailyReading,
   LiveStream,
   MinistryLink,
-  PrayerRequest,
-  PrayerRequestStatus,
   ReadingPlan,
   StudyMedia,
 } from '../services/database';
@@ -35,15 +34,12 @@ import {
   deleteDailyReading,
   deleteLiveStream,
   deleteMinistryLink,
-  deletePrayerRequest,
   getAdminAnnouncements,
   getAdminBibleStudies,
   getAdminDailyReadings,
   getAdminLiveStreams,
   getAdminMinistryLinks,
-  getAdminPrayerRequests,
   getAdminReadingPlans,
-  moderatePrayerRequest,
   saveAnnouncement,
   saveBibleStudy,
   saveDailyReading,
@@ -65,13 +61,6 @@ import { spacing } from '../theme/theme';
 type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
-const PRAYER_STATUSES: PrayerRequestStatus[] = [
-  'pending',
-  'reviewed',
-  'approved',
-  'closed',
-];
-
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'prayer', label: 'Prayer', icon: 'heart-outline' },
   { key: 'announcements', label: 'Notices', icon: 'megaphone-outline' },
@@ -324,128 +313,6 @@ function ContentActions({
         </TouchableOpacity>
       ) : null}
     </>
-  );
-}
-
-function PrayerManager({ administratorId, styles }: { administratorId: string; styles: any }) {
-  const [requests, setRequests] = useState<PrayerRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { requests: loadedRequests, error } = await getAdminPrayerRequests();
-    if (error) {
-      console.warn('Unable to load requests for administration.', error.message);
-      Alert.alert('Unable to load prayer requests', 'Please refresh and try again.');
-    } else {
-      setRequests(loadedRequests);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const save = async (request: PrayerRequest, status: PrayerRequestStatus, isPublic: boolean) => {
-    setSavingId(request.id);
-    const { request: savedRequest, error } = await moderatePrayerRequest(
-      request.id,
-      administratorId,
-      status,
-      isPublic
-    );
-    setSavingId(null);
-
-    if (error || !savedRequest) {
-      Alert.alert('Unable to update request', 'Please check your connection and try again.');
-      return;
-    }
-
-    setRequests((current) =>
-      current.map((item) => (item.id === savedRequest.id ? savedRequest : item))
-    );
-  };
-
-  const remove = (request: PrayerRequest) => {
-    Alert.alert('Delete prayer request?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          const { error } = await deletePrayerRequest(request.id);
-
-          if (error) {
-            Alert.alert('Unable to delete request', 'Please check your connection and try again.');
-            return;
-          }
-
-          setRequests((current) => current.filter((item) => item.id !== request.id));
-        },
-      },
-    ]);
-  };
-
-  if (loading) return <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} />;
-
-  return (
-    <View>
-      <Text style={styles.panelHint}>
-        Review private requests carefully. Public sharing requires an Approved status.
-      </Text>
-      {requests.length ? requests.map((request) => (
-        <PrayerAdminCard key={request.id} request={request} saving={savingId === request.id} onDelete={remove} onSave={save} styles={styles} />
-      )) : <EmptyState icon="heart-outline" message="No prayer requests have been submitted." styles={styles} />}
-    </View>
-  );
-}
-
-function PrayerAdminCard({
-  request,
-  saving,
-  onDelete,
-  onSave,
-  styles,
-}: {
-  request: PrayerRequest;
-  saving: boolean;
-  onDelete: (request: PrayerRequest) => void;
-  onSave: (request: PrayerRequest, status: PrayerRequestStatus, isPublic: boolean) => Promise<void>;
-  styles: any;
-}) {
-  const [status, setStatus] = useState<PrayerRequestStatus>(request.status);
-  const [isPublic, setIsPublic] = useState(request.is_public);
-
-  return (
-    <View style={styles.itemCard}>
-      <Text style={styles.itemMeta}>Submitted {formatDate(request.created_at)}</Text>
-      <Text style={styles.itemDescription}>{request.description}</Text>
-      <View style={styles.statusPicker}>
-        {PRAYER_STATUSES.map((option) => (
-          <TouchableOpacity
-            key={option}
-            onPress={() => setStatus(option)}
-            style={[styles.statusOption, status === option && styles.statusOptionActive]}
-          >
-            <Text style={[styles.statusOptionText, status === option && styles.statusOptionTextActive]}>
-              {titleCase(option)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Visible to members after approval</Text>
-        <Switch value={isPublic} onValueChange={setIsPublic} />
-      </View>
-      <TouchableOpacity disabled={saving} onPress={() => void onSave(request, status, isPublic)} style={styles.outlineButton}>
-        <Text style={styles.outlineButtonText}>{saving ? 'Saving...' : 'Save handling'}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity disabled={saving} onPress={() => onDelete(request)} style={styles.adminDeleteButton}>
-        <Text style={styles.adminDeleteButtonText}>Delete request</Text>
-      </TouchableOpacity>
-    </View>
   );
 }
 
@@ -1026,15 +893,21 @@ export default function AdminScreen() {
   const [section, setSection] = useState<AdminSection>('prayer');
   const [administratorId, setAdministratorId] = useState<string | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [prayerAccess, setPrayerAccess] = useState({ may_read: false, may_delegate: false });
   const [allowed, setAllowed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const checkAccess = useCallback(async () => {
     setCheckingAccess(true);
-    const [roleResult, userResult] = await Promise.all([
+    const [roleResult, userResult, accessResult] = await Promise.all([
       getCurrentUserRole(),
       supabase.auth.getUser(),
+      supabase.rpc('prayer_care_capabilities').single(),
     ]);
+    const permissions = accessResult.data as typeof prayerAccess | null;
+    const access = permissions ?? { may_read: false, may_delegate: false };
+    setPrayerAccess(access);
+    if (!access.may_read && !access.may_delegate) setSection(current => current === 'prayer' ? 'announcements' : current);
     setAllowed(isAdminRole(roleResult.role));
     setAdministratorId(userResult.data.user?.id || null);
     setCheckingAccess(false);
@@ -1058,9 +931,9 @@ export default function AdminScreen() {
     >
       <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
-        {SECTIONS.map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
+        {SECTIONS.filter(item => item.key !== 'prayer' || prayerAccess.may_read || prayerAccess.may_delegate).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
       </ScrollView>
-      {section === 'prayer' ? <PrayerManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'prayer' ? <PrayerInbox access={prayerAccess} styles={styles} /> : null}
       {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}

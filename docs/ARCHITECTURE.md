@@ -123,21 +123,19 @@ visible links; Row Level Security prevents members from changing any link.
 
 ## Prayer-request flow
 
-A signed-in member can create a private prayer request, optionally request
-public sharing, and edit or delete it while it is still pending. The database
-enforces ownership through Row Level Security. No other member can read a
-private request; pastoral handling and public approval are deferred to the
-separate Admin feature.
+Members submit private requests and can edit or delete their own pending requests. My requests shows each reply with its author and date. Pull to refresh for new replies. Only the author, pastor and selected prayer-care administrators can read a thread. Access managers can select administrators independently of inbox access. Database policies enforce these boundaries for previously published requests as well.
+
+Staff search by member name and browse Needs reply, Replied, or Closed. The inbox uses date and ID pagination, displaying 25 requests at a time grouped by member ID. Sending a reply and moving the request to Replied occur together. Follow-up replies retain the thread history. Closed threads remain readable. Internally the existing reviewed status represents Replied after migration.
 
 ## Admin-content flow
 
 The Admin destination is hidden unless the signed-in member has the `pastor`
 or `admin` application role. The screen checks that role again before loading
 content tools. It supports content-management roles already authorised by the
-database to manage prayer-request moderation, announcements, Bible studies,
+database to manage announcements, Bible studies,
 scheduled daily readings, and livestream links.
 It also manages permanent ministry links.
-Prayer-request removal is available only to authorised Admin users.
+Prayer-care staff may delete a request and its replies after confirmation.
 Role assignment is deliberately excluded from the mobile app.
 
 The prior `home_encouragement` database table and its content are intentionally

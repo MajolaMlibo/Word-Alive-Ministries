@@ -128,3 +128,9 @@ On 23 November 2026 the physical Samsung Galaxy A26 reproduced rapid-input corru
 ### Grouped admin readings
 
 Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
+
+### Private prayer care
+
+The disposable PostgreSQL test in app/scripts/test-private-prayer-care.cjs uses the actual baseline prayer tables, the migration, simulated Supabase identities and the authenticated database role. Supply @electric-sql/pglite on NODE_PATH and run node app/scripts/test-private-prayer-care.cjs. It checks legacy conversion, owner-only pending edits, private submission, delegation separate from reading, revocation, reply retry, closure, history, name search and pagination across 107 requests.
+
+Android acceptance pending: submit a fictional prayer as a member, reply as pastor, reopen My requests as the submitting member, and confirm the reply text, responder and date. Confirm ordinary admins have no Prayer section, selected admins can search, and access managers without reading permission see only access controls. Test a failed send and retry with the keyboard visible. Use fictional text only.
