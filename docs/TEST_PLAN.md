@@ -133,7 +133,7 @@ Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. F
 
 On Android, scroll to the last verse of a long chapter and select it. Verify Verse actions (1) appears above the app tabs, select another verse to check the count, open and dismiss the actions, then clear the selection. Check the final verse is reachable and the chapter stays at the same reading position. TypeScript and simulated control checks passed on 24 November 2026. Physical verification pending.
 
-Android keyboard regression check: with the keyboard open, scroll to the last password on Create Account and Reset Password, submit Sign In, and save a multiline private Bible note. Repeat with large system text. Physical verification pending.
+Android keyboard checks, 24 November 2026: the owner confirmed the Confirm password field stayed visible while typing and the Create account button could be scrolled into view with the keyboard open. This check covered layout only. Still pending are Sign In submission with the keyboard open, Reset Password field visibility, and checks with large system text. The private Bible note result is recorded below.
 
 Bible highlight contrast: in light and dark mode verify Gold, Green, Blue and Pink labels and each saved highlighted verse and verse number remain readable. Device check pending.
 
