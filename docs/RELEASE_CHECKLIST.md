@@ -15,9 +15,12 @@
 ## Public account deletion acceptance
 
 - The owner approved all four migrations and reported successful verification.
-  Check deletion-request submission, duplicate taps,
-  withdrawal, dedicated administrator visibility and privacy using synthetic
-  accounts. Confirm no deletion occurs merely by requesting one.
+- [x] On 25 November 2026 the member submitted a deletion request in the
+  Android Studio emulator. The dedicated administrator saw it in BlueStacks.
+  After withdrawal the queue showed “No pending deletion requests” and the
+  member remained signed in with the same completed-reading count.
+- Remaining manual checks with synthetic accounts include duplicate taps and
+  confirming staff without access cannot view the queue.
 - Before public store submission, approve the contact inbox, retention periods
   and response owner, deploy the web app, and verify its HTTPS deletion link
   (site root with ?account=delete). A website has not been published as part of
