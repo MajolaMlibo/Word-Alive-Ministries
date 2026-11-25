@@ -52,8 +52,7 @@
   applying migrations. No automatic edits to the church plan or files.
 - Pending phone checks: install the authorised signed APK over build 5, confirm
   session retention and Pastor's December 2027 readings, open/correct rich
-  notes, retry a failed image upload, and open one cached and one uncached
-  chapter in airplane mode. Ordinary-member signup and recovery are independent
+  notes and retry a failed image upload. Ordinary-member signup and recovery are independent
   of the recorded project-owner recovery pass.
 - Store gates: church-approved support contact and retention policy; published
   privacy and account-deletion URLs; verified Play Console testing eligibility;
@@ -209,7 +208,9 @@ upgrade still require verification.
 - [ ] Test the complete member journey on an Android device.
 - [ ] Test the complete member journey on an iPhone outside Expo Go.
 - [ ] Test small and large screens with standard, large, and extra-large text.
-- [ ] Test offline reading from an existing cached passage and reconnection.
+- [x] Android Studio emulator, 25 November 2026: John 1 opened online and
+  reopened in airplane mode. Uncached Deuteronomy 5 displayed the download
+  message and Try again. The owner reported the reconnection step passed.
 - [ ] Test error and retry states for Supabase and Bible-text requests.
 
 ## Security and privacy
