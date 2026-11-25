@@ -1,9 +1,21 @@
 # Release Checklist
 
+## Android acceptance reported 25 November 2026
+
+- [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
+  Readings, December expanded and showed the draft entry HOSEA 10–14 on
+  1 December (day 335).
+- [x] Two-account prayer check across Android Studio and BlueStacks: the
+  requester submitted a prayer, the administrator replied and closed it,
+  and the requester could see the private reply under My requests.
+- The project owner previously reported all four production migration
+  verification flags true. Build number and upgrade-session retention were
+  not established by these screenshots.
+
 ## Public account deletion acceptance
 
-- Production approval required for 202611250004_account_deletion_requests.sql
-  after the three preceding audit migrations. Check submission, duplicate taps,
+- The owner approved all four migrations and reported successful verification.
+  Check deletion-request submission, duplicate taps,
   withdrawal, dedicated administrator visibility and privacy using synthetic
   accounts. Confirm no deletion occurs merely by requesting one.
 - Before public store submission, approve the contact inbox, retention periods
