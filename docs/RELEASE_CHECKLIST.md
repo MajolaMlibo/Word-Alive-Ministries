@@ -7,6 +7,7 @@
   displayed Choose a new password.
 - [x] New-member signup: the tester received the confirmation email and
   reported reaching Home after confirming the account and signing in.
+- [x] The new member opened More and confirmed Administration was hidden.
 
 - [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
   Readings, December expanded and showed the draft entry HOSEA 10–14 on
