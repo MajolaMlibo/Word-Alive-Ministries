@@ -8,6 +8,8 @@
 - [x] Two-account prayer check across Android Studio and BlueStacks: the
   requester submitted a prayer, the administrator replied and closed it,
   and the requester could see the private reply under My requests.
+- [x] The dedicated administrator saw 3 completed readings under Members in
+  BlueStacks, matching the member's Profile total in the Android Studio emulator.
 - The project owner previously reported all four production migration
   verification flags true. Build number and upgrade-session retention were
   not established by these screenshots.
