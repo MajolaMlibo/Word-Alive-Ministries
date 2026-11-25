@@ -8,6 +8,8 @@
 - [x] New-member signup: the tester received the confirmation email and
   reported reaching Home after confirming the account and signing in.
 - [x] The new member opened More and confirmed Administration was hidden.
+- [x] The new member opened More → Prayer requests and found My requests empty.
+  The other member's test request and private reply did not appear in this view.
 
 - [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
   Readings, December expanded and showed the draft entry HOSEA 10–14 on
