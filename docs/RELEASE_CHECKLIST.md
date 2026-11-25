@@ -61,9 +61,8 @@
   Preview the pending duplicate-date and image-capacity checks below first.
   If either returns rows, review the content with the administrator before
   applying migrations. No automatic edits to the church plan or files.
-- Pending phone checks: confirm the upgrade and December 2027 readings on
-  Pastor's own phone, open/correct rich
-  notes and retry a failed image upload.
+- Pending phone checks: confirm whether Pastor stayed signed in through the
+  upgrade, open and edit rich notes, and retry a failed image upload.
 - Store gates: church-approved support contact and retention policy; published
   privacy and account-deletion URLs; verified Play Console testing eligibility;
   stakeholder acceptance. Obtain owner consent before external publication.
@@ -94,8 +93,8 @@ without editing their saved contents. The large Study introductory card was remo
   updated app. The old list stopped in May (15 May 2027, day 135). The updated
   app showed all months, with December expanded to show draft readings for
   1–3 December (days 335–337).
-- [ ] After Pastor installs the updated app, confirm he can open the draft
-  readings for September through December 2027.
+- [x] On 25 November 2026, the project owner reported that Pastor could see
+  the full 2027 reading plan on his phone after receiving build 6.
 
 ## Pre-build diagnostic — 24 November 2026
 
