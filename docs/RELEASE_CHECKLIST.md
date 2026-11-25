@@ -10,6 +10,8 @@
 - [x] The new member opened More and confirmed Administration was hidden.
 - [x] The new member opened More → Prayer requests and found My requests empty.
   The other member's test request and private reply did not appear in this view.
+- [x] The new member dismissed the app from Recent apps and reopened it from
+  the launcher. Home opened without another sign-in.
 
 - [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
   Readings, December expanded and showed the draft entry HOSEA 10–14 on
