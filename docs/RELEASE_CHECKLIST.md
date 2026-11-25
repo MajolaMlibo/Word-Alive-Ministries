@@ -4,7 +4,9 @@
 
 - [x] A tester outside the Supabase project team received a password-reset
   email in their own inbox and opened its link on the same phone. The app
-  displayed Choose a new password. New-account confirmation is a separate check.
+  displayed Choose a new password.
+- [x] New-member signup: the tester received the confirmation email and
+  reported reaching Home after confirming the account and signing in.
 
 - [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
   Readings, December expanded and showed the draft entry HOSEA 10–14 on
@@ -56,8 +58,7 @@
   applying migrations. No automatic edits to the church plan or files.
 - Pending phone checks: install the authorised signed APK over build 5, confirm
   session retention and Pastor's December 2027 readings, open/correct rich
-  notes and retry a failed image upload. Ordinary-member signup and recovery are independent
-  of the recorded project-owner recovery pass.
+  notes and retry a failed image upload.
 - Store gates: church-approved support contact and retention policy; published
   privacy and account-deletion URLs; verified Play Console testing eligibility;
   stakeholder acceptance. Obtain owner consent before external publication.
