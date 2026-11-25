@@ -21,9 +21,9 @@
   and the requester could see the private reply under My requests.
 - [x] The dedicated administrator saw 3 completed readings under Members in
   BlueStacks, matching the member's Profile total in the Android Studio emulator.
-- The project owner previously reported all four production migration
-  verification flags true. Build number and upgrade-session retention were
-  not established by these screenshots.
+- [x] The project owner installed build 6 directly over build 5 on the Android
+  Studio emulator while signed in. The first launch opened Home without another sign-in.
+- The project owner previously reported all four production migration verification flags true.
 
 ## Public account deletion acceptance
 
@@ -61,8 +61,8 @@
   Preview the pending duplicate-date and image-capacity checks below first.
   If either returns rows, review the content with the administrator before
   applying migrations. No automatic edits to the church plan or files.
-- Pending phone checks: install the authorised signed APK over build 5, confirm
-  session retention and Pastor's December 2027 readings, open/correct rich
+- Pending phone checks: confirm the upgrade and December 2027 readings on
+  Pastor's own phone, open/correct rich
   notes and retry a failed image upload.
 - Store gates: church-approved support contact and retention policy; published
   privacy and account-deletion URLs; verified Play Console testing eligibility;
