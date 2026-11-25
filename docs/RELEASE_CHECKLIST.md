@@ -2,6 +2,10 @@
 
 ## Android acceptance reported 25 November 2026
 
+- [x] A tester outside the Supabase project team received a password-reset
+  email in their own inbox and opened its link on the same phone. The app
+  displayed Choose a new password. New-account confirmation is a separate check.
+
 - [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
   Readings, December expanded and showed the draft entry HOSEA 10–14 on
   1 December (day 335).
