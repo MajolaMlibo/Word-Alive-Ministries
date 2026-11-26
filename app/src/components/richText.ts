@@ -81,25 +81,29 @@ function markInlineText(content: string, marker: string) {
 }
 
 function richHtmlToMarkdown(value: string) {
+  const lists: { ordered: boolean; count: number }[] = [];
   const body = value
     .replace(/<a\s+[^>]*href=(['"])(https:\/\/[^'"\s]+)\1[^>]*>([\s\S]*?)<\/a>/gi, '[$3]($2)')
     .replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _tag, content) => markInlineText(content, '**'))
     .replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_, _tag, content) => markInlineText(content, '_'))
     .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '## $1\n')
     .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '> $1\n')
-    .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, items) => String(items).replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n'))
-    .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (_, items) => {
-      let number = 0;
-      return String(items).replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_match, item) => {
-        number += 1;
-        return `${number}. ${item}\n`;
-      });
+    .replace(/\s*(<\/?(?:ul|ol|li)\b[^>]*>)\s*/gi, (_, tag: string) => {
+      if (/^<\/li/i.test(tag)) return '';
+      if (/^<\/(ul|ol)/i.test(tag)) { lists.pop(); return '\n'; }
+      if (/^<(ul|ol)/i.test(tag)) {
+        lists.push({ ordered: /^<ol/i.test(tag), count: 0 });
+        return '\n';
+      }
+      const list = lists[lists.length - 1];
+      return list?.ordered ? `\n${++list.count}. ` : '\n- ';
     })
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div)>/gi, '\n')
     .replace(/<[^>]*>/g, '');
 
   return decodeHtml(body)
+    .replace(/\n+(?=(?:- |\d+\. ))/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -115,4 +119,16 @@ export function valueFromEditorHtml(html: string) {
 
 export function displayText(value: string) {
   return isRichText(value) ? richHtmlToMarkdown(value.slice(RICH_TEXT_PREFIX.length)) : value;
+}
+
+export function announcementPreviewText(message: string) {
+  return displayText(message)
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/\[([^\]]+)\]\(https:\/\/[^)]+\)/g, '$1')
+    .replace(/^##[ \t]+/gm, '')
+    .replace(/^>[ \t]?/gm, '')
+    .replace(/^[-*][ \t]+/gm, '• ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

@@ -34,7 +34,7 @@ import {
 import { Announcement, BibleStudy, DailyReading, Profile } from '../services/database';
 import { getAvatarSignedUrl } from '../services/profileService';
 import FormattedText from '../components/FormattedText';
-import { displayText, isRichText } from '../components/richText';
+import { announcementPreviewText, isRichText } from '../components/richText';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
@@ -44,19 +44,6 @@ const ANNOUNCEMENT_SWIPE_HINT_KEY = 'wam-announcement-swipe-hint-seen-v1';
 const MAX_VISIBLE_ANNOUNCEMENT_BACK_CARDS = 2;
 
 type AnnouncementReadTimes = Record<string, string>;
-
-function announcementPreviewText(message: string) {
-  return displayText(message)
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-    .replace(/\[([^\]]+)\]\(https:\/\/[^)]+\)/g, '$1')
-    .replace(/^##\s+/gm, '')
-    .replace(/^>\s?/gm, '')
-    .replace(/^[-*]\s+/gm, '')
-    .replace(/^\d+\.\s+/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
 
 function formatAnnouncementDate(publishedAt: string | null) {
   if (!publishedAt) return null;

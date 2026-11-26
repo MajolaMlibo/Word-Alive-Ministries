@@ -249,3 +249,7 @@ upgrade still require verification.
 - [ ] Obtain required Google Play Console and Apple Developer access.
 - [ ] Create signed Android App Bundle and iOS store builds.
 - [ ] Obtain pastor acceptance after a documented stakeholder test session.
+- [ ] On Android, use a test notice and study with a heading and three bullets.
+  Reopen each in Admin and confirm the list survives editing. As a member,
+  check the bullets in the Home preview, the expanded notice, and the study.
+  Include a long bullet and confirm its text wraps inside the card.
