@@ -29,6 +29,8 @@ import Bible from './src/screens/Bible';
 import Calendar from './src/screens/Calendar';
 import Study from './src/screens/Study';
 import More from './src/screens/More';
+import { Platform } from 'react-native';
+import { AccountDeletion, PublicDeletionHelp } from './src/components/AccountDeletion';
 import SignIn from './src/screens/SignIn';
 import ResetPassword from './src/screens/ResetPassword';
 
@@ -211,6 +213,9 @@ function AppContent({
 }) {
   const { colors, colorScheme } = useAccessibility();
   const styles = makeStyles(colors);
+  const [showDeletionSignIn, setShowDeletionSignIn] = useState(false);
+  const deletionPage = Platform.OS === 'web' && typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('account') === 'delete';
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
   const navigationTheme = {
     ...baseTheme,
@@ -244,7 +249,10 @@ function AppContent({
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      {session ? <MainTabs /> : <SignIn />}
+      {deletionPage
+        ? session ? <AccountDeletion key={session.user.id} userId={session.user.id} />
+          : showDeletionSignIn ? <SignIn /> : <PublicDeletionHelp onSignIn={() => setShowDeletionSignIn(true)} />
+        : session ? <MainTabs /> : <SignIn />}
     </NavigationContainer>
   );
 }

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { AccountDeletion } from '../components/AccountDeletion';
 import { supabase } from "../services/supabase";
 import { useAccessibility } from "../theme/AccessibilityContext";
 import { spacing } from "../theme/theme";
@@ -177,6 +178,7 @@ const styles = makeStyles(colors, fonts);
         </Text>
       </View>
 
+      {profile && <AccountDeletion key={profile.id} userId={profile.id} />}
     </ScrollView>
   );
 }

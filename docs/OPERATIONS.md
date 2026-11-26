@@ -128,3 +128,33 @@ remove it after the upload has stopped, then select the image again. The file
 is removed through Storage before its record. Compare the Storage manifest to
 study_media periodically to identify unlinked files from older app versions;
 confirm provenance and backup before approving any permanent removal.
+
+
+### Account deletion requests
+
+After deploying the account-request migration, members open More → Profile and
+settings → Request account deletion → Submit deletion request. The available
+withdrawal action cancels a pending request. No account is erased by submitting
+the form. The dedicated access manager opens More → Administration → Members →
+Review account deletion requests. Check the queue on a schedule approved by the
+church and name a backup operator for absences.
+
+For the public web app, the same site's root with `?account=delete` opens the
+deletion page without installation. Signed-out visitors see the purpose and
+instructions before sign-in. Set EXPO_PUBLIC_PRIVACY_CONTACT_EMAIL only to a
+church-approved monitored inbox. Verify on a signed-out browser and an actual
+phone; provide the deployed HTTPS URL in Play Console only after approval.
+
+For fulfilment, use the original authenticated request, verify the Auth UUID
+and check the queue again for withdrawal immediately before deletion. For
+requests received by email, verify account ownership before processing. Tell
+the requester how the church handles its backups and any lawful retention.
+Remove privately owned Storage objects via the Storage API first. Handle
+ministry-owned study files separately so deleting one staff account does not
+erase shared study notes. Remove the verified Auth identity through Supabase
+Authentication → Users, after explicit operator approval. Verify disappearance
+of the profile, associated personal records, storage paths and request row.
+Record completion without copying prayer content into an audit log. If the
+requester is the dedicated access manager, arrange the approved ownership
+transfer first. Confirm policy, turnaround, public contact and backup retention
+with Pastor before publishing store disclosures.

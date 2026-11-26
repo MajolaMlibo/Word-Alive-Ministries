@@ -1,5 +1,44 @@
 # Release Checklist
 
+## Android acceptance reported 25 November 2026
+
+- [x] A tester outside the Supabase project team received a password-reset
+  email in their own inbox and opened its link on the same phone. The app
+  displayed Choose a new password.
+- [x] New-member signup: the tester received the confirmation email and
+  reported reaching Home after confirming the account and signing in.
+- [x] The new member opened More and confirmed Administration was hidden.
+- [x] The new member opened More → Prayer requests and found My requests empty.
+  The other member's test request and private reply did not appear in this view.
+- [x] The new member dismissed the app from Recent apps and reopened it from
+  the launcher. Home opened without another sign-in.
+
+- [x] Project owner confirmed the 2027 calendar is up to date. In Admin →
+  Readings, December expanded and showed the draft entry HOSEA 10–14 on
+  1 December (day 335).
+- [x] Two-account prayer check across Android Studio and BlueStacks: the
+  requester submitted a prayer, the administrator replied and closed it,
+  and the requester could see the private reply under My requests.
+- [x] The dedicated administrator saw 3 completed readings under Members in
+  BlueStacks, matching the member's Profile total in the Android Studio emulator.
+- [x] The project owner installed build 6 directly over build 5 on the Android
+  Studio emulator while signed in. The first launch opened Home without another sign-in.
+- The project owner previously reported all four production migration verification flags true.
+
+## Public account deletion acceptance
+
+- The owner approved all four migrations and reported successful verification.
+- [x] On 25 November 2026 the member submitted a deletion request in the
+  Android Studio emulator. The dedicated administrator saw it in BlueStacks.
+  After withdrawal the queue showed “No pending deletion requests” and the
+  member remained signed in with the same completed-reading count.
+- Remaining manual checks with synthetic accounts include duplicate taps and
+  confirming staff without access cannot view the queue.
+- Before public store submission, approve the contact inbox, retention periods
+  and response owner, deploy the web app, and verify its HTTPS deletion link
+  (site root with ?account=delete). A website has not been published as part of
+  this audit.
+
 ## November release audit follow-up
 
 - Expo project verified as @mlibo/word-alive-ministries, project ID
@@ -22,33 +61,20 @@
   Preview the pending duplicate-date and image-capacity checks below first.
   If either returns rows, review the content with the administrator before
   applying migrations. No automatic edits to the church plan or files.
-- Pending phone checks: install the authorised signed APK over build 5, confirm
-  session retention and Pastor's December 2027 readings, open/correct rich
-  notes, retry a failed image upload, and open one cached and one uncached
-  chapter in airplane mode. Ordinary-member signup and recovery are independent
-  of the recorded project-owner recovery pass.
+- Pending phone checks: confirm whether Pastor stayed signed in through the
+  upgrade, open and edit rich notes, and retry a failed image upload.
 - Store gates: church-approved support contact and retention policy; published
   privacy and account-deletion URLs; verified Play Console testing eligibility;
   stakeholder acceptance. Obtain owner consent before external publication.
   Actual private-file restore rehearsal is still pending. See OPERATIONS.md.
 
-Read-only preflight for word-alive-prod:
-
-```sql
-select scheduled_date, count(*) from public.daily_readings
-where status = 'published' group by scheduled_date having count(*) > 1;
-select study_id, count(*) from public.study_media group by study_id having count(*) > 6;
-select count(*) as published_readings_in_hidden_plans
-from public.daily_readings r join public.reading_plans p on p.id=r.plan_id
-where r.status='published' and p.status<>'published';
-```
-
-
-## Reading history and editor safeguards
-
-- Apply the reading safeguards migration only after production approval. A completed reading or its parent plan cannot be deleted, including from an older client. Use Edit → Archived to keep history.
-- Members retain their own reading details. Directory-authorised staff see a selected member’s count. Test granting and revoking directory access on the combined app.
-- On Android and iOS, reopen the published Hebrews notes, verify quote and bold formatting, edit a draft and verify the keyboard and toolbar. Test navigation from a link inside the editor.
+In Supabase → word-alive-prod → SQL Editor → New query, run
+[supabase/checks/preflight_release_audit.sql](../supabase/checks/preflight_release_audit.sql).
+Expect a single row with three zeros. Request deployment approval separately.
+Expo Doctor passed 20/20 on this checkout. npm audit reported three moderate
+entries in the Expo fingerprint dependency chain, zero high and zero critical.
+The registry listed 58.0.26 as the latest patch within the configured Expo 58
+range; retain the supported version and recheck before distribution.
 
 ## Integrated reader and Study checks — 24 November 2026
 
@@ -67,8 +93,8 @@ without editing their saved contents. The large Study introductory card was remo
   updated app. The old list stopped in May (15 May 2027, day 135). The updated
   app showed all months, with December expanded to show draft readings for
   1–3 December (days 335–337).
-- [ ] After Pastor installs the updated app, confirm he can open the draft
-  readings for September through December 2027.
+- [x] On 25 November 2026, the project owner reported that Pastor could see
+  the full 2027 reading plan on his phone after receiving build 6.
 
 ## Pre-build diagnostic — 24 November 2026
 
@@ -191,7 +217,9 @@ upgrade still require verification.
 - [ ] Test the complete member journey on an Android device.
 - [ ] Test the complete member journey on an iPhone outside Expo Go.
 - [ ] Test small and large screens with standard, large, and extra-large text.
-- [ ] Test offline reading from an existing cached passage and reconnection.
+- [x] Android Studio emulator, 25 November 2026: John 1 opened online and
+  reopened in airplane mode. Uncached Deuteronomy 5 displayed the download
+  message and Try again. The owner reported the reconnection step passed.
 - [ ] Test error and retry states for Supabase and Bible-text requests.
 
 ## Security and privacy
