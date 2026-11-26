@@ -254,7 +254,7 @@ upgrade still require verification.
   check the bullets in the Home preview, the expanded notice, and the study.
   Include a long bullet and confirm its text wraps inside the card.
 - [ ] On the updated client, open Administration > Notices > New stream. Save a live HTTPS stream. Confirm Watch live appears above announcements on member Home, opens the correct platform, and disappears after switching off and saving. Home checks on entry and every minute while focused.
-- [ ] Confirm six New forms open on demand, existing items open directly for editing, Links follow creation time, the Editor filter is hidden, the Administration introduction disappears after ten seconds, and Profile shows Numbers 6:24.
+- [ ] Confirm six New forms open on demand, existing items open directly for editing, Links follow creation time, the Editor filter is hidden, the Administration introduction disappears after ten seconds, and Profile shows the complete blessing from Numbers 6:24–26 (KJV), ending with “and give thee peace.”
 - [ ] In Administration, confirm the first notice, study and stream card has space below search. In Members and Prayer, check spacing above and below the filter buttons.
 
 ### Ministry push alerts

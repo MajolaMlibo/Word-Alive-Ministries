@@ -182,9 +182,11 @@ const styles = makeStyles(colors, fonts);
       {/* ACHIEVEMENT */}
       <View style={styles.achievement}>
         <Ionicons name="trophy" size={28} color={colors.accent} />
-        <Text style={styles.achievementTitle}>Numbers 6:24 · KJV</Text>
+        <Text style={styles.achievementTitle}>Numbers 6:24–26 · KJV</Text>
         <Text style={styles.achievementText}>
-          The LORD bless thee, and keep thee:
+          The LORD bless thee, and keep thee:{'\n'}
+          The LORD make his face shine upon thee, and be gracious unto thee:{'\n'}
+          The LORD lift up his countenance upon thee, and give thee peace.
         </Text>
       </View>
 
