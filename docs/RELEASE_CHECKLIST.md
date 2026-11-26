@@ -265,3 +265,9 @@ upgrade still require verification.
 - [ ] Save a test stream as live, confirm only the subscribed phone receives the alert, and tap it from the background and after a cold start. Confirm Home opens with Watch live. End the stream before tapping another test alert and confirm Home reports it has ended. Editing an already-live stream should stay silent.
 - [ ] Publish one notice with Send push notification off, then another with it on. Expect one alert for the second notice only. Editing the published message should stay silent. Disable alerts or sign out, then verify later publications stay silent.
 - Delivery is best effort. Local tests capture outgoing payloads without contacting Expo. The initial sender does not automate Expo receipt polling, retry failed batches, or remove stale tokens from delivery receipts. Monitor during the pilot and add receipt handling before broad distribution.
+
+## Handoff, 26 November 2026
+
+Mlibo confirmed all six iPhone Expo Go walkthrough checks: the complete Profile blessing, collapsed creation forms and timed Admin introduction, notice publication switch, draft search/spacing/editor, stream management under Notices, and Links/Members filters. Real remote delivery is pending. Expo Go deliberately hides the device opt-in switch.
+
+Continue from GitHub main after integrating PRs 73–78. Keep the original local checkout and its Expo owner change, private configuration and local files. Project owner Mlibo K. Majola, Expo account mlibo, Supabase word-alive-prod. Ask before production changes, credentials, spending or builds. Before Build 7 verify push setup and release checklist; Android and iOS require separate artifacts. Remaining feature decisions include automatic recurring streams, yearly main-plan streak with optional plans tracked separately, moderated study comments with delegated access, daily study notes, reading history, reference links and mention privacy.
