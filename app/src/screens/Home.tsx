@@ -708,7 +708,7 @@ export default function HomeScreen() {
       {/* ANNOUNCEMENTS */}
       {liveStreams.map(stream => <TouchableOpacity key={stream.id} accessibilityRole="link"
         style={styles.primaryButton} onPress={() => void openAnnouncementLink(stream.stream_url)}>
-        <Text style={styles.primaryButtonText}>{stream.platform} · Watch live</Text>
+        <Text style={styles.primaryButtonText}>{stream.platform} . Live Now</Text>
       </TouchableOpacity>)}
       <View style={styles.announcementsSection}>
         <View style={styles.sectionHeader}>
