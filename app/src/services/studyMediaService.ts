@@ -33,7 +33,7 @@ export async function getStudyMedia(studyIds: string[]) {
 
 export async function getStudyMediaUrls(media: StudyMedia[]) {
   const signedUrls = await Promise.all(
-    media.map(async (item) => {
+    media.filter(item => !item.upload_pending).map(async (item) => {
       const { data, error } = await supabase.storage
         .from(STUDY_MEDIA_BUCKET)
         .createSignedUrl(item.storage_path, 60 * 60);
@@ -91,6 +91,20 @@ export async function chooseAndUploadStudyImages(studyId: string, administratorI
 
     const extension = extensionForMimeType(image.mimeType);
     const storagePath = `${studyId}/${Date.now()}-${index}.${extension}`;
+    const { data, error: rowError } = await supabase
+      .from('study_media')
+      .insert({
+        study_id: studyId,
+        upload_pending: true,
+        storage_path: storagePath,
+        sort_order: (existing?.length ?? 0) + uploaded.length,
+        created_by: administratorId,
+      })
+      .select('*')
+      .single();
+
+    if (rowError) return { media: uploaded, cancelled: false, error: rowError };
+
     const { error: uploadError } = await supabase.storage
       .from(STUDY_MEDIA_BUCKET)
       .upload(storagePath, decode(image.base64), {
@@ -102,23 +116,10 @@ export async function chooseAndUploadStudyImages(studyId: string, administratorI
       return { media: uploaded, cancelled: false, error: uploadError };
     }
 
-    const { data, error: rowError } = await supabase
-      .from('study_media')
-      .insert({
-        study_id: studyId,
-        storage_path: storagePath,
-        sort_order: (existing?.length ?? 0) + uploaded.length,
-        created_by: administratorId,
-      })
-      .select('*')
-      .single();
-
-    if (rowError) {
-      await supabase.storage.from(STUDY_MEDIA_BUCKET).remove([storagePath]);
-      return { media: uploaded, cancelled: false, error: rowError };
-    }
-
-    uploaded.push(data as StudyMedia);
+    const { error: finaliseError } = await supabase.from('study_media')
+      .update({ upload_pending: false }).eq('id', data.id).select('id').single();
+    if (finaliseError) return { media: uploaded, cancelled: false, error: finaliseError };
+    uploaded.push({ ...data, upload_pending: false } as StudyMedia);
   }
 
   return { media: uploaded, cancelled: false, error: null };

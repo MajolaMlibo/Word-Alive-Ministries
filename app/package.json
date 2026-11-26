@@ -30,6 +30,7 @@
     "react-native-webview": "14.0.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.6.0",
     "@types/react": "~19.3.0",
     "jsdom": "^26.1.0",
     "typescript": "~6.0.3"
@@ -39,7 +40,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "verify:supabase": "node scripts/verify-supabase-connection.mjs"
+    "verify:supabase": "node scripts/verify-supabase-connection.mjs",
+    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
   },
   "private": true
 }

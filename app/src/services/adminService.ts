@@ -66,14 +66,11 @@ function publishedAtForStatus(status: ContentStatus, publishedAt: string | null)
   return publishedAt || new Date().toISOString();
 }
 
-export async function getAdminAnnouncements() {
-  const { data, error } = await supabase
-    .from('announcements')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100);
-
-  return { announcements: (data as Announcement[]) || [], error };
+export async function getAdminAnnouncements(offset: number, search: string) {
+  const { data, error } = await supabase.from('announcements').select('*')
+    .ilike('title', '%' + search.replace(/[\\%_]/g, '\\$&') + '%')
+    .order('created_at', { ascending: false }).order('id').range(offset, offset + 25);
+  return { items: (data as Announcement[]) || [], error };
 }
 
 export async function saveAnnouncement(
@@ -111,14 +108,9 @@ export async function deleteAnnouncement(announcementId: string) {
   return supabase.from('announcements').delete().eq('id', announcementId);
 }
 
-export async function getAdminBibleStudies() {
-  const { data, error } = await supabase
-    .from('bible_studies')
-    .select('*')
-    .order('study_date', { ascending: true })
-    .limit(100);
-
-  return { studies: (data as BibleStudy[]) || [], error };
+export async function getAdminBibleStudies(offset: number, search: string) {
+  const { data, error } = await supabase.rpc('admin_study_page', { term: search, page_offset: offset });
+  return { items: (data as BibleStudy[]) || [], error };
 }
 
 export async function saveBibleStudy(
@@ -255,14 +247,11 @@ export async function deleteDailyReading(readingId: string) {
   return supabase.from('daily_readings').delete().eq('id', readingId);
 }
 
-export async function getAdminLiveStreams() {
-  const { data, error } = await supabase
-    .from('live_streams')
-    .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(30);
-
-  return { streams: (data as LiveStream[]) || [], error };
+export async function getAdminLiveStreams(offset: number, search: string) {
+  const { data, error } = await supabase.from('live_streams').select('*')
+    .ilike('platform', '%' + search.replace(/[\\%_]/g, '\\$&') + '%')
+    .order('updated_at', { ascending: false }).order('id').range(offset, offset + 25);
+  return { items: (data as LiveStream[]) || [], error };
 }
 
 export async function saveLiveStream(

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useContentList } from '../components/useContentList';
 import MembersManager from '../components/MembersManager';
 import PrayerInbox from '../components/PrayerInbox';
 import RichTextField from '../components/RichTextField';
@@ -323,23 +324,15 @@ function ContentActions({
 
 function AnnouncementsManager({ administratorId, styles }: { administratorId: string; styles: any }) {
   const blank = () => ({ title: '', message: '', status: 'draft' as ContentStatus, expiryDate: '', expiryTime: '', actionLabel: '', actionUrl: '' });
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const list = useContentList(getAdminAnnouncements);
+  const { items: announcements, loading } = list;
   const [form, setForm] = useState(blank);
   const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<Announcement | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const savedForm = useRef(JSON.stringify(form));
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { announcements: loadedAnnouncements, error } = await getAdminAnnouncements();
-    if (error) Alert.alert('Unable to load notices', 'Please refresh and try again.');
-    else setAnnouncements(loadedAnnouncements);
-    setLoading(false);
-  }, []);
 
-  useEffect(() => { void load(); }, [load]);
 
   const applyForm = (nextForm: ReturnType<typeof blank>, nextEditing: Announcement | null) => {
     savedForm.current = JSON.stringify(nextForm);
@@ -408,7 +401,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
       Alert.alert('Unable to save notice', 'Please check your connection and try again.');
       return;
     }
-    setAnnouncements((current) => [announcement, ...current.filter((item) => item.id !== announcement.id)]);
+    list.reload();
     reset();
   };
 
@@ -417,7 +410,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     { text: 'Delete', style: 'destructive', onPress: async () => {
       const { error } = await deleteAnnouncement(announcement.id);
       if (error) Alert.alert('Unable to delete notice', 'Please try again.');
-      else { setAnnouncements((current) => current.filter((item) => item.id !== announcement.id)); if (editing?.id === announcement.id) reset(); }
+      else { list.reload(); if (editing?.id === announcement.id) reset(); }
     } },
   ]);
 
@@ -435,9 +428,11 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
         <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
       </EditorCard>
       <Text style={styles.listTitle}>Existing notices</Text>
+    {list.searchControl('Search announcements')}
       {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : announcements.length ? announcements.map((announcement) => (
         <ContentListCard key={announcement.id} title={announcement.title} subtitle={`${titleCase(announcement.status)} • ${announcement.published_at ? formatDate(announcement.published_at) : 'Not scheduled'}`} onEdit={() => edit(announcement)} onDelete={() => remove(announcement)} styles={styles} />
       )) : <EmptyState icon="megaphone-outline" message="No notices yet." styles={styles} />}
+    {list.pageControl(styles)}
     </View>
   );
 }
@@ -479,7 +474,8 @@ function StudyImagesManager({
     setUploading(false);
     if (cancelled) return;
     if (error) {
-      Alert.alert('Unable to add images', error.message || 'Please try again.');
+      Alert.alert('Unable to add images', 'An interrupted image can be removed here before retrying. ' + (error.message || ''));
+      await load();
       return;
     }
     await load();
@@ -512,6 +508,7 @@ function StudyImagesManager({
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyImageList}>
           {media.map((item) => (
             <View key={item.id} style={styles.studyImageItem}>
+              {item.upload_pending && <Text style={styles.fieldLabel}>Incomplete upload</Text>}
               {urls[item.id] ? <Image source={{ uri: urls[item.id] }} style={styles.studyImagePreview} /> : null}
               <TouchableOpacity
                 accessibilityLabel="Remove study image"
@@ -540,20 +537,14 @@ function StudyImagesManager({
 
 function StudiesManager({ administratorId, styles }: { administratorId: string; styles: any }) {
   const blank = () => ({ name: '', scripture: '', date: '', start: '', end: '', description: '', location: '', status: 'draft' as ContentStatus });
-  const [studies, setStudies] = useState<BibleStudy[]>([]);
+  const list = useContentList(getAdminBibleStudies);
+  const { items: studies, loading } = list;
   const [form, setForm] = useState(blank);
   const [draftNumber, setDraftNumber] = useState(0);
   const [editing, setEditing] = useState<BibleStudy | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const savedForm = useRef(JSON.stringify(form));
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { studies: loadedStudies, error } = await getAdminBibleStudies();
-    if (error) Alert.alert('Unable to load studies', 'Please refresh and try again.'); else setStudies(loadedStudies);
-    setLoading(false);
-  }, []);
-  useEffect(() => { void load(); }, [load]);
+
   const applyForm = (nextForm: ReturnType<typeof blank>, nextEditing: BibleStudy | null) => {
     savedForm.current = JSON.stringify(nextForm);
     setEditing(nextEditing);
@@ -583,10 +574,10 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
     const { study, error } = await saveBibleStudy({ studyName: form.name, scriptureRef: toOptional(form.scripture), studyDate: form.date, startTime: toOptional(form.start), endTime: toOptional(form.end), description: toOptional(form.description), locationOrUrl: toOptional(form.location), status: form.status }, administratorId, editing?.id);
     setSaving(false);
     if (error || !study) { Alert.alert('Unable to save study', 'Please check your connection and try again.'); return; }
-    setStudies((current) => [...current.filter((item) => item.id !== study.id), study].sort((a, b) => a.study_date.localeCompare(b.study_date)));
+    list.reload();
     startEditing(study);
   };
-  const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Unable to delete study', 'Please try again.'); else { setStudies((current) => current.filter((item) => item.id !== study.id)); if (editing?.id === study.id) reset(); } } }]);
+  const remove = (study: BibleStudy) => Alert.alert('Delete Bible study?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteBibleStudy(study.id); if (error) Alert.alert('Study kept', error.code === '23503' ? 'Open Edit and remove the study images first. You can retry each removal, or archive the study to keep its images.' : 'Please try again.'); else { list.reload(); if (editing?.id === study.id) reset(); } } }]);
   return <View>
     <EditorCard title={editing ? 'Edit study or event' : 'New study or event'} styles={styles}>
       <Field label="Study or event title" value={form.name} onChangeText={(name) => setForm(current => ({ ...current, name }))} styles={styles} />
@@ -603,7 +594,9 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
       )}
     </EditorCard>
     <Text style={styles.listTitle}>Scheduled studies and events</Text>
-    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : studies.length ? studies.map((study) => <ContentListCard key={study.id} title={study.study_name} subtitle={`${study.study_date} • ${titleCase(study.status)}`} onEdit={() => edit(study)} onDelete={() => remove(study)} styles={styles} />) : <EmptyState icon="school-outline" message="No Bible studies yet." styles={styles} />}
+    {list.searchControl('Search studies')}
+    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : studies.length ? studies.map((study) => <ContentListCard key={study.id} title={study.study_name} subtitle={`${study.study_date} • ${titleCase(study.status)}`} onEdit={() => edit(study)} onDelete={study.status === 'draft' ? () => remove(study) : undefined} styles={styles} />) : <EmptyState icon="school-outline" message="No Bible studies yet." styles={styles} />}
+    {list.pageControl(styles)}
   </View>;
 }
 
@@ -742,7 +735,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     setSaving(true);
     const { reading, error } = await saveDailyReading({ planId: form.planId, dayNumber, scheduledDate: form.date, scriptureRef: form.scripture, reflection: toOptional(form.reflection), audioUrl: toOptional(form.audioUrl), status: form.status, publishedAt: editing?.published_at || null }, administratorId, editing?.id);
     setSaving(false);
-    if (error || !reading) { Alert.alert('Unable to save reading', 'Please check for duplicate day numbers or dates in this plan.'); return; }
+    if (error || !reading) { Alert.alert('Unable to save reading', error?.message?.includes('Publish the reading plan') ? 'Publish the year plan first, or save the reading as a draft.' : 'Check the day number and date. Only one reading across all plans can be published for a date.'); return; }
     revealId.current = reading.id;
     setLoading(true);
     setMonth(Number(reading.scheduled_date.slice(5, 7)) - 1);
@@ -864,18 +857,12 @@ function LinksManager({ administratorId, styles }: { administratorId: string; st
 
 function StreamsManager({ administratorId, styles }: { administratorId: string; styles: any }) {
   const blank = () => ({ platform: '', url: '', isLive: false });
-  const [streams, setStreams] = useState<LiveStream[]>([]);
+  const list = useContentList(getAdminLiveStreams);
+  const { items: streams, loading } = list;
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState<LiveStream | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { streams: loadedStreams, error } = await getAdminLiveStreams();
-    if (error) Alert.alert('Unable to load streams', 'Please refresh and try again.'); else setStreams(loadedStreams);
-    setLoading(false);
-  }, []);
-  useEffect(() => { void load(); }, [load]);
+
   const reset = () => { setEditing(null); setForm(blank()); };
   const edit = (stream: LiveStream) => { setEditing(stream); setForm({ platform: stream.platform, url: stream.stream_url, isLive: stream.is_live }); };
   const save = async () => {
@@ -884,10 +871,10 @@ function StreamsManager({ administratorId, styles }: { administratorId: string; 
     const { stream, error } = await saveLiveStream({ platform: form.platform, streamUrl: form.url, isLive: form.isLive }, administratorId, editing?.id);
     setSaving(false);
     if (error || !stream) { Alert.alert('Unable to save stream', 'Please check your connection and try again.'); return; }
-    setStreams((current) => [stream, ...current.filter((item) => item.id !== stream.id)]);
+    list.reload();
     reset();
   };
-  const remove = (stream: LiveStream) => Alert.alert('Delete stream?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteLiveStream(stream.id); if (error) Alert.alert('Unable to delete stream', 'Please try again.'); else { setStreams((current) => current.filter((item) => item.id !== stream.id)); if (editing?.id === stream.id) reset(); } } }]);
+  const remove = (stream: LiveStream) => Alert.alert('Delete stream?', 'This cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteLiveStream(stream.id); if (error) Alert.alert('Unable to delete stream', 'Please try again.'); else { list.reload(); if (editing?.id === stream.id) reset(); } } }]);
   return <View>
     <EditorCard title={editing ? 'Edit stream' : 'New stream'} styles={styles}>
       <Field label="Platform" value={form.platform} onChangeText={(platform) => setForm({ ...form, platform })} placeholder="TikTok or Spotify" styles={styles} />
@@ -896,7 +883,9 @@ function StreamsManager({ administratorId, styles }: { administratorId: string; 
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Configured streams</Text>
+    {list.searchControl('Search streams')}
     {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : streams.length ? streams.map((stream) => <ContentListCard key={stream.id} title={stream.platform} subtitle={stream.is_live ? 'Live now' : 'Not live'} onEdit={() => edit(stream)} onDelete={() => remove(stream)} styles={styles} />) : <EmptyState icon="videocam-outline" message="No livestream links configured." styles={styles} />}
+    {list.pageControl(styles)}
   </View>;
 }
 

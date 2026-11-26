@@ -59,3 +59,72 @@ After migration 202611240005_admin_directory_permission.sql, the dedicated admin
 ### Native password recovery
 
 In the production Supabase project's Authentication URL Configuration, verify Redirect URLs includes wordalive-ministries://auth/callback and the Reset Password email template links to {{ .ConfirmationURL }}. Request a fresh email from the installed app. Open it on the same phone and verify that Reset Password opens, that the new password works, and that an expired link gives feedback. A blank browser before the app opens requires checking the redirect destination and installed app on the device. Never share the token-bearing URL.
+
+
+## Recovery rehearsal and release identity
+
+Use an isolated target and synthetic test accounts for rehearsal. The project owner
+must approve any operation that copies real prayer data, changes credentials,
+affects production or incurs charges. Keep backups encrypted outside Git; give
+restore access only to the authorised operator. Record date, operator, target
+project, backup timestamp, downtime and results without names or prayer text.
+
+1. Identify the source in Supabase → project selector → **word-alive-prod**.
+   Write down the source and target project references. They must differ.
+   Record the database migration versions, private bucket settings and object
+   counts. Protect the original backups from changes during the drill.
+2. Use the supported Supabase database backup/restore workflow appropriate to
+   the plan. A logical migration needs the roles, schema and table data,
+   including Auth identities, plus custom Auth triggers and policies. Verify
+   that identities retain their original UUIDs. Inspect a restore log for
+   skipped objects or grants before pointing any test client at the target.
+   Never run a restore over the production project as a rehearsal.
+3. Back up **actual files** from the private avatars and study-media buckets
+   using the Storage API. Keep a manifest of bucket, object path, byte size,
+   content type and SHA-256 per file. A database backup contains storage
+   metadata, not the image bytes. Restore objects into the target's private
+   buckets via Storage; reconcile existing metadata with the supported storage
+   migration procedure. Verify the manifest paths and digests, open a restored
+   published study image as a member, and verify future/private media stays
+   restricted. Keep a copy of any reconciliation report for review.
+4. Recheck sign-in settings, callback destinations and mail sender on the
+   target separately. Use a test mailbox and test destination. Restore a
+   synthetic prayer and reply, check the requester and authorised carer see
+   it, and check another member cannot. Verify completed reading totals.
+5. For the dedicated administrator, compare the Auth user ID to the UUID in
+   can_manage_members and verify the role is admin. Sign in with the test
+   identity on the isolated target; open More → Administration → Members and
+   test a reversible permission change on a synthetic admin. Recreating an
+   email address gives a new UUID. If recovery of the original identity is
+   impossible, get explicit owner approval for a reviewed UUID-transfer
+   migration, preserve the audit trail, revoke the old account and retest.
+   Never grant directory write access to all admins to recover one account.
+6. The local regression suite restarts a database from its fixture dump and
+   checks prayer rows, the access-manager role and image metadata. A hosted
+   restore with actual Storage file checksums and sign-in is a separate check.
+
+[Supabase database backups](https://supabase.com/docs/guides/platform/backups) ·
+[Supabase CLI restore guide](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
+
+### Email acceptance
+
+In Supabase → word-alive-prod → Authentication → Emails, inspect the SMTP
+configuration without sharing credentials. With a consenting tester outside
+the Supabase organisation, verify delivery of signup confirmation and recovery
+separately. For recovery open the freshest email on the phone with the app
+installed, set a password and sign in. Record pass/fail and time only. Do not
+send a reset for an unsuspecting member. If delivery fails, inspect Auth and
+sender delivery logs. A working developer mailbox alone does not establish
+delivery to normal members.
+
+[Supabase email delivery](https://supabase.com/docs/guides/auth/auth-smtp)
+
+### Private media cleanup
+
+Archive published studies. Before deleting a draft, open its editor and remove
+each image. A database constraint blocks deleting the study while file records
+exist. An interrupted upload retains a record labelled Incomplete upload;
+remove it after the upload has stopped, then select the image again. The file
+is removed through Storage before its record. Compare the Storage manifest to
+study_media periodically to identify unlinked files from older app versions;
+confirm provenance and backup before approving any permanent removal.

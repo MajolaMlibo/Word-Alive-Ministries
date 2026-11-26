@@ -194,7 +194,8 @@ export default function CalendarScreen() {
           .order('study_date', { ascending: true }),
         supabase
           .from('daily_readings')
-          .select('*')
+          .select('*, reading_plans!inner(status)')
+          .eq('reading_plans.status', 'published')
           .eq('status', 'published')
           .gte('scheduled_date', start)
           .lte('scheduled_date', end)

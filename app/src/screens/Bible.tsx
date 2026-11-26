@@ -862,6 +862,12 @@ function BibleReader({
             </View>
           ) : null}
 
+          {!loading && passage && !passage.verses?.length && <View>
+            <Text style={styles.scripture}>{passage.text}</Text>
+            <TouchableOpacity accessibilityRole="button" onPress={() => void load()}>
+              <Text style={styles.scripture}>Try again</Text>
+            </TouchableOpacity>
+          </View>}
           {passage?.verses?.filter((v: any) => !verse || v.verse === verse).map((v: any) => {
             const verseSave = verseSaveByNumber.get(v.verse);
             const useHighlightInk = colorScheme === 'dark' && verseSave?.highlight_color && !selectedVerses.includes(v.verse);
