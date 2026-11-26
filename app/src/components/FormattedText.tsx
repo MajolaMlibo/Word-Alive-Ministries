@@ -21,8 +21,10 @@ export default function FormattedText({ text, styles, containerStyle }: Props) {
     if (line.startsWith('## ')) return <InlineText key={index} value={line.slice(3)} styles={{ ...styles, formattedText: styles.formattedHeading }} />;
     if (line.startsWith('> ')) return <View key={index} style={styles.formattedQuote}><InlineText value={line.slice(2)} styles={styles} /></View>;
     const numbered = line.match(/^(\d+)\.\s(.*)$/);
-    if (numbered) return <View key={index} style={styles.formattedListRow}><Text style={styles.formattedListMarker}>{numbered[1]}.</Text><InlineText value={numbered[2]} styles={styles} /></View>;
-    if (line.startsWith('- ')) return <View key={index} style={styles.formattedListRow}><Text style={styles.formattedListMarker}>•</Text><InlineText value={line.slice(2)} styles={styles} /></View>;
+    if (numbered || /^[-*] /.test(line)) return <View key={index} style={styles.formattedListRow}>
+      <Text style={styles.formattedListMarker}>{numbered ? numbered[1] + '.' : '•'}</Text>
+      <View style={{ flex: 1 }}><InlineText value={numbered ? numbered[2] : line.slice(2)} styles={styles} /></View>
+    </View>;
     return <InlineText key={index} value={line || ' '} styles={styles} />;
   })}</View>;
 }
