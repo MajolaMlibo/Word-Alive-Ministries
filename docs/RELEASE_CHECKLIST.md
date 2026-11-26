@@ -1,5 +1,11 @@
 # Release Checklist
 
+## Reading history and editor safeguards
+
+- Apply the reading safeguards migration only after production approval. A completed reading or its parent plan cannot be deleted, including from an older client. Use Edit → Archived to keep history.
+- Members retain their own reading details. Directory-authorised staff see a selected member’s count. Test granting and revoking directory access on the combined app.
+- On Android and iOS, reopen the published Hebrews notes, verify quote and bold formatting, edit a draft and verify the keyboard and toolbar. Test navigation from a link inside the editor.
+
 ## Integrated reader and Study checks — 24 November 2026
 
 The combined branch includes the fixes from #59 through #71. TypeScript, all
