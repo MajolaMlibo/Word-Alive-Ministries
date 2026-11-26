@@ -172,9 +172,9 @@ const styles = makeStyles(colors, fonts);
       {/* ACHIEVEMENT */}
       <View style={styles.achievement}>
         <Ionicons name="trophy" size={28} color={colors.accent} />
-        <Text style={styles.achievementTitle}>Keep Going!</Text>
+        <Text style={styles.achievementTitle}>Numbers 6:24 · KJV</Text>
         <Text style={styles.achievementText}>
-          Every completed reading strengthens your daily walk with God.
+          The LORD bless thee, and keep thee:
         </Text>
       </View>
 

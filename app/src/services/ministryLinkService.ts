@@ -6,8 +6,8 @@ export async function getVisibleMinistryLinks() {
     .from('ministry_links')
     .select('*')
     .eq('is_visible', true)
-    .order('sort_order', { ascending: true })
-    .order('label', { ascending: true });
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
 
   return { links: (data as MinistryLink[]) || [], error };
 }

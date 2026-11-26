@@ -309,6 +309,23 @@ export default function HomeScreen() {
     null
   );
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [liveStreams, setLiveStreams] = useState<{ id: string; platform: string; stream_url: string }[]>([]);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    let loading = false;
+    async function refreshStreams() {
+      if (loading) return;
+      loading = true;
+      try {
+        const { data } = await supabase.from('live_streams').select('id,platform,stream_url')
+          .eq('is_live', true).order('updated_at', { ascending: false });
+        if (active) setLiveStreams((data ?? []).filter(stream => /^https:\/\//i.test(stream.stream_url)));
+      } finally { loading = false; }
+    }
+    void refreshStreams();
+    const interval = setInterval(refreshStreams, 60000);
+    return () => { active = false; clearInterval(interval); };
+  }, []));
   const [noticeOrder, setNoticeOrder] = useState<string[]>([]);
   const [announcementsError, setAnnouncementsError] = useState<string | null>(
     null
@@ -689,6 +706,10 @@ export default function HomeScreen() {
       </View>
 
       {/* ANNOUNCEMENTS */}
+      {liveStreams.map(stream => <TouchableOpacity key={stream.id} accessibilityRole="link"
+        style={styles.primaryButton} onPress={() => void openAnnouncementLink(stream.stream_url)}>
+        <Text style={styles.primaryButtonText}>{stream.platform} · Watch live</Text>
+      </TouchableOpacity>)}
       <View style={styles.announcementsSection}>
         <View style={styles.sectionHeader}>
           <Ionicons name="megaphone" size={20} color={colors.primary} />
