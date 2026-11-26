@@ -57,7 +57,6 @@ export type LiveStreamInput = {
 export type MinistryLinkInput = {
   label: string;
   url: string;
-  sortOrder: number;
   isVisible: boolean;
 };
 
@@ -289,8 +288,8 @@ export async function getAdminMinistryLinks() {
   const { data, error } = await supabase
     .from('ministry_links')
     .select('*')
-    .order('sort_order', { ascending: true })
-    .order('label', { ascending: true });
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
 
   return { links: (data as MinistryLink[]) || [], error };
 }
@@ -303,7 +302,6 @@ export async function saveMinistryLink(
   const payload = {
     label: input.label.trim(),
     url: input.url.trim(),
-    sort_order: input.sortOrder,
     is_visible: input.isVisible,
   };
 

@@ -70,7 +70,6 @@ const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.
   { key: 'studies', label: 'Studies', icon: 'school-outline' },
   { key: 'plans', label: 'Plans', icon: 'list-outline' },
   { key: 'readings', label: 'Readings', icon: 'book-outline' },
-  { key: 'streams', label: 'Streams', icon: 'videocam-outline' },
   { key: 'links', label: 'Links', icon: 'link-outline' },
   { key: 'members', label: 'Members', icon: 'people-outline' },
 ];
@@ -805,7 +804,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
 }
 
 function LinksManager({ administratorId, styles }: { administratorId: string; styles: any }) {
-  const blank = () => ({ label: '', url: '', sortOrder: '50', isVisible: true });
+  const blank = () => ({ label: '', url: '', isVisible: true });
   const [links, setLinks] = useState<MinistryLink[]>([]);
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState<MinistryLink | null>(null);
@@ -821,23 +820,19 @@ function LinksManager({ administratorId, styles }: { administratorId: string; st
   const reset = () => { setEditing(null); setForm(blank()); };
   const edit = (link: MinistryLink) => {
     setEditing(link);
-    setForm({ label: link.label, url: link.url, sortOrder: String(link.sort_order), isVisible: link.is_visible });
+    setForm({ label: link.label, url: link.url, isVisible: link.is_visible });
   };
   const save = async () => {
-    const sortOrder = Number(form.sortOrder);
     if (!form.label.trim() || form.label.trim().length > 80 || !form.url.trim() || !isHttpsUrl(form.url)) {
       Alert.alert('Check link details', 'Use a channel name of 80 characters or fewer and a valid HTTPS link.'); return;
     }
-    if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 9999) {
-      Alert.alert('Check display order', 'Use a whole number from 0 to 9,999. Lower numbers appear first.'); return;
-    }
     setSaving(true);
-    const { link, error } = await saveMinistryLink({ label: form.label, url: form.url, sortOrder, isVisible: form.isVisible }, administratorId, editing?.id);
+    const { link, error } = await saveMinistryLink({ label: form.label, url: form.url, isVisible: form.isVisible }, administratorId, editing?.id);
     setSaving(false);
     if (error || !link) {
       Alert.alert('Unable to save ministry link', 'Channel names must be unique. Please check the details and try again.'); return;
     }
-    setLinks((current) => [...current.filter((item) => item.id !== link.id), link].sort((first, second) => first.sort_order - second.sort_order || first.label.localeCompare(second.label)));
+    setLinks((current) => [...current.filter((item) => item.id !== link.id), link].sort((first, second) => first.created_at.localeCompare(second.created_at) || first.id.localeCompare(second.id)));
     reset();
   };
   const remove = (link: MinistryLink) => Alert.alert('Delete ministry link?', 'Members will no longer see this channel link.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { const { error } = await deleteMinistryLink(link.id); if (error) Alert.alert('Unable to delete ministry link', 'Please try again.'); else { setLinks((current) => current.filter((item) => item.id !== link.id)); if (editing?.id === link.id) reset(); } } }]);
@@ -846,12 +841,11 @@ function LinksManager({ administratorId, styles }: { administratorId: string; st
     <EditorCard title={editing ? 'Edit ministry link' : 'New ministry link'} styles={styles}>
       <Field label="Channel name" value={form.label} onChangeText={(label) => setForm({ ...form, label })} placeholder="WhatsApp Channel" styles={styles} />
       <Field label="HTTPS link" value={form.url} onChangeText={(url) => setForm({ ...form, url })} keyboardType="url" placeholder="https://" styles={styles} />
-      <Field label="Display order (lower appears first)" value={form.sortOrder} onChangeText={(sortOrder) => setForm({ ...form, sortOrder })} keyboardType="numeric" styles={styles} />
       <View style={styles.switchRow}><Text style={styles.switchLabel}>Visible to members</Text><Switch value={form.isVisible} onValueChange={(isVisible) => setForm({ ...form, isVisible })} /></View>
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Ministry links</Text>
-    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : links.length ? links.map((link) => <ContentListCard key={link.id} title={link.label} subtitle={`${link.is_visible ? 'Visible' : 'Hidden'} • Position ${link.sort_order}`} onEdit={() => edit(link)} onDelete={() => remove(link)} styles={styles} />) : <EmptyState icon="link-outline" message="No ministry links yet." styles={styles} />}
+    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : links.length ? links.map((link) => <ContentListCard key={link.id} title={link.label} subtitle={`${link.is_visible ? 'Visible' : 'Hidden'}`} onEdit={() => edit(link)} onDelete={() => remove(link)} styles={styles} />) : <EmptyState icon="link-outline" message="No ministry links yet." styles={styles} />}
   </View>;
 }
 
@@ -890,7 +884,15 @@ function StreamsManager({ administratorId, styles }: { administratorId: string; 
 }
 
 function EditorCard({ title, children, styles }: { title: string; children: React.ReactNode; styles: any }) {
-  return <View style={styles.editorCard}><Text style={styles.editorTitle}>{title}</Text>{children}</View>;
+  const [expanded, setExpanded] = useState(false);
+  const creating = title.startsWith('New ');
+  return <View style={styles.editorCard}>
+    {creating ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded }}
+      onPress={() => setExpanded(open => !open)}>
+      <Text style={styles.editorTitle}>{expanded ? '−' : '+'} {title}</Text>
+    </TouchableOpacity> : <Text style={styles.editorTitle}>{title}</Text>}
+    {(!creating || expanded) && children}
+  </View>;
 }
 
 function ContentListCard({ title, subtitle, onEdit, onDelete, styles }: { title: string; subtitle: string; onEdit: () => void; onDelete?: () => void; styles: any }) {
@@ -905,6 +907,12 @@ function EmptyState({ icon, message, styles }: { icon: keyof typeof Ionicons.gly
 }
 
 export default function AdminScreen({ registerMemberBack }: { registerMemberBack: (action: (() => void) | null) => void }) {
+  const [showIntroduction, setShowIntroduction] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowIntroduction(false), 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
@@ -954,7 +962,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       style={styles.container}
     >
-      <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>
+      {showIntroduction && <View style={styles.hero}><Ionicons color="#FFF" name="shield-checkmark" size={31} /><Text style={styles.heroTitle}>Administration</Text><Text style={styles.heroText}>Manage ministry content and prayer-request handling.</Text></View>}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={styles.sectionTabsContent}>
         {SECTIONS.filter(item => (item.key !== 'prayer' || prayerAccess.may_read) && (item.key !== 'members' || viewMembers)).map((item) => <TouchableOpacity key={item.key} onPress={() => setSection(item.key)} style={[styles.sectionTab, section === item.key && styles.sectionTabActive]}><Ionicons color={section === item.key ? '#FFF' : colors.primary} name={item.icon} size={17} /><Text style={[styles.sectionTabText, section === item.key && styles.sectionTabTextActive]}>{item.label}</Text></TouchableOpacity>)}
       </ScrollView>
@@ -963,7 +971,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
-      {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'announcements' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'members' && viewMembers ? <MembersManager canEdit={manageMembers} registerMemberBack={registerMemberBack} styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>

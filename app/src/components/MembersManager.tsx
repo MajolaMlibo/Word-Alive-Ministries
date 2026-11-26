@@ -7,7 +7,7 @@ import { supabase } from '../services/supabase';
 
 type Member = { member_id: string; display_name: string; email: string; member_role: AppRole; prayer_access: boolean; directory_access: boolean };
 const assignable: AppRole[] = ['member', 'admin', 'pastor'];
-const filters = ['all', ...assignable, 'editor'] as const;
+const filters = ['all', ...assignable] as const;
 type Filter = typeof filters[number];
 const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 const permissions = (role: AppRole, care: boolean, directory: boolean) => {
