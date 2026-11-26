@@ -259,7 +259,7 @@ upgrade still require verification.
 
 ### Ministry push alerts
 
-- [ ] Obtain owner approval before applying 202611260001_ministry_alerts.sql, configuring credentials, or starting a build. The migration enables pg_net and adds opt-in and publication flags. Existing devices default to off.
+- [x] On 26 November 2026, Mlibo reported that the ministry alerts migration ran successfully in word-alive-prod (Success. No rows returned). Existing devices default to off. Separate approval is required for credential changes and builds.
 - [ ] In the Expo project owned by mlibo, verify Android FCM v1 credentials and the matching Firebase client configuration for com.wordaliveministries.app. For iOS verify APNs credentials before a separate iOS build. Verify Expo push access-token security settings: this sender uses the standard endpoint without an access token. If enhanced security is enabled, configure server-side authenticated sending before activation.
 - [ ] Use an installed push-enabled app. In More > Profile, enable Ministry alerts on one device and leave the other off. On Android verify the Ministry alerts notification channel is enabled.
 - [ ] Save a test stream as live, confirm only the subscribed phone receives the alert, and tap it from the background and after a cold start. Confirm Home opens with Watch live. End the stream before tapping another test alert and confirm Home reports it has ended. Editing an already-live stream should stay silent.
