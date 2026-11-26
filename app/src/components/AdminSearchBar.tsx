@@ -2,6 +2,7 @@ import React from 'react';
 import { Keyboard, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '../theme/AccessibilityContext';
+import { spacing } from '../theme/theme';
 
 type Props = {
   placeholder: string;
@@ -52,7 +53,7 @@ export default function AdminSearchBar(props: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: spacing.sm },
   field: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1 },
   input: { flex: 1, minWidth: 0, minHeight: 48, paddingHorizontal: 10 },
   control: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
