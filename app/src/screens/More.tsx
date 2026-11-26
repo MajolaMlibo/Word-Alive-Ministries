@@ -1,3 +1,4 @@
+import { setDeviceSubscription } from "../services/ministryAlerts";
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   Alert,
@@ -149,6 +150,8 @@ export default function MoreScreen() {
           onPress: () => {
             void (async () => {
               try {
+                const { data } = await supabase.auth.getSession();
+                if (data.session) await setDeviceSubscription(data.session.user.id, false);
                 const { error } = await supabase.auth.signOut({ scope: 'local' });
 
                 if (error) {

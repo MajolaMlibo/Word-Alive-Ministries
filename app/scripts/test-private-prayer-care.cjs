@@ -26,11 +26,25 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     const baseline = migration('202611070001_initial_schema.sql');
     await db.exec(baseline.split('insert into storage.buckets')[0]
       .replace('create extension if not exists pgcrypto;', '') + 'commit;');
+    await db.exec(`create schema net; create table net.sent(body jsonb);
+      create function net.http_post(url text, body jsonb) returns bigint language sql as
+      $$ insert into net.sent values(body) returning 1::bigint $$;`);
+    await db.exec(migration('202611260001_ministry_alerts.sql').replace('create extension if not exists pg_net;', ''));
     for (const [id,name,role] of [[member,'Older Member','member'],[other,'Other Member','member'],
       [pastor,'Test Pastor','pastor'],[admin,'Care Admin','admin'],[manager,'Access Manager','admin']]) {
       await rows('insert into auth.users values($1,$2,null)', [id, name+'@example.invalid']);
       await rows('update public.user_roles set role=$2 where user_id=$1',[id,role]);
     }
+    await rows("insert into push_tokens(user_id,token,ministry_alerts) values($1,'enabled',true),($2,'disabled',false)", [member,other]);
+    await db.exec(`insert into live_streams(platform,stream_url,is_live) values('Test','https://example.org',false);
+      update live_streams set is_live=true; update live_streams set is_live=true; update live_streams set is_live=false;
+      insert into announcements(title,message,status) values('Draft','Test','draft');
+      update announcements set status='published'; update announcements set send_push=true;
+      insert into announcements(title,message,status,send_push) values('Alert','Test','published',true);
+      update announcements set title=title;`);
+    const sent = (await rows('select body from net.sent')).flatMap(row => row.body);
+    assert.deepEqual(sent.map(message => [message.to,message.data.kind]), [['enabled','live'],['enabled','notice']]);
+    console.log('PASS: opted-in devices only, live transition once, selected publication once, ordinary edits silent.');
     await rows("insert into prayer_requests(id,user_id,description,status,is_public) values($1,$2,'legacy','approved',true)",[target,member]);
     await rows("insert into prayer_requests(user_id,description) select $1,'Example '||n from generate_series(1,105) n",[other]);
     await db.exec(migration('202611240001_private_prayer_care.sql'));
