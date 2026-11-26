@@ -322,7 +322,7 @@ function ContentActions({
 }
 
 function AnnouncementsManager({ administratorId, styles }: { administratorId: string; styles: any }) {
-  const blank = () => ({ title: '', message: '', status: 'draft' as ContentStatus, expiryDate: '', expiryTime: '', actionLabel: '', actionUrl: '' });
+  const blank = () => ({ sendPush: false, title: '', message: '', status: 'draft' as ContentStatus, expiryDate: '', expiryTime: '', actionLabel: '', actionUrl: '' });
   const list = useContentList(getAdminAnnouncements);
   const { items: announcements, loading } = list;
   const [form, setForm] = useState(blank);
@@ -342,6 +342,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
   const startEditing = (announcement: Announcement) => {
     const expiry = splitDateTime(announcement.expires_at);
     applyForm({
+      sendPush: false,
       title: announcement.title,
       message: announcement.message,
       status: announcement.status,
@@ -387,6 +388,7 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
     }
     setSaving(true);
     const { announcement, error } = await saveAnnouncement({
+      sendPush: form.sendPush && form.status === "published" && editing?.status !== "published",
       title: form.title,
       message: form.message,
       status: form.status,
@@ -420,6 +422,11 @@ function AnnouncementsManager({ administratorId, styles }: { administratorId: st
         <Field label="Message" value={form.message} onChangeText={(message) => setForm(current => ({ ...current, message }))} multiline documentId={editing?.id || 'new-notice-' + draftNumber} styles={styles} />
         <Text style={styles.fieldLabel}>Status</Text>
         <ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
+        {form.status === 'published' && editing?.status !== 'published' && <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>Send push notification</Text>
+          <Switch accessibilityLabel="Send push notification" value={form.sendPush}
+            onValueChange={sendPush => setForm(current => ({ ...current, sendPush }))} />
+        </View>}
         <DateTimeField label="Expiry date (optional)" value={form.expiryDate} onChange={(expiryDate) => setForm(current => ({ ...current, expiryDate }))} mode="date" optional styles={styles} />
         <DateTimeField label="Expiry time (optional)" value={form.expiryTime} onChange={(expiryTime) => setForm(current => ({ ...current, expiryTime }))} mode="time" optional styles={styles} />
         <Field label="Action button label (optional)" value={form.actionLabel} onChangeText={(actionLabel) => setForm(current => ({ ...current, actionLabel }))} styles={styles} />

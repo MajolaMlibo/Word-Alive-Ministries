@@ -256,3 +256,12 @@ upgrade still require verification.
 - [ ] On the updated client, open Administration > Notices > New stream. Save a live HTTPS stream. Confirm Watch live appears above announcements on member Home, opens the correct platform, and disappears after switching off and saving. Home checks on entry and every minute while focused.
 - [ ] Confirm six New forms open on demand, existing items open directly for editing, Links follow creation time, the Editor filter is hidden, the Administration introduction disappears after ten seconds, and Profile shows Numbers 6:24.
 - [ ] In Administration, confirm the first notice, study and stream card has space below search. In Members and Prayer, check spacing above and below the filter buttons.
+
+### Ministry push alerts
+
+- [ ] Obtain owner approval before applying 202611260001_ministry_alerts.sql, configuring credentials, or starting a build. The migration enables pg_net and adds opt-in and publication flags. Existing devices default to off.
+- [ ] In the Expo project owned by mlibo, verify Android FCM v1 credentials and the matching Firebase client configuration for com.wordaliveministries.app. For iOS verify APNs credentials before a separate iOS build. Verify Expo push access-token security settings: this sender uses the standard endpoint without an access token. If enhanced security is enabled, configure server-side authenticated sending before activation.
+- [ ] Use an installed push-enabled app. In More > Profile, enable Ministry alerts on one device and leave the other off. On Android verify the Ministry alerts notification channel is enabled.
+- [ ] Save a test stream as live, confirm only the subscribed phone receives the alert, and tap it from the background and after a cold start. Confirm Home opens with Watch live. End the stream before tapping another test alert and confirm Home reports it has ended. Editing an already-live stream should stay silent.
+- [ ] Publish one notice with Send push notification off, then another with it on. Expect one alert for the second notice only. Editing the published message should stay silent. Disable alerts or sign out, then verify later publications stay silent.
+- Delivery is best effort. Local tests capture outgoing payloads without contacting Expo. The initial sender does not automate Expo receipt polling, retry failed batches, or remove stale tokens from delivery receipts. Monitor during the pilot and add receipt handling before broad distribution.

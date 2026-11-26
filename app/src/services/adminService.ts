@@ -10,6 +10,7 @@ import {
 import { supabase } from './supabase';
 
 export type AnnouncementInput = {
+  sendPush?: boolean;
   title: string;
   message: string;
   status: ContentStatus;
@@ -78,6 +79,7 @@ export async function saveAnnouncement(
   announcementId?: string
 ) {
   const payload = {
+    ...(input.sendPush ? { send_push: true } : {}),
     title: input.title.trim(),
     message: input.message.trim(),
     status: input.status,

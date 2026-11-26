@@ -16,6 +16,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { pushSupported } from '../services/ministryAlerts';
 import { supabase } from '../services/supabase';
 import {
   getSouthAfricaDate,
@@ -309,6 +310,32 @@ export default function HomeScreen() {
     null
   );
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const scroll = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const [alertTarget, setAlertTarget] = useState<{ kind: string; id: string; request: string } | null>(null);
+  const [checkedAlert, setCheckedAlert] = useState('');
+  useEffect(() => {
+    if (!pushSupported) return;
+    let active = true;
+    let subscription: { remove(): void } | undefined;
+    void import('expo-notifications').then(async api => {
+      if (!active) return;
+      function open(response: ReturnType<typeof api.getLastNotificationResponse>) {
+        if (!active || !response) return;
+        const { data } = response.notification.request.content;
+        if (!data || (data.kind !== 'live' && data.kind !== 'notice') || typeof data.contentId !== 'string') return;
+        navigation.navigate('Home');
+        scroll.current?.scrollTo({ y: 0, animated: false });
+        setAlertTarget({ kind: data.kind, id: data.contentId, request: response.notification.request.identifier });
+        api.clearLastNotificationResponse();
+      }
+      api.setNotificationHandler({ handleNotification: async () => ({
+        shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false,
+      }) });
+      subscription = api.addNotificationResponseReceivedListener(open);
+      open(api.getLastNotificationResponse());
+    }).catch(() => {});
+    return () => { active = false; subscription?.remove(); };
+  }, [navigation]);
   const [liveStreams, setLiveStreams] = useState<{ id: string; platform: string; stream_url: string }[]>([]);
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -317,15 +344,16 @@ export default function HomeScreen() {
       if (loading) return;
       loading = true;
       try {
-        const { data } = await supabase.from('live_streams').select('id,platform,stream_url')
+        const { data, error } = await supabase.from('live_streams').select('id,platform,stream_url')
           .eq('is_live', true).order('updated_at', { ascending: false });
+        if (active && !error) setCheckedAlert(alertTarget?.request ?? '');
         if (active) setLiveStreams((data ?? []).filter(stream => /^https:\/\//i.test(stream.stream_url)));
       } finally { loading = false; }
     }
     void refreshStreams();
     const interval = setInterval(refreshStreams, 60000);
     return () => { active = false; clearInterval(interval); };
-  }, []));
+  }, [alertTarget]));
   const [noticeOrder, setNoticeOrder] = useState<string[]>([]);
   const [announcementsError, setAnnouncementsError] = useState<string | null>(
     null
@@ -620,13 +648,23 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
+    <ScrollView ref={scroll}
       style={styles.container}
       contentContainerStyle={{ paddingBottom: spacing.xl }}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+      {alertTarget && <View style={styles.announcementCard}>
+        {alertTarget.kind === 'live' ? (() => {
+          const stream = liveStreams.find(item => item.id === alertTarget.id);
+          if (checkedAlert !== alertTarget.request) return <Text style={styles.announcementTitle}>Checking live status…</Text>;
+          return stream ? <TouchableOpacity style={styles.primaryButton} onPress={() => void openAnnouncementLink(stream.stream_url)}>
+            <Text style={styles.primaryButtonText}>{stream.platform} · Watch live</Text>
+          </TouchableOpacity> : <Text style={styles.announcementTitle}>This stream has ended.</Text>;
+        })() : <Text style={styles.announcementTitle}>{announcements.find(item => item.id === alertTarget.id)?.title ?? 'Church announcements'}</Text>}
+        <TouchableOpacity onPress={() => setAlertTarget(null)}><Text style={styles.announcementToggle}>Dismiss</Text></TouchableOpacity>
+      </View>}
       {/* HERO */}
       <View style={styles.hero}>
         <View style={styles.heroTop}>

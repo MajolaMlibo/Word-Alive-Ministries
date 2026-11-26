@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { deviceSubscription, pushSupported, setDeviceSubscription } from "../services/ministryAlerts";
 import { AccountDeletion } from '../components/AccountDeletion';
 import { supabase } from "../services/supabase";
 import { useAccessibility } from "../theme/AccessibilityContext";
@@ -30,6 +31,15 @@ const {
 
 const styles = makeStyles(colors, fonts);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [alerts, setAlerts] = useState(false);
+  const [savingAlerts, setSavingAlerts] = useState(false);
+  useEffect(() => {
+    let active = true;
+    if (profile && pushSupported) void deviceSubscription(profile.id).then(value => {
+      if (active) setAlerts(value);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [profile?.id]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [avatarSaving, setAvatarSaving] = useState(false);
@@ -178,6 +188,17 @@ const styles = makeStyles(colors, fonts);
         </Text>
       </View>
 
+      {profile && pushSupported && <TouchableOpacity style={styles.achievement} disabled={savingAlerts}
+        accessibilityRole="switch" accessibilityState={{ checked: alerts, disabled: savingAlerts }}
+        onPress={async () => {
+          setSavingAlerts(true);
+          try { await setDeviceSubscription(profile.id, !alerts); setAlerts(!alerts); }
+          catch (error) { Alert.alert('Unable to change ministry alerts', error instanceof Error ? error.message : 'Please try again.'); }
+          finally { setSavingAlerts(false); }
+        }}>
+        <Text style={styles.achievementTitle}>Ministry alerts · {alerts ? 'On' : 'Off'}</Text>
+        <Text style={styles.achievementText}>Live sermons and selected church notices on this device.</Text>
+      </TouchableOpacity>}
       {profile && <AccountDeletion key={profile.id} userId={profile.id} />}
     </ScrollView>
   );

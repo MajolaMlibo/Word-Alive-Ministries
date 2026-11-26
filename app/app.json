@@ -25,6 +25,7 @@
     },
 
     "plugins": [
+      "expo-notifications",
       "expo-web-browser",
       "expo-font",
       "expo-system-ui",

@@ -1,28 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-
 export type AvatarUpload = {
   path: string;
   signedUrl: string;
 };
-
-export async function registerNotifications(userId: string) {
-  if (!Device.isDevice) return;
-
-  const { status } = await Notifications.requestPermissionsAsync();
-
-  if (status !== 'granted') return;
-
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
-
-  await supabase.from('push_tokens').upsert({
-    user_id: userId,
-    token,
-  });
-}
 
 export async function getAvatarSignedUrl(path: string) {
   const { data, error } = await supabase.storage
