@@ -35,10 +35,25 @@ export type ScriptureReference = {
 };
 
 export type ScriptureReferenceValidation =
-  | { isValid: true; normalizedReference: string; reference: ScriptureReference }
+  | { isValid: true; normalizedReference: string; reference: ScriptureReference; passages: ScripturePassage[] }
   | { isValid: false; error: string; suggestedReference?: string };
 
+export type ScriptureTextToken = {
+  text: string;
+  reference?: string;
+};
+
 const bookByKey = new Map(BIBLE_BOOKS.map(([book, chapters]) => [book.toLowerCase(), { book, chapters }]));
+const bookPattern = BIBLE_BOOKS
+  .map(([book]) => book.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+'))
+  .sort((left, right) => right.length - left.length)
+  .join('|');
+
+// Capture the separator separately so punctuation and whitespace remain visible text.
+const referenceInTextPattern = new RegExp(
+  `(^|[^A-Za-z0-9]\\s*)((?:${bookPattern})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?(?:\\s*[-–—]\\s*\\d+)?)(?![A-Za-z0-9:–—-])`,
+  'gi',
+);
 
 // These aliases are explicit, unambiguous variants in supplied reading plans.
 // They are offered for staff confirmation and are never saved automatically.
@@ -155,7 +170,7 @@ export function validateScriptureReference(input: string): ScriptureReferenceVal
     return invalid(`Use the app’s canonical book name: “${normalizedReference}”.`, normalizedReference);
   }
 
-  return { isValid: true, normalizedReference, reference: { passages } };
+  return { isValid: true, normalizedReference, reference: { passages }, passages };
 }
 
 export function getFirstChapterFromScriptureReference(scriptureRef?: string) {
@@ -164,6 +179,14 @@ export function getFirstChapterFromScriptureReference(scriptureRef?: string) {
   if (!validation.isValid) return null;
   const passage = validation.reference.passages[0];
   return { book: passage.book, chapter: passage.startChapter };
+}
+
+export function getFirstPassageFromScriptureReference(reference?: string) {
+  if (!reference) return null;
+  const validation = validateScriptureReference(reference);
+  if (!validation.isValid) return null;
+  const passage = validation.reference.passages[0];
+  return { book: passage.book, chapter: passage.startChapter, verse: passage.startVerse };
 }
 
 export function getFirstVerseReference(scriptureRef: string) {
@@ -175,4 +198,30 @@ export function getFirstVerseReference(scriptureRef: string) {
 
 export function getChapterCount(book: string) {
   return bookByKey.get(book.toLowerCase())?.chapters ?? 1;
+}
+
+/**
+ * Splits ordinary rich-text content into plain and clickable Scripture tokens.
+ * Only complete, canonical, validated references become links; ambiguous prose stays text.
+ */
+export function tokenizeScriptureReferences(value: string): ScriptureTextToken[] {
+  const tokens: ScriptureTextToken[] = [];
+  let cursor = 0;
+  referenceInTextPattern.lastIndex = 0;
+
+  for (let match = referenceInTextPattern.exec(value); match; match = referenceInTextPattern.exec(value)) {
+    const separator = match[1] || '';
+    const candidate = match[2];
+    const candidateStart = match.index + separator.length;
+    if (candidateStart > cursor) tokens.push({ text: value.slice(cursor, candidateStart) });
+
+    const validation = validateScriptureReference(candidate);
+    tokens.push(validation.isValid
+      ? { text: candidate, reference: validation.normalizedReference }
+      : { text: candidate });
+    cursor = candidateStart + candidate.length;
+  }
+
+  if (cursor < value.length || !tokens.length) tokens.push({ text: value.slice(cursor) });
+  return tokens;
 }

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { useRoute } from '@react-navigation/native';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 import {
@@ -47,6 +48,7 @@ import {
   BIBLE_BOOKS,
   getChapterCount,
   getFirstChapterFromScriptureReference,
+  getFirstPassageFromScriptureReference,
   validateScriptureReference,
 } from '../services/scriptureReference';
 
@@ -99,6 +101,7 @@ function parseReference(input: string) {
 }
 
 export default function Bible() {
+  const route = useRoute<any>();
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
@@ -108,12 +111,26 @@ export default function Bible() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [linkedReference, setLinkedReference] = useState<string | null>(null);
+  const handledLinkRequest = useRef<string | null>(null);
   const scheduledReferenceError = reading
     ? (() => {
       const validation = validateScriptureReference(reading.scripture_ref);
       return validation.isValid ? null : validation.error;
     })()
     : null;
+
+  useEffect(() => {
+    const reference = route.params?.scriptureReference;
+    const nonce = route.params?.scriptureLinkNonce;
+    const requestKey = typeof reference === 'string' ? `${reference}:${String(nonce ?? '')}` : null;
+    if (!requestKey || requestKey === handledLinkRequest.current) return;
+    if (!getFirstPassageFromScriptureReference(reference)) return;
+
+    handledLinkRequest.current = requestKey;
+    setLinkedReference(reference);
+    setTab('read');
+  }, [route.params?.scriptureLinkNonce, route.params?.scriptureReference]);
 
   const loadReading = useCallback(async () => {
     setLoading(true);
@@ -254,10 +271,13 @@ export default function Bible() {
       {tab === 'read' ? (
         <BibleReader
           key={
-            reading && !completed
+            linkedReference
+              ? `linked-reference-${linkedReference}`
+              : reading && !completed
               ? `daily-reading-${reading.id}`
               : 'personal-reading'
           }
+          directReference={linkedReference || undefined}
           dailyReadingReference={
             reading && !completed ? reading.scripture_ref : undefined
           }
@@ -339,11 +359,14 @@ export default function Bible() {
 }
 
 function BibleReader({
+  directReference,
   dailyReadingReference,
 }: {
+  directReference?: string;
   dailyReadingReference?: string;
 }) {
   const { colors, fonts, colorScheme } = useAccessibility();
+  const directReferenceStart = getFirstPassageFromScriptureReference(directReference);
   const dailyReferenceValidation = dailyReadingReference
     ? validateScriptureReference(dailyReadingReference)
     : null;
@@ -356,20 +379,22 @@ function BibleReader({
   const dailyPassageLabels = dailyReferenceValidation?.isValid
     ? dailyReferenceValidation.normalizedReference.split('; ')
     : [];
-  const isGuidedDailyReading = Boolean(dailyReadingStart);
+  const initialReferenceStart = directReferenceStart ?? dailyReadingStart;
+  const isDirectReference = Boolean(directReferenceStart);
+  const isGuidedDailyReading = Boolean(dailyReadingStart) && !isDirectReference;
   const dailyReferenceError = dailyReferenceValidation && !dailyReferenceValidation.isValid
     ? dailyReferenceValidation.error
     : null;
 
   const [book, setBook] = useState<string>(
-    () => dailyReadingStart?.book ?? 'Genesis'
+    () => initialReferenceStart?.book ?? 'Genesis'
   );
-  const [chapter, setChapter] = useState(() => dailyReadingStart?.chapter ?? 1);
-  const [verse, setVerse] = useState<number | undefined>();
+  const [chapter, setChapter] = useState(() => initialReferenceStart?.chapter ?? 1);
+  const [verse, setVerse] = useState<number | undefined>(() => initialReferenceStart?.verse);
   const [input, setInput] = useState(
     () =>
-      dailyReadingStart
-        ? `${dailyReadingStart.book} ${dailyReadingStart.chapter}`
+      initialReferenceStart
+        ? `${initialReferenceStart.book} ${initialReferenceStart.chapter}${initialReferenceStart.verse ? `:${initialReferenceStart.verse}` : ''}`
         : 'Genesis'
   );
   const [passage, setPassage] = useState<any>(null);
@@ -408,7 +433,7 @@ function BibleReader({
   }, []);
 
   useEffect(() => {
-    if (isGuidedDailyReading) return;
+    if (isGuidedDailyReading || isDirectReference) return;
 
     (async () => {
       const saved = await getLastPosition();
@@ -425,7 +450,7 @@ function BibleReader({
       }
       setVerse(saved?.verse);
     })();
-  }, [isGuidedDailyReading]);
+  }, [isDirectReference, isGuidedDailyReading]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -435,13 +460,13 @@ function BibleReader({
       const ref = `${book} ${chapter}`;
       const data = await fetchScripture(ref);
       setPassage(data);
-      if (!isGuidedDailyReading) {
+      if (!isGuidedDailyReading && !isDirectReference) {
         saveLastPosition(book, chapter, verse);
       }
     } finally {
       setLoading(false);
     }
-  }, [book, chapter, isGuidedDailyReading, verse]);
+  }, [book, chapter, isDirectReference, isGuidedDailyReading, verse]);
 
   useEffect(() => {
     load();
