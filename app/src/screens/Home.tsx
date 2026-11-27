@@ -266,7 +266,7 @@ function AnnouncementCard({
             <Text style={styles.announcementActionButtonText}>
               {announcement.action_label}
             </Text>
-            <Ionicons name="open-outline" size={17} color="#FFF" />
+            <Ionicons name="open-outline" size={17} color="#FFF" style={styles.announcementActionIcon} />
           </TouchableOpacity>
         ) : null}
         {isRead ? (
@@ -1250,17 +1250,28 @@ function makeStyles(
       alignItems: 'center',
       backgroundColor: colors.primary,
       borderRadius: 14,
-      flexDirection: 'row',
       justifyContent: 'center',
       marginTop: spacing.md,
+      minHeight: 48,
+      paddingHorizontal: 48,
       paddingVertical: 12,
+      position: 'relative',
     },
 
     announcementActionButtonText: {
       color: '#FFF',
+      flexShrink: 1,
       fontSize: fonts.body,
       fontWeight: '700',
-      marginRight: spacing.xs,
+      lineHeight: fonts.body * 1.3,
+      textAlign: 'center',
+      width: '100%',
+    },
+
+    announcementActionIcon: {
+      alignSelf: 'center',
+      position: 'absolute',
+      right: spacing.md,
     },
 
     announcementReadButton: {
