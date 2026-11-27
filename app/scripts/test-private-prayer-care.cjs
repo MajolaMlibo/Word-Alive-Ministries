@@ -30,6 +30,7 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
       create function net.http_post(url text, body jsonb) returns bigint language sql as
       $$ insert into net.sent values(body) returning 1::bigint $$;`);
     await db.exec(migration('202611260001_ministry_alerts.sql').replace('create extension if not exists pg_net;', ''));
+    await db.exec(migration('202611270002_harden_ministry_alerts.sql'));
     for (const [id,name,role] of [[member,'Older Member','member'],[other,'Other Member','member'],
       [pastor,'Test Pastor','pastor'],[admin,'Care Admin','admin'],[manager,'Access Manager','admin']]) {
       await rows('insert into auth.users values($1,$2,null)', [id, name+'@example.invalid']);
@@ -39,12 +40,21 @@ const migration = file => readFileSync(resolve(__dirname, '../../supabase/migrat
     await db.exec(`insert into live_streams(platform,stream_url,is_live) values('Test','https://example.org',false);
       update live_streams set is_live=true; update live_streams set is_live=true; update live_streams set is_live=false;
       insert into announcements(title,message,status) values('Draft','Test','draft');
-      update announcements set status='published'; update announcements set send_push=true;
-      insert into announcements(title,message,status,send_push) values('Alert','Test','published',true);
+      update announcements set status='published',published_at=now(); update announcements set send_push=true;
+      insert into announcements(title,message,status,published_at,send_push) values('Alert','Test','published',now(),true);
       update announcements set title=title;`);
     const sent = (await rows('select body from net.sent')).flatMap(row => row.body);
     assert.deepEqual(sent.map(message => [message.to,message.data.kind]), [['enabled','live'],['enabled','notice']]);
     console.log('PASS: opted-in devices only, live transition once, selected publication once, ordinary edits silent.');
+    await assert.rejects(
+      rows("insert into announcements(title,message,status,send_push) values('Untimed','Test','published',true)"),
+      /publication timestamp/i
+    );
+    await db.exec(`insert into announcements(title,message,status,published_at,expires_at,send_push) values
+      ('Future','Test','published',now() + interval '1 day',null,true),
+      ('Expired','Test','published',now() - interval '2 days',now() - interval '1 day',true);`);
+    assert.equal((await rows('select body from net.sent')).flatMap(row => row.body).length, 2);
+    console.log('PASS: untimed, future and expired notices do not enqueue an alert.');
     await rows("insert into prayer_requests(id,user_id,description,status,is_public) values($1,$2,'legacy','approved',true)",[target,member]);
     await rows("insert into prayer_requests(user_id,description) select $1,'Example '||n from generate_series(1,105) n",[other]);
     await db.exec(migration('202611240001_private_prayer_care.sql'));

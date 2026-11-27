@@ -19,11 +19,14 @@ export async function getActiveAnnouncements(limit = 20) {
   };
 }
 
-export async function getAnnouncementReads(userId: string) {
+export async function getAnnouncementReads(userId: string, announcementIds: string[]) {
+  if (!announcementIds.length) return { reads: [], error: null };
+
   const { data, error } = await supabase
     .from('announcement_reads')
     .select('announcement_id, user_id, read_at')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .in('announcement_id', announcementIds);
 
   return {
     reads: (data as AnnouncementRead[]) || [],

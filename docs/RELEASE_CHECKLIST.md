@@ -265,6 +265,40 @@ upgrade still require verification.
 - [ ] Save a test stream as live, confirm only the subscribed phone receives the alert, and tap it from the background and after a cold start. Confirm Home opens with Watch live. End the stream before tapping another test alert and confirm Home reports it has ended. Editing an already-live stream should stay silent.
 - [ ] Publish one notice with Send push notification off, then another with it on. Expect one alert for the second notice only. Editing the published message should stay silent. Disable alerts or sign out, then verify later publications stay silent.
 - Delivery is best effort. Local tests capture outgoing payloads without contacting Expo. The initial sender does not automate Expo receipt polling, retry failed batches, or remove stale tokens from delivery receipts. Monitor during the pilot and add receipt handling before broad distribution.
+- `202611270002_harden_ministry_alerts.sql` is prepared and locally tested but
+  not applied. It prevents a published notice without `published_at` and
+  prevents untimed, future or expired notices from enqueueing a push. It makes
+  no data changes, but still needs explicit production approval and the native
+  credential/device checks above.
+
+### Reading-reference integrity — 27 November 2026
+
+- [ ] Before Build 7, open Administration → Readings and resolve every item
+  under Reading checks → Current & upcoming. The app checks book names and
+  chapter bounds; use All active to review older records too. A new or changed
+  bad reference cannot be saved or published. An existing bad reference can be
+  archived if it is no longer needed.
+- Local source-plan audit found 25 structurally invalid or app-unresolvable
+  references: 3 in the 2026 import and 22 in the 2027 draft import. On
+  27 November, 23 of those dates are current or future. The two historic 2026
+  items must still be reviewed under All active. Do not infer a replacement
+  for `Exodus 5-77`, `Psalms 91-88`, `Haggai 1-3`, or the slash-delimited
+  December 2027 value without pastoral confirmation.
+- Run `npm run audit:reading-references` from `app` to reproduce the
+  source-only report. It does not prove production data: the 2027 import
+  preserves an existing plan rather than overwriting staff edits.
+- Run [reading_reference_audit.sql](../supabase/checks/reading_reference_audit.sql)
+  in the production SQL Editor for the live current-and-upcoming report before
+  correcting rows in Administration. It is read-only and returns no member
+  data. This checkout cannot run it because production credentials are not
+  available locally.
+- `202611270001_validate_daily_reading_references.sql` is prepared but has
+  not been applied. It prevents future direct database writes with an invalid
+  recognised book/chapter range while leaving existing rows reviewable. Obtain
+  explicit production approval before applying it. Exact verse counts still
+  require a final reader/provider check.
+- Android uses local version-code management. The audit worktree now reserves
+  `versionCode` 7 for the next internal artifact; no build has been started.
 
 ## Handoff, 26 November 2026
 

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getFirstVerseReference } from './scriptureReference';
 
 const CACHE_PREFIX = '@word_alive_scripture_';
 export const LAST_POSITION_KEY = '@word_alive_last_position';
@@ -20,16 +21,6 @@ export type DailyVersePreview = {
 
 function getCacheKey(reference: string) {
   return `${CACHE_PREFIX}${reference.replace(/\s+/g, '_').toLowerCase()}`;
-}
-
-function getFirstVerseReference(scriptureRef: string) {
-  const match = scriptureRef
-    .trim()
-    .match(/^(.+?)\s+(\d+)(?::\d+)?(?:[-;].*)?$/);
-
-  if (!match) return null;
-
-  return `${match[1]} ${match[2]}:1`;
 }
 
 async function readCached<T>(key: string): Promise<T | null> {

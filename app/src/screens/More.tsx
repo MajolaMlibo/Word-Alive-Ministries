@@ -160,7 +160,7 @@ export default function MoreScreen() {
               } catch {
                 Alert.alert(
                   'Unable to sign out',
-                  'Please try again when your connection is available.'
+                  'Connect to the internet so Ministry alerts can be disabled before this device signs out. This helps prevent alerts reaching a later user of the device.'
                 );
               }
             })();

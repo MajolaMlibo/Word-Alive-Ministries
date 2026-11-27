@@ -37,7 +37,9 @@ import {
   deleteLiveStream,
   deleteMinistryLink,
   getAdminAnnouncements,
+  getAdminAllDailyReadings,
   getAdminBibleStudies,
+  getAdminCurrentAndUpcomingDailyReadings,
   getAdminDailyReadings,
   readingDayNumber,
   getAdminLiveStreams,
@@ -50,7 +52,9 @@ import {
   saveMinistryLink,
   saveReadingPlan,
 } from '../services/adminService';
+import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
+import { validateScriptureReference } from '../services/scriptureReference';
 import { supabase } from '../services/supabase';
 import {
   chooseAndUploadStudyImages,
@@ -62,6 +66,12 @@ import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
 type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links' | 'members';
+
+type ReadingIntegrityIssue = {
+  reading: DailyReading;
+  error: string;
+  suggestedReference?: string;
+};
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -670,8 +680,16 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
   const [month, setMonth] = useState<number | null>(new Date().getMonth());
   const [revision, setRevision] = useState(0);
   const [loadError, setLoadError] = useState(false);
+  const [integrityIssues, setIntegrityIssues] = useState<ReadingIntegrityIssue[]>([]);
+  const [integrityLoading, setIntegrityLoading] = useState(true);
+  const [integrityLoadError, setIntegrityLoadError] = useState(false);
+  const [integrityScope, setIntegrityScope] = useState<'current' | 'all'>('current');
+  const [integrityRevision, setIntegrityRevision] = useState(0);
   const sectionY = useRef(0);
   const revealId = useRef<string | null>(null);
+  const scriptureValidation = form.scripture.trim()
+    ? validateScriptureReference(form.scripture)
+    : null;
 
   useEffect(() => {
     let active = true;
@@ -706,12 +724,53 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     return () => { active = false; };
   }, [form.planId, year, month, revision]);
 
+  useEffect(() => {
+    let active = true;
+    setIntegrityLoading(true);
+    setIntegrityLoadError(false);
+    const load = integrityScope === 'current'
+      ? getAdminCurrentAndUpcomingDailyReadings(getSouthAfricaDate())
+      : getAdminAllDailyReadings();
+
+    load.then(({ readings: items, error }) => {
+      if (!active) return;
+      if (error) {
+        setIntegrityIssues([]);
+        setIntegrityLoadError(true);
+      } else {
+        setIntegrityIssues(items.flatMap((reading) => {
+          const validation = validateScriptureReference(reading.scripture_ref);
+          return validation.isValid ? [] : [{
+            reading,
+            error: validation.error,
+            suggestedReference: validation.suggestedReference,
+          }];
+        }));
+      }
+      setIntegrityLoading(false);
+    });
+
+    return () => { active = false; };
+  }, [integrityRevision, integrityScope]);
+
   const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank(form.planId)); };
   const edit = (reading: DailyReading) => {
     scrollTo(sectionY.current);
     setChoosingPlan(false);
+    setMonth(Number(reading.scheduled_date.slice(5, 7)) - 1);
     setEditing(reading);
     setForm({ planId: reading.plan_id, date: reading.scheduled_date, scripture: reading.scripture_ref, reflection: reading.reflection || '', audioUrl: reading.audio_url || '', status: reading.status });
+  };
+  const reviewIssue = (issue: ReadingIntegrityIssue) => {
+    if (saving) return;
+    const open = () => edit(issue.reading);
+    const hasUnsavedChanges = editing || JSON.stringify(form) !== JSON.stringify(blank(form.planId));
+    if (hasUnsavedChanges) {
+      Alert.alert('Review another reading?', 'Discard the reading currently being edited?', [
+        { text: 'Keep editing', style: 'cancel' },
+        { text: 'Review reading', onPress: open },
+      ]);
+    } else open();
   };
   const selectPlan = (plan: ReadingPlan) => {
     if (editing || saving) return;
@@ -737,6 +796,16 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     if (!dayNumber || !form.scripture.trim()) {
       Alert.alert('Check reading details', `Choose a date in ${year} and enter a Scripture reference.`); return;
     }
+    const mayArchiveLegacyInvalidReference = Boolean(editing)
+      && form.status === 'archived'
+      && form.scripture.trim() === editing?.scripture_ref.trim();
+    if (scriptureValidation && !scriptureValidation.isValid && !mayArchiveLegacyInvalidReference) {
+      Alert.alert(
+        'Fix Scripture reference',
+        `${scriptureValidation.error}${scriptureValidation.suggestedReference ? ` Use “${scriptureValidation.suggestedReference}”.` : ''}`
+      );
+      return;
+    }
     if (form.audioUrl && !isHttpsUrl(form.audioUrl)) { Alert.alert('Check audio link', 'Audio links must begin with https://.'); return; }
     setSaving(true);
     const { reading, error } = await saveDailyReading({ planId: form.planId, dayNumber, scheduledDate: form.date, scriptureRef: form.scripture, reflection: toOptional(form.reflection), audioUrl: toOptional(form.audioUrl), status: form.status, publishedAt: editing?.published_at || null }, administratorId, editing?.id);
@@ -747,6 +816,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     setMonth(Number(reading.scheduled_date.slice(5, 7)) - 1);
     reset();
     setRevision(v => v + 1);
+    setIntegrityRevision(v => v + 1);
   };
   const remove = (reading: DailyReading) => Alert.alert('Delete unused draft?', 'A reading with member completions must be archived instead.', [
     { text: 'Cancel', style: 'cancel' },
@@ -758,12 +828,47 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
       }
       setReadings(current => current.filter(item => item.id !== reading.id));
       if (editing?.id === reading.id) reset();
+      setIntegrityRevision(v => v + 1);
     } },
   ]);
   if (plansFailed) return <EmptyState icon="alert-circle-outline" message="Could not load reading plans. Pull down to refresh." styles={styles} />;
   if (!plans) return <ActivityIndicator color={styles.primaryColor} />;
   if (!plans.length) return <EmptyState icon="book-outline" message="Create a reading plan in Plans to schedule readings." styles={styles} />;
   return <View onLayout={event => { sectionY.current = event.nativeEvent.layout.y; }}>
+    <View style={styles.integrityCard}>
+      <Text style={styles.integrityTitle}>Reading checks</Text>
+      <Text style={styles.panelHint}>Checks Bible-book names and chapter ranges before a reading can be saved. Exact verse counts still need a final reader check.</Text>
+      <View style={styles.integrityScopeRow}>
+        <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: integrityScope === 'current' }}
+          style={[styles.integrityScopeButton, integrityScope === 'current' && styles.integrityScopeButtonActive]}
+          onPress={() => setIntegrityScope('current')}>
+          <Text style={[styles.integrityScopeText, integrityScope === 'current' && styles.integrityScopeTextActive]}>Current & upcoming</Text>
+        </TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: integrityScope === 'all' }}
+          style={[styles.integrityScopeButton, integrityScope === 'all' && styles.integrityScopeButtonActive]}
+          onPress={() => setIntegrityScope('all')}>
+          <Text style={[styles.integrityScopeText, integrityScope === 'all' && styles.integrityScopeTextActive]}>All active</Text>
+        </TouchableOpacity>
+      </View>
+      {integrityLoading ? <ActivityIndicator color={styles.primaryColor} style={styles.integrityLoading} /> :
+        integrityLoadError ? <TouchableOpacity accessibilityRole="button" onPress={() => setIntegrityRevision(value => value + 1)}>
+          <Text style={styles.warningText}>Unable to run reading checks. Tap to retry.</Text>
+        </TouchableOpacity> : integrityIssues.length ? <>
+          <Text style={styles.warningText}>{integrityIssues.length} reading{integrityIssues.length === 1 ? '' : 's'} need{integrityIssues.length === 1 ? 's' : ''} correction before they can be saved or published.</Text>
+          {integrityIssues.map((issue) => {
+            const issuePlan = plans.find((plan) => plan.id === issue.reading.plan_id);
+            return <TouchableOpacity key={issue.reading.id} accessibilityRole="button"
+              accessibilityLabel={`Review ${issue.reading.scheduled_date}: ${issue.reading.scripture_ref}`}
+              style={styles.integrityIssue} onPress={() => reviewIssue(issue)}>
+              <Text style={styles.integrityIssueDate}>{issue.reading.scheduled_date} · {issuePlan?.name || 'Unknown plan'}</Text>
+              <Text style={styles.integrityIssueReference}>{issue.reading.scripture_ref}</Text>
+              <Text style={styles.integrityIssueReason}>{issue.error}</Text>
+              {issue.suggestedReference ? <Text style={styles.integrityIssueSuggestion}>Suggested: {issue.suggestedReference}</Text> : null}
+              <Text style={styles.integrityIssueAction}>Review and fix</Text>
+            </TouchableOpacity>;
+          })}
+        </> : <Text style={styles.integritySuccess}>No book or chapter-range issues found in these active readings.</Text>}
+    </View>
     <EditorCard title={editing ? 'Edit daily reading' : 'New daily reading'} styles={styles}>
       <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded: choosingPlan, disabled: !!editing || saving }}
         disabled={!!editing || saving} style={styles.planButton} onPress={() => setChoosingPlan(open => !open)}>
@@ -778,6 +883,13 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
       <DateTimeField label="Scheduled date" initialDate={year ? year + '-' + String((month ?? 0) + 1).padStart(2, '0') + '-01' : undefined} value={form.date} onChange={(date) => setForm(current => ({ ...current, date }))} mode="date" styles={styles} />
       <Text style={styles.itemMeta}>{dayNumber ? `Day ${dayNumber} of ${year}` : form.date ? `Choose a date in ${year}.` : 'Day number is calculated from the scheduled date.'}</Text>
       <Field label="Scripture reference" value={form.scripture} onChangeText={(scripture) => setForm(current => ({ ...current, scripture }))} placeholder="Psalms 107-111" styles={styles} />
+      {scriptureValidation && !scriptureValidation.isValid ? <View style={styles.referenceFeedback} accessibilityLiveRegion="polite">
+        <Text style={styles.warningText}>{scriptureValidation.error}{form.status === 'archived' ? ' This entry may be archived, or correct the reference before saving.' : ''}</Text>
+        {scriptureValidation.suggestedReference ? <TouchableOpacity accessibilityRole="button"
+          onPress={() => setForm(current => ({ ...current, scripture: scriptureValidation.suggestedReference! }))}>
+          <Text style={styles.referenceSuggestion}>Use {scriptureValidation.suggestedReference}</Text>
+        </TouchableOpacity> : null}
+      </View> : scriptureValidation && scriptureValidation.normalizedReference !== form.scripture.trim() ? <Text style={styles.referenceHint}>Will be saved as {scriptureValidation.normalizedReference}</Text> : null}
       <Field label="Reflection (optional)" value={form.reflection} onChangeText={(reflection) => setForm(current => ({ ...current, reflection }))} multiline documentId={editing?.id || 'new-daily-reading-' + draftNumber} styles={styles} />
       <Field label="Audio HTTPS link (optional)" value={form.audioUrl} onChangeText={(audioUrl) => setForm(current => ({ ...current, audioUrl }))} keyboardType="url" styles={styles} />
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
@@ -997,6 +1109,7 @@ function makeStyles(colors: any, fonts: any) {
     listTitle: { color: colors.text, fontSize: fonts.subtitle, fontWeight: '700', marginBottom: spacing.sm, marginTop: spacing.xl }, loading: { marginTop: spacing.lg }, itemCard: { backgroundColor: colors.surface, borderRadius: 18, marginBottom: spacing.sm, padding: spacing.md }, itemTitle: { color: colors.text, fontSize: fonts.body, fontWeight: '700' }, itemMeta: { color: colors.textMuted, fontSize: fonts.caption, marginTop: 3 }, itemDescription: { color: colors.text, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.xs }, cardActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.sm }, editText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700', marginRight: spacing.md }, deleteText: { color: colors.danger, fontSize: fonts.body, fontWeight: '700' },
     switchRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm }, switchLabel: { color: colors.text, flex: 1, fontSize: fonts.caption, fontWeight: '600', paddingRight: spacing.sm }, outlineButton: { alignItems: 'center', borderColor: colors.primary, borderRadius: 12, borderWidth: 1, marginTop: spacing.sm, paddingVertical: 10 }, outlineButtonText: { color: colors.primary, fontSize: fonts.body, fontWeight: '700' }, adminDeleteButton: { alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.xs }, adminDeleteButtonText: { color: colors.danger, fontSize: fonts.caption, fontWeight: '700' },
     emptyCard: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: 18, padding: spacing.xl }, emptyText: { color: colors.textMuted, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.sm, textAlign: 'center' }, deniedTitle: { color: colors.text, fontSize: fonts.subtitle, fontWeight: '700', marginTop: spacing.sm }, deniedText: { color: colors.textMuted, fontSize: fonts.body, lineHeight: fonts.body * 1.5, marginTop: spacing.xs, textAlign: 'center' },
+    integrityCard: { backgroundColor: colors.surface, borderRadius: 20, marginBottom: spacing.lg, padding: spacing.lg }, integrityTitle: { color: colors.primary, fontSize: fonts.subtitle, fontWeight: '700', marginBottom: spacing.xs }, integrityScopeRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.sm }, integrityScopeButton: { borderColor: colors.borderSoft, borderRadius: 10, borderWidth: 1, flex: 1, paddingHorizontal: spacing.sm, paddingVertical: 8 }, integrityScopeButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary }, integrityScopeText: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', textAlign: 'center' }, integrityScopeTextActive: { color: '#FFF' }, integrityLoading: { marginTop: spacing.sm }, integrityIssue: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, marginTop: spacing.sm, padding: spacing.sm }, integrityIssueDate: { color: colors.textMuted, fontSize: fonts.caption }, integrityIssueReference: { color: colors.text, fontSize: fonts.body, fontWeight: '700', marginTop: 3 }, integrityIssueReason: { color: colors.danger, fontSize: fonts.caption, lineHeight: fonts.caption * 1.4, marginTop: 3 }, integrityIssueSuggestion: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: 3 }, integrityIssueAction: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: spacing.xs }, integritySuccess: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: spacing.sm }, referenceFeedback: { marginTop: spacing.xs }, referenceHint: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.4, marginTop: spacing.xs }, referenceSuggestion: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: spacing.xs },
     planButton: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, marginTop: spacing.sm, padding: spacing.sm }, planButtonLabel: { color: colors.textMuted, fontSize: fonts.caption }, planButtonValue: { color: colors.text, fontSize: fonts.body, fontWeight: '700', marginTop: 3 }, planButtonHint: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700', marginTop: 3 }, warningText: { color: colors.danger, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5, marginTop: spacing.sm },
     studyImagesEditor: { borderTopColor: colors.borderSoft, borderTopWidth: 1, marginTop: spacing.lg, paddingTop: spacing.md }, helperText: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5 }, studyImageList: { gap: spacing.sm, paddingVertical: spacing.sm }, studyImageItem: { height: 96, position: 'relative', width: 96 }, studyImagePreview: { borderRadius: 10, height: 96, width: 96 }, removeStudyImageButton: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 14, height: 28, justifyContent: 'center', position: 'absolute', right: -6, top: -6, width: 28 }, addStudyImageButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', marginTop: spacing.sm, minHeight: 46, paddingHorizontal: spacing.md }, addStudyImageButtonText: { color: '#FFF', fontSize: fonts.body, fontWeight: '700', marginLeft: spacing.xs },
   });

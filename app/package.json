@@ -10,14 +10,15 @@
     "@react-navigation/native": "^7.3.18",
     "@supabase/supabase-js": "^2.115.0",
     "base64-arraybuffer": "^1.0.2",
-    "expo": "~58.0.26",
+    "expo": "~58.1.0",
     "expo-clipboard": "~58.0.4",
+    "expo-constants": "~58.0.16",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.11",
     "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.17",
-    "expo-notifications": "~58.1.9",
-    "expo-splash-screen": "~58.0.14",
+    "expo-notifications": "~58.1.10",
+    "expo-splash-screen": "~58.0.15",
     "expo-status-bar": "~58.0.5",
     "expo-system-ui": "~58.0.7",
     "expo-web-browser": "~58.1.0",
@@ -41,7 +42,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "verify:supabase": "node scripts/verify-supabase-connection.mjs",
-    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
+    "audit:reading-references": "node scripts/audit-reading-references.cjs",
+    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-scripture-reference-validation.cjs && node scripts/test-announcement-reads.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
   },
   "private": true
 }

@@ -453,6 +453,12 @@ Editor and reported `Success. No rows returned`.
 
 2027 reading plan: the draft import in supabase/migrations/202611230001_import_2027_draft_readings.sql uses the 365 dates in docs/2027 BIBLE STUDY PLAN.docx. Calendar dates determine the app day numbers. Book and chapter wording is preserved. Local PostgreSQL-engine checks passed for all dates and references, draft status, repeat execution, preservation of edits, partial-plan rollback, and the existing 2026 schedule. Production verification returned 365 draft readings dated 1 January through 31 December 2027. Pastoral review is pending.
 
+Correction, 27 November 2026: the earlier reference check established date/count
+integrity but did not use the reader's canonical book-and-chapter parser. The
+new source audit identifies 22 app-unresolvable 2027 references and three
+2026 reference-range faults. See RELEASE_CHECKLIST.md for the live-data review
+and correction gate; do not treat the earlier wording as reader validation.
+
 Admin → Readings now groups entries by plan and scheduled month on feature/group-admin-readings. The current year's published plan opens first when available. No migration is required. The isolated browser interaction check passed (see TEST_PLAN.md). Physical-device verification remains pending.
 
 Private prayer care is implemented on feature/private-prayer-care. On 24 November 2026 the owner confirmed the migration succeeded in word-alive-prod and the dedicated administrator returned may_delegate=true and may_read=false. In-app verification with separate member and staff accounts remains pending. See OPERATIONS.md and TEST_PLAN.md.

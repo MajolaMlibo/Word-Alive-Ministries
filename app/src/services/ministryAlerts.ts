@@ -32,7 +32,12 @@ export async function setDeviceSubscription(userId: string, enabled: boolean) {
   });
   const permission = await notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error('Allow notifications in your phone settings to receive ministry alerts.');
-  const { data: token } = await notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig?.extra?.eas?.projectId });
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId
+    ?? Constants.easConfig?.projectId;
+  if (!projectId) {
+    throw new Error('Push notifications are not configured for this app.');
+  }
+  const { data: token } = await notifications.getExpoPushTokenAsync({ projectId });
   await AsyncStorage.setItem(storageKey, token);
   const { error } = await supabase.from('push_tokens').upsert({
     user_id: userId, token, platform: Platform.OS, ministry_alerts: true,

@@ -1,7 +1,7 @@
 /**
  * Application-facing records for the production schema.
  *
- * Keep these aligned with `supabase/migrations/202611070001_initial_schema.sql`.
+ * Keep these aligned with the versioned `supabase/migrations` schema.
  * They are deliberately independent of generated Supabase types until the new
  * project exists and its database types can be generated from the live schema.
  */
@@ -147,6 +147,7 @@ export interface Announcement {
   status: ContentStatus;
   published_at: string | null;
   expires_at: string | null;
+  send_push: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -184,6 +185,7 @@ export interface PushToken {
   user_id: string;
   token: string;
   platform: string | null;
+  ministry_alerts: boolean;
   last_seen_at: string;
   created_at: string;
   updated_at: string;

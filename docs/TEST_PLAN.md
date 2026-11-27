@@ -21,6 +21,18 @@ npx expo export --platform ios
 npx expo export --platform android
 ```
 
+For the reading-integrity guard, also run:
+
+```powershell
+npm run test:release
+npm run audit:reading-references
+```
+
+`audit:reading-references` reports source-plan faults without changing data.
+It is not a substitute for the read-only production report or staff review.
+The three `expo export` commands create artifacts; obtain owner approval before
+running them as part of a release audit.
+
 `verify:supabase` checks that the public Supabase URL and publishable key can
 reach Auth settings. It does not test member permissions or write database
 data.
@@ -153,7 +165,7 @@ Member directory: compare the total across search, role filters and Load more. A
 
 Verify the directory-only admin sees names, roles and count without access to private prayers. Local database tests passed for all four permission combinations, revocation, older clients, role changes and audit records.
 
-Admin Readings device check: at the top of New daily reading, tap the year-plan control and select the 2027 Align and Prosper plan. Open December and check 31 December, Day 365, MALACHI 1-4. Compare with the pastor on the same app revision. Check the gap below an expanded month for both populated and empty months. In a test plan verify selecting a date calculates the day and that a date outside the plan year cannot be saved.
+Admin Readings device check: at the top of New daily reading, tap the year-plan control and select the 2027 Align and Prosper plan. Open December and check 31 December, Day 365, MALACHI 1-4. Compare with the pastor on the same app revision. Check the gap below an expanded month for both populated and empty months. In a test plan verify selecting a date calculates the day and that a date outside the plan year cannot be saved. In Reading checks, verify Current & upcoming lists every deliberately invalid test reference, Review and fix opens its plan/month, a recognised book/chapter range saves, and a bad range cannot be saved. Confirm a legacy bad reference can be archived rather than trapping the editor. With a test reading of `2 John 1; 3 John 1`, verify both passage buttons appear in Read and each opens its matching chapter.
 Run `node app/scripts/test-admin-reading-months.cjs` from the repository root. Five simulated query cases cover November 2026, December rollover, January 2027, records beyond the previous 500-row cutoff, and an empty month. On 23 November 2026 an isolated Edge test of ReadingsManager with in-memory services verified November expansion/collapse, switching to a future plan, entering a date, and saving a January 4 draft while browsing February. January opened and the saved row scrolled into the viewport. Real account integration and physical-device interaction remain pending. Use a test database for writes.
 
 ### Bible verse selection controls

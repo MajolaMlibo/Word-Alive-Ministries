@@ -7,6 +7,7 @@ import {
   MinistryLink,
   ReadingPlan,
 } from './database';
+import { validateScriptureReference } from './scriptureReference';
 import { supabase } from './supabase';
 
 export type AnnouncementInput = {
@@ -212,16 +213,54 @@ export async function getAdminDailyReadings(planId: string, year: number, month:
   return { readings: (data as DailyReading[]) || [], error };
 }
 
+/**
+ * Staff use this to review active readings across every plan, rather than only
+ * the month currently open in the editor. The caller supplies the ministry's
+ * local date so the service remains deterministic and easy to test.
+ */
+export async function getAdminCurrentAndUpcomingDailyReadings(fromDate: string) {
+  const { data, error } = await supabase
+    .from('daily_readings')
+    .select('*')
+    .gte('scheduled_date', fromDate)
+    .neq('status', 'archived')
+    .order('scheduled_date', { ascending: true });
+
+  return { readings: (data as DailyReading[]) || [], error };
+}
+
+export async function getAdminAllDailyReadings() {
+  const { data, error } = await supabase
+    .from('daily_readings')
+    .select('*')
+    .neq('status', 'archived')
+    .order('scheduled_date', { ascending: true });
+
+  return { readings: (data as DailyReading[]) || [], error };
+}
+
 export async function saveDailyReading(
   input: DailyReadingInput,
   administratorId: string,
   readingId?: string
 ) {
+  const referenceValidation = validateScriptureReference(input.scriptureRef);
+  const archivingLegacyInvalidReference = !referenceValidation.isValid
+    && input.status === 'archived'
+    && Boolean(readingId);
+  if (!referenceValidation.isValid && !archivingLegacyInvalidReference) {
+    return { reading: null, error: new Error(referenceValidation.error) };
+  }
+
+  // Omit an unchanged legacy-invalid value so the database trigger permits
+  // archiving it; any new or changed reference must pass the shared guard.
   const payload = {
     plan_id: input.planId,
     day_number: input.dayNumber,
     scheduled_date: input.scheduledDate,
-    scripture_ref: input.scriptureRef.trim(),
+    ...(referenceValidation.isValid
+      ? { scripture_ref: referenceValidation.normalizedReference }
+      : {}),
     reflection: input.reflection,
     audio_url: input.audioUrl,
     status: input.status,

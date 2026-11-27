@@ -478,7 +478,7 @@ export default function HomeScreen() {
         );
       } else {
         const { reads, error: announcementReadsError } = user
-          ? await getAnnouncementReads(user.id)
+          ? await getAnnouncementReads(user.id, announcementData.map((announcement) => announcement.id))
           : { reads: [], error: null };
 
         if (announcementReadsError) {
