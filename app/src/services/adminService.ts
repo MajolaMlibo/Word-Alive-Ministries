@@ -6,6 +6,7 @@ import {
   LiveStream,
   MinistryLink,
   ReadingPlan,
+  ReadingPlanEnrollmentMode,
 } from './database';
 import { validateScriptureReference } from './scriptureReference';
 import { supabase } from './supabase';
@@ -48,6 +49,7 @@ export type ReadingPlanInput = {
   planYear: number;
   description: string | null;
   status: ContentStatus;
+  enrollmentMode: ReadingPlanEnrollmentMode;
 };
 
 export type LiveStreamInput = {
@@ -170,6 +172,7 @@ export async function saveReadingPlan(
     plan_year: input.planYear,
     description: input.description,
     status: input.status,
+    enrollment_mode: input.enrollmentMode,
   };
 
   const result = planId

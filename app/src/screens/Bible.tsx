@@ -29,8 +29,8 @@ import {
 } from '../services/bibleService';
 import {
   completeDailyReading,
-  getDailyReadingCompletion,
-  getTodaysDailyReading,
+  getDailyReadingCompletions,
+  getTodaysDailyReadings,
 } from '../services/dailyReadingService';
 import {
   BibleHighlightColor,
@@ -106,20 +106,13 @@ export default function Bible() {
   const styles = makeStyles(colors, fonts);
 
   const [tab, setTab] = useState<Tab>('daily');
-  const [reading, setReading] = useState<DailyReading | null>(null);
-  const [completed, setCompleted] = useState(false);
+  const [readings, setReadings] = useState<DailyReading[]>([]);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingReadingId, setSubmittingReadingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [linkedReference, setLinkedReference] = useState<string | null>(null);
   const handledLinkRequest = useRef<string | null>(null);
-  const scheduledReferenceError = reading
-    ? (() => {
-      const validation = validateScriptureReference(reading.scripture_ref);
-      return validation.isValid ? null : validation.error;
-    })()
-    : null;
-
   useEffect(() => {
     const reference = route.params?.scriptureReference;
     const nonce = route.params?.scriptureLinkNonce;
@@ -137,42 +130,42 @@ export default function Bible() {
     setLoadError(null);
 
     try {
-      const { reading: todayReading, error: readingError } =
-        await getTodaysDailyReading();
+      const { readings: todayReadings, error: readingError } =
+        await getTodaysDailyReadings();
 
       if (readingError) {
         console.warn('Unable to load today\'s reading.', readingError.message);
-        setReading(null);
-        setCompleted(false);
+        setReadings([]);
+        setCompletedIds(new Set());
         setLoadError('We could not load today\'s reading. Please try again.');
         return;
       }
 
-      setReading(todayReading);
+      setReadings(todayReadings);
 
-      if (!todayReading) {
-        setCompleted(false);
+      if (!todayReadings.length) {
+        setCompletedIds(new Set());
         return;
       }
 
-      const { completed: isCompleted, error: completionError } =
-        await getDailyReadingCompletion(todayReading.id);
+      const { completedIds: loadedCompletedIds, error: completionError } =
+        await getDailyReadingCompletions(todayReadings.map((reading) => reading.id));
 
       if (completionError) {
         console.warn(
           'Unable to load the daily reading completion status.',
           completionError.message
         );
-        setCompleted(false);
+        setCompletedIds(new Set());
         setLoadError('We could not confirm your reading progress. Please try again.');
         return;
       }
 
-      setCompleted(isCompleted);
+      setCompletedIds(loadedCompletedIds);
     } catch (error) {
       console.warn('Unexpected error while loading today\'s reading.', error);
-      setReading(null);
-      setCompleted(false);
+      setReadings([]);
+      setCompletedIds(new Set());
       setLoadError('We could not load today\'s reading. Please try again.');
     } finally {
       setLoading(false);
@@ -183,10 +176,10 @@ export default function Bible() {
     loadReading();
   }, [loadReading]);
 
-  async function markComplete() {
-    if (completed || !reading) return;
+  async function markComplete(reading: DailyReading) {
+    if (completedIds.has(reading.id) || submittingReadingId) return;
 
-    setSubmitting(true);
+    setSubmittingReadingId(reading.id);
 
     try {
       const { completion, error } = await completeDailyReading(reading.id);
@@ -200,11 +193,11 @@ export default function Bible() {
         return;
       }
 
-      setCompleted(true);
+      setCompletedIds((current) => new Set([...current, reading.id]));
       const dayLabel = completion.current_streak === 1 ? 'day' : 'days';
       Alert.alert(
         'Reading completed',
-        `Today’s reading has been saved. Your current streak is ${completion.current_streak} ${dayLabel}.`
+        `This plan’s reading has been saved. Your ministry-wide streak is ${completion.current_streak} ${dayLabel}.`
       );
     } catch (error) {
       console.warn('Unexpected error while completing today\'s reading.', error);
@@ -213,9 +206,11 @@ export default function Bible() {
         'Please check your connection and try again.'
       );
     } finally {
-      setSubmitting(false);
+      setSubmittingReadingId(null);
     }
   }
+
+  const guidedReading = readings.find((reading) => !completedIds.has(reading.id)) || null;
 
   return (
     <View style={styles.container}>
@@ -273,13 +268,13 @@ export default function Bible() {
           key={
             linkedReference
               ? `linked-reference-${linkedReference}`
-              : reading && !completed
-              ? `daily-reading-${reading.id}`
+              : guidedReading
+              ? `daily-reading-${guidedReading.id}`
               : 'personal-reading'
           }
           directReference={linkedReference || undefined}
           dailyReadingReference={
-            reading && !completed ? reading.scripture_ref : undefined
+            guidedReading ? guidedReading.scripture_ref : undefined
           }
         />
       ) : loading ? (
@@ -289,7 +284,7 @@ export default function Bible() {
         />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.todayCard}>
+          <View style={styles.todayHeader}>
             <Text style={styles.date}>
               {new Date().toLocaleDateString('en-GB', {
                 weekday: 'long',
@@ -297,39 +292,36 @@ export default function Bible() {
                 month: 'long',
               })}
             </Text>
+            <Text style={styles.todayHint}>Complete any available plan once to continue the ministry-wide streak.</Text>
+          </View>
 
-            <Text style={styles.reference}>
-              {reading?.scripture_ref || 'No reading'}
-            </Text>
-
-            <Text style={styles.scripture}>
-              {reading
-                ? reading.reflection ||
-                  'Open the Read tab to read today’s passage.'
-                : 'There is no scripture scheduled for today.'}
-            </Text>
-
-            {scheduledReferenceError ? (
-              <View style={styles.readingError} accessibilityLiveRegion="polite">
+          {loadError ? (
+            <View style={styles.readingError}>
+              <Text style={styles.readingErrorText}>{loadError}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={loadReading}>
+                <Text style={styles.retryButtonText}>Try again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : readings.length ? readings.map((reading) => {
+            const completed = completedIds.has(reading.id);
+            const submitting = submittingReadingId === reading.id;
+            const validation = validateScriptureReference(reading.scripture_ref);
+            const referenceError = validation.isValid ? null : validation.error;
+            return <View key={reading.id} style={styles.todayCard}>
+              <Text style={styles.planName}>{reading.reading_plans?.name || `${reading.scheduled_date.slice(0, 4)} Reading Plan`}</Text>
+              <Text style={styles.reference}>{reading.scripture_ref}</Text>
+              <Text style={styles.scripture}>{reading.reflection || 'Open the Read tab to read today’s passage.'}</Text>
+              {referenceError ? <View style={styles.readingError} accessibilityLiveRegion="polite">
                 <Text style={styles.readingErrorText}>
-                  This scheduled reference needs correction: {scheduledReferenceError} It cannot be opened or marked complete until an administrator fixes it.
+                  This scheduled reference needs correction: {referenceError} It cannot be opened or marked complete until an administrator fixes it.
                 </Text>
-              </View>
-            ) : loadError ? (
-              <View style={styles.readingError}>
-                <Text style={styles.readingErrorText}>{loadError}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={loadReading}>
-                  <Text style={styles.retryButtonText}>Try again</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
+              </View> : <TouchableOpacity
                 style={[
                   styles.completeBtn,
-                  (completed || !reading) && styles.disabledCompleteBtn,
+                  (completed || submittingReadingId !== null) && styles.disabledCompleteBtn,
                 ]}
-                disabled={completed || submitting || !reading}
-                onPress={markComplete}
+                disabled={completed || submittingReadingId !== null}
+                onPress={() => void markComplete(reading)}
               >
                 <Ionicons
                   name={
@@ -341,17 +333,14 @@ export default function Bible() {
                   color="#FFF"
                 />
                 <Text style={styles.completeText}>
-                  {!reading
-                    ? 'No reading scheduled'
-                    : completed
-                      ? 'Completed'
-                      : submitting
-                        ? 'Saving...'
-                        : 'Mark Complete'}
+                  {completed ? 'Completed' : submitting ? 'Saving...' : 'Mark Complete'}
                 </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              </TouchableOpacity>}
+            </View>;
+          }) : <View style={styles.todayCard}>
+            <Text style={styles.reference}>No reading</Text>
+            <Text style={styles.scripture}>There is no scripture scheduled for today.</Text>
+          </View>}
         </ScrollView>
       )}
     </View>
@@ -1222,12 +1211,30 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
     todayCard: {
       backgroundColor: colors.surface,
       borderRadius: 22,
+      marginTop: spacing.sm,
       padding: spacing.lg,
+    },
+
+    todayHeader: {
+      paddingHorizontal: spacing.xs,
     },
 
     date: {
       color: colors.textMuted,
       marginBottom: spacing.sm,
+    },
+
+    todayHint: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      lineHeight: fonts.caption * 1.45,
+    },
+
+    planName: {
+      color: colors.textMuted,
+      fontSize: fonts.caption,
+      fontWeight: '800',
+      marginBottom: spacing.xs,
     },
 
     reference: {
