@@ -37,11 +37,12 @@ import {
   DailyReading,
 } from '../services/database';
 import {
-  getAllBibleVerseSaves,
+  getBibleVerseSavesPage,
   getBibleVerseSaves,
   saveBibleVerseNote,
   setBibleVerseBookmarks,
   setBibleVerseHighlights,
+  type BibleVerseSaveCursor,
 } from '../services/bibleVerseSaveService';
 
 type Tab = 'daily' | 'read';
@@ -387,6 +388,9 @@ function BibleReader({
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
   const [verseSaves, setVerseSaves] = useState<BibleVerseSave[]>([]);
   const [allVerseSaves, setAllVerseSaves] = useState<BibleVerseSave[]>([]);
+  const [savedVerseCursor, setSavedVerseCursor] = useState<BibleVerseSaveCursor | null>(null);
+  const [savedVerseLoading, setSavedVerseLoading] = useState(false);
+  const [savedVerseLoadError, setSavedVerseLoadError] = useState<string | null>(null);
   const [isVerseActionsOpen, setIsVerseActionsOpen] = useState(false);
   const [isSavedVersesOpen, setIsSavedVersesOpen] = useState(false);
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
@@ -397,6 +401,7 @@ function BibleReader({
   );
   const [isTextSizeMenuOpen, setIsTextSizeMenuOpen] = useState(false);
   const readerScrollRef = useRef<ScrollViewInstance>(null);
+  const savedVerseLoadGeneration = useRef(0);
   const readerTextScale = BIBLE_READER_TEXT_SCALE[readerTextSize];
   const styles = makeStyles(colors, fonts, readerTextScale);
 
@@ -467,15 +472,44 @@ function BibleReader({
     setVerseSaves(saves);
   }, [book, chapter]);
 
-  async function openSavedVerses() {
-    const { saves, error } = await getAllBibleVerseSaves();
-    if (error) {
-      console.warn('Unable to load saved Bible activity.', error.message);
-      Alert.alert('Unable to load saved verses', 'Please check your connection and try again.');
-      return;
+  const loadSavedVersePage = useCallback(async (reset = false) => {
+    const cursor = reset ? null : savedVerseCursor;
+    if (!reset && !cursor) return;
+
+    const generation = ++savedVerseLoadGeneration.current;
+    setSavedVerseLoading(true);
+    setSavedVerseLoadError(null);
+
+    try {
+      const { saves, nextCursor, error } = await getBibleVerseSavesPage(cursor);
+      if (generation !== savedVerseLoadGeneration.current) return;
+      if (error) {
+        console.warn('Unable to load saved Bible activity.', error.message);
+        setSavedVerseLoadError('We could not load saved verses. Please try again.');
+        return;
+      }
+
+      setAllVerseSaves((current) => {
+        if (reset) return saves;
+        const existingIds = new Set(current.map((save) => save.id));
+        return [...current, ...saves.filter((save) => !existingIds.has(save.id))];
+      });
+      setSavedVerseCursor(nextCursor);
+    } catch (error) {
+      if (generation !== savedVerseLoadGeneration.current) return;
+      console.warn('Unexpected error while loading saved Bible activity.', error);
+      setSavedVerseLoadError('We could not load saved verses. Please try again.');
+    } finally {
+      if (generation === savedVerseLoadGeneration.current) setSavedVerseLoading(false);
     }
-    setAllVerseSaves(saves);
+  }, [savedVerseCursor]);
+
+  function openSavedVerses() {
+    setAllVerseSaves([]);
+    setSavedVerseCursor(null);
+    setSavedVerseLoadError(null);
     setIsSavedVersesOpen(true);
+    void loadSavedVersePage(true);
   }
 
   function openSavedVerse(save: BibleVerseSave) {
@@ -1053,7 +1087,29 @@ function BibleReader({
                   </View>
                   {save.note ? <Text numberOfLines={2} style={styles.savedVerseNote}>{save.note}</Text> : null}
                 </TouchableOpacity>
-              )) : <Text style={styles.savedVersesEmpty}>No saved verses yet. Select a verse to highlight, bookmark, or add a note.</Text>}
+              )) : !savedVerseLoading && !savedVerseLoadError ? <Text style={styles.savedVersesEmpty}>No saved verses yet. Select a verse to highlight, bookmark, or add a note.</Text> : null}
+
+              {savedVerseLoading ? <ActivityIndicator color={colors.primary} style={styles.savedVersesLoading} /> : null}
+
+              {savedVerseLoadError ? (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => void loadSavedVersePage(allVerseSaves.length === 0)}
+                  style={styles.savedVersesLoadMore}
+                >
+                  <Text style={styles.savedVersesLoadMoreText}>Retry loading saved verses</Text>
+                </TouchableOpacity>
+              ) : savedVerseCursor ? (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: savedVerseLoading }}
+                  disabled={savedVerseLoading}
+                  onPress={() => void loadSavedVersePage()}
+                  style={styles.savedVersesLoadMore}
+                >
+                  <Text style={styles.savedVersesLoadMoreText}>Load older saved verses</Text>
+                </TouchableOpacity>
+              ) : null}
             </ScrollView>
           </View>
         </View>
@@ -1717,6 +1773,25 @@ function makeStyles(colors: any, fonts: any, readerTextScale = 1) {
       lineHeight: fonts.body * 1.5,
       paddingVertical: spacing.lg,
       textAlign: 'center',
+    },
+
+    savedVersesLoading: {
+      marginVertical: spacing.md,
+    },
+
+    savedVersesLoadMore: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 12,
+      borderWidth: 1,
+      marginVertical: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 10,
+    },
+
+    savedVersesLoadMoreText: {
+      color: colors.primary,
+      fontWeight: '700',
     },
   });
 }
