@@ -20,6 +20,7 @@ import { useContentList } from '../components/useContentList';
 import MembersManager from '../components/MembersManager';
 import PrayerInbox from '../components/PrayerInbox';
 import RichTextField from '../components/RichTextField';
+import StudyCommentsManager from '../components/StudyCommentsManager';
 import {
   Announcement,
   BibleStudy,
@@ -61,13 +62,14 @@ import {
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links' | 'members';
+type AdminSection = 'prayer' | 'announcements' | 'studies' | 'comments' | 'plans' | 'readings' | 'streams' | 'links' | 'members';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'prayer', label: 'Prayer', icon: 'heart-outline' },
   { key: 'announcements', label: 'Notices', icon: 'megaphone-outline' },
   { key: 'studies', label: 'Studies', icon: 'school-outline' },
+  { key: 'comments', label: 'Comments', icon: 'chatbubbles-outline' },
   { key: 'plans', label: 'Plans', icon: 'list-outline' },
   { key: 'readings', label: 'Readings', icon: 'book-outline' },
   { key: 'links', label: 'Links', icon: 'link-outline' },
@@ -976,6 +978,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
       {section === 'prayer' && prayerAccess.may_read ? <PrayerInbox styles={styles} /> : null}
       {section === 'announcements' ? <AnnouncementsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'comments' ? <StudyCommentsManager styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
       {section === 'announcements' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
