@@ -16,6 +16,10 @@ type VerseReference = {
   verse: number;
 };
 
+export type BibleVerseSaveCursor = Pick<BibleVerseSave, 'updated_at' | 'id'>;
+
+export const BIBLE_VERSE_SAVE_PAGE_SIZE = 25;
+
 async function getSignedInUserId() {
   const {
     data: { user },
@@ -45,14 +49,41 @@ export async function getBibleVerseSaves(book: string, chapter: number) {
   return { saves: (data as BibleVerseSave[]) || [], error };
 }
 
-export async function getAllBibleVerseSaves() {
-  const { data, error } = await supabase
+export async function getBibleVerseSavesPage(
+  cursor?: BibleVerseSaveCursor | null,
+  pageSize = BIBLE_VERSE_SAVE_PAGE_SIZE
+) {
+  const { userId, error: userError } = await getSignedInUserId();
+  if (userError || !userId) {
+    return { saves: [], nextCursor: null, error: userError };
+  }
+
+  let query = supabase
     .from('bible_verse_saves')
     .select('*')
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
-    .limit(250);
+    .order('id', { ascending: false })
+    .limit(pageSize + 1);
 
-  return { saves: (data as BibleVerseSave[]) || [], error };
+  if (cursor) {
+    query = query.or(
+      `updated_at.lt.${cursor.updated_at},and(updated_at.eq.${cursor.updated_at},id.lt.${cursor.id})`
+    );
+  }
+
+  const { data, error } = await query;
+  const rows = (data as BibleVerseSave[]) || [];
+  const saves = rows.slice(0, pageSize);
+  const last = saves.at(-1);
+
+  return {
+    saves,
+    nextCursor: rows.length > pageSize && last
+      ? { updated_at: last.updated_at, id: last.id }
+      : null,
+    error,
+  };
 }
 
 async function updateVerseSave(reference: VerseReference, patch: VerseSavePatch) {

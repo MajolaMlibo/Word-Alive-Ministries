@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,16 @@ import { getStudyMedia, getStudyMediaUrls } from '../services/studyMediaService'
 import { getStudyCommentPage, StudyCommentCursor, submitStudyComment } from '../services/studyCommentService';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
+import {
+  getPublishedStudiesForToday,
+  getPublishedStudyPage,
+  type StudyListFilter,
+  type StudyPageCursor,
+} from '../services/studyService';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 
-type StudyFilter = 'upcoming' | 'past';
+type StudyFilter = StudyListFilter;
 
 function formatStudyDate(studyDate: string) {
   const [year, month, day] = studyDate.split('-').map(Number);
@@ -47,6 +53,9 @@ export default function StudyScreen() {
   const [studyMedia, setStudyMedia] = useState<StudyMedia[]>([]);
   const [studyMediaUrls, setStudyMediaUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextStudyCursor, setNextStudyCursor] = useState<StudyPageCursor | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -59,30 +68,25 @@ export default function StudyScreen() {
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState('');
   const [commentSending, setCommentSending] = useState(false);
+  const studyLoadGeneration = useRef(0);
 
   const loadStudies = useCallback(async (which: StudyFilter, includeUpcoming: boolean) => {
+    const generation = ++studyLoadGeneration.current;
     setLoading(true);
     setLoadError(null);
+    setLoadMoreError(null);
+    setLoadingMore(false);
+    setNextStudyCursor(null);
 
     try {
       const today = getSouthAfricaDate();
-      const todayQuery = supabase
-        .from('bible_studies')
-        .select('*')
-        .eq('status', 'published')
-        .eq('study_date', today)
-        .order('start_time', { ascending: true });
+      const visibleFilter: StudyFilter = which === 'upcoming' && includeUpcoming ? 'upcoming' : 'past';
+      const [todayResult, studiesResult] = await Promise.all([
+        getPublishedStudiesForToday(today),
+        getPublishedStudyPage({ filter: visibleFilter, today }),
+      ]);
 
-      const studyQuery = supabase
-        .from('bible_studies')
-        .select('*')
-        .eq('status', 'published');
-
-      const primaryQuery = which === 'upcoming' && includeUpcoming
-        ? studyQuery.gt('study_date', today).order('study_date', { ascending: true })
-        : studyQuery.lt('study_date', today).order('study_date', { ascending: false });
-
-      const [todayResult, studiesResult] = await Promise.all([todayQuery, primaryQuery]);
+      if (generation !== studyLoadGeneration.current) return;
 
       if (todayResult.error || studiesResult.error) {
         console.warn(
@@ -95,19 +99,51 @@ export default function StudyScreen() {
         return;
       }
 
-      const loadedTodayStudies = (todayResult.data as BibleStudy[]) || [];
-      const loadedStudies = (studiesResult.data as BibleStudy[]) || [];
-      setTodayStudies(loadedTodayStudies);
-      setStudies(loadedStudies);
+      setTodayStudies(todayResult.studies);
+      setStudies(studiesResult.studies);
+      setNextStudyCursor(studiesResult.nextCursor);
     } catch (error) {
+      if (generation !== studyLoadGeneration.current) return;
       console.warn('Unexpected error while loading Bible studies.', error);
       setTodayStudies([]);
       setStudies([]);
       setLoadError('We could not load Bible studies. Please try again.');
     } finally {
-      setLoading(false);
+      if (generation === studyLoadGeneration.current) setLoading(false);
     }
   }, []);
+
+  const loadMoreStudies = useCallback(async () => {
+    if (!nextStudyCursor || loadingMore) return;
+    const generation = studyLoadGeneration.current;
+    const visibleFilter: StudyFilter = filter === 'upcoming' && canSeeUpcoming ? 'upcoming' : 'past';
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    try {
+      const result = await getPublishedStudyPage({
+        filter: visibleFilter,
+        today: getSouthAfricaDate(),
+        cursor: nextStudyCursor,
+      });
+      if (generation !== studyLoadGeneration.current) return;
+      if (result.error) {
+        console.warn('Unable to load more Bible studies.', result.error.message);
+        setLoadMoreError('We could not load more studies. Please try again.');
+        return;
+      }
+      setStudies((current) => {
+        const existingIds = new Set(current.map((study) => study.id));
+        return [...current, ...result.studies.filter((study) => !existingIds.has(study.id))];
+      });
+      setNextStudyCursor(result.nextCursor);
+    } catch (error) {
+      if (generation !== studyLoadGeneration.current) return;
+      console.warn('Unexpected error while loading more Bible studies.', error);
+      setLoadMoreError('We could not load more studies. Please try again.');
+    } finally {
+      if (generation === studyLoadGeneration.current) setLoadingMore(false);
+    }
+  }, [canSeeUpcoming, filter, loadingMore, nextStudyCursor]);
 
   useEffect(() => {
     let isMounted = true;
@@ -478,6 +514,28 @@ export default function StudyScreen() {
               </Text>
             </View>
           )}
+
+          {nextStudyCursor || loadMoreError ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loadingMore }}
+              disabled={loadingMore}
+              onPress={() => void loadMoreStudies()}
+              style={styles.loadMoreButton}
+            >
+              {loadingMore ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.loadMoreButtonText}>
+                  {loadMoreError
+                    ? 'Retry loading studies'
+                    : filter === 'upcoming' && canSeeUpcoming
+                      ? 'Load more upcoming studies'
+                      : 'Load older studies'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ) : null}
         </ScrollView>
       )}
 
@@ -741,6 +799,24 @@ function makeStyles(colors: any, fonts: any) {
     retryButtonText: {
       color: colors.primary,
       fontWeight: '700',
+    },
+
+    loadMoreButton: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 12,
+      borderWidth: 1,
+      justifyContent: 'center',
+      marginTop: spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 10,
+    },
+
+    loadMoreButtonText: {
+      color: colors.primary,
+      fontWeight: '700',
+      textAlign: 'center',
     },
   });
 }

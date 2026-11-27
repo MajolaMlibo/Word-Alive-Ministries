@@ -43,7 +43,8 @@
     "web": "expo start --web",
     "verify:supabase": "node scripts/verify-supabase-connection.mjs",
     "audit:reading-references": "node scripts/audit-reading-references.cjs",
-    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-scripture-reference-validation.cjs && node scripts/test-scripture-reference-links.cjs && node scripts/test-multiple-reading-plans.cjs && node scripts/test-study-comments.cjs && node scripts/test-announcement-reads.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
+    "test:content-pagination": "node scripts/test-content-pagination.cjs",
+    "test:release": "tsc --noEmit && node scripts/test-content-pagination.cjs && node scripts/test-admin-reading-months.cjs && node scripts/test-scripture-reference-validation.cjs && node scripts/test-scripture-reference-links.cjs && node scripts/test-multiple-reading-plans.cjs && node scripts/test-study-comments.cjs && node scripts/test-announcement-reads.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
   },
   "private": true
 }
