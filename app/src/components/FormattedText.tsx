@@ -1,17 +1,35 @@
 import React from 'react';
 import { Linking, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { displayText } from './richText';
+import { tokenizeScriptureReferences } from '../services/scriptureReference';
 
 type Props = { text: string; styles: any; containerStyle?: any };
 
+function ScriptureTokens({ value, styles, navigation, textStyle }: { value: string; styles: any; navigation: any; textStyle?: any }) {
+  return <>{tokenizeScriptureReferences(value).map((token, tokenIndex) => token.reference ? (
+    <Text
+      accessibilityHint="Opens this passage in the Bible reader"
+      accessibilityLabel={`Open ${token.reference} in the Bible reader`}
+      accessibilityRole="link"
+      key={tokenIndex}
+      onPress={() => navigation.navigate('Bible', { scriptureReference: token.reference, scriptureLinkNonce: String(Date.now()) })}
+      style={[textStyle, styles.formattedLink]}
+    >
+      {token.text}
+    </Text>
+  ) : <Text key={tokenIndex} style={textStyle}>{token.text}</Text>)}</>;
+}
+
 function InlineText({ value, styles }: { value: string; styles: any }) {
+  const navigation = useNavigation<any>();
   const parts = value.split(/(\*\*[^*]+\*\*|_[^_]+_|\[[^\]]+\]\(https:\/\/[^)]+\))/g);
   return <Text style={styles.formattedText}>{parts.map((part, index) => {
-    if (/^\*\*[^*]+\*\*$/.test(part)) return <Text key={index} style={styles.formattedBold}>{part.slice(2, -2)}</Text>;
-    if (/^_[^_]+_$/.test(part)) return <Text key={index} style={styles.formattedItalic}>{part.slice(1, -1)}</Text>;
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <Text key={index} style={styles.formattedBold}><ScriptureTokens value={part.slice(2, -2)} styles={styles} navigation={navigation} textStyle={styles.formattedBold} /></Text>;
+    if (/^_[^_]+_$/.test(part)) return <Text key={index} style={styles.formattedItalic}><ScriptureTokens value={part.slice(1, -1)} styles={styles} navigation={navigation} textStyle={styles.formattedItalic} /></Text>;
     const linkMatch = part.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/);
     if (linkMatch) return <Text key={index} onPress={() => void Linking.openURL(linkMatch[2])} style={styles.formattedLink}>{linkMatch[1]}</Text>;
-    return <React.Fragment key={index}>{part}</React.Fragment>;
+    return <React.Fragment key={index}><ScriptureTokens value={part} styles={styles} navigation={navigation} /></React.Fragment>;
   })}</Text>;
 }
 

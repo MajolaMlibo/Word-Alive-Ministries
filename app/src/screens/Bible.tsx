@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { useRoute } from '@react-navigation/native';
 import { useAccessibility } from '../theme/AccessibilityContext';
 import { spacing } from '../theme/theme';
 import {
@@ -43,6 +44,11 @@ import {
   setBibleVerseBookmarks,
   setBibleVerseHighlights,
 } from '../services/bibleVerseSaveService';
+import {
+  BIBLE_BOOKS,
+  getChapterCount,
+  getFirstPassageFromScriptureReference,
+} from '../services/scriptureReference';
 
 type Tab = 'daily' | 'read';
 
@@ -78,25 +84,6 @@ const HIGHLIGHT_COLOR_BY_KEY = Object.fromEntries(
   BIBLE_HIGHLIGHT_OPTIONS.map((option) => [option.key, option.color])
 ) as Record<BibleHighlightColor, string>;
 
-const BIBLE_BOOKS = [
-  ['Genesis', 50], ['Exodus', 40], ['Leviticus', 27], ['Numbers', 36], ['Deuteronomy', 34],
-  ['Joshua', 24], ['Judges', 21], ['Ruth', 4], ['1 Samuel', 31], ['2 Samuel', 24],
-  ['1 Kings', 22], ['2 Kings', 25], ['1 Chronicles', 29], ['2 Chronicles', 36], ['Ezra', 10],
-  ['Nehemiah', 13], ['Esther', 10], ['Job', 42], ['Psalms', 150], ['Proverbs', 31],
-  ['Ecclesiastes', 12], ['Song of Solomon', 8], ['Isaiah', 66], ['Jeremiah', 52], ['Lamentations', 5],
-  ['Ezekiel', 48], ['Daniel', 12], ['Hosea', 14], ['Joel', 3], ['Amos', 9], ['Obadiah', 1],
-  ['Jonah', 4], ['Micah', 7], ['Nahum', 3], ['Habakkuk', 3], ['Zephaniah', 3], ['Haggai', 2],
-  ['Zechariah', 14], ['Malachi', 4], ['Matthew', 28], ['Mark', 16], ['Luke', 24], ['John', 21],
-  ['Acts', 28], ['Romans', 16], ['1 Corinthians', 16], ['2 Corinthians', 13], ['Galatians', 6],
-  ['Ephesians', 6], ['Philippians', 4], ['Colossians', 4], ['1 Thessalonians', 5],
-  ['2 Thessalonians', 3], ['1 Timothy', 6], ['2 Timothy', 4], ['Titus', 3], ['Philemon', 1],
-  ['Hebrews', 13], ['James', 5], ['1 Peter', 5], ['2 Peter', 3], ['1 John', 5], ['2 John', 1],
-  ['3 John', 1], ['Jude', 1], ['Revelation', 22],
-] as const;
-
-const getChapterCount = (book: string) =>
-  BIBLE_BOOKS.find(([name]) => name === book)?.[1] ?? 1;
-
 function parseReference(input: string) {
   const match = input.trim().match(/^(.*?)\s+(\d+)(?::(\d+))?$/);
 
@@ -111,28 +98,8 @@ function parseReference(input: string) {
   return { book: input.trim(), chapter: 1 };
 }
 
-function getFirstChapterFromReference(scriptureRef?: string) {
-  if (!scriptureRef) return null;
-
-  const match = scriptureRef
-    .trim()
-    .match(/^(.+?)\s+(\d+)(?::\d+)?(?:[-;].*)?$/);
-
-  if (!match) return null;
-
-  const matchingBook = BIBLE_BOOKS.find(
-    ([name]) => name.toLowerCase() === match[1].trim().toLowerCase()
-  );
-
-  if (!matchingBook) return null;
-
-  return {
-    book: matchingBook[0],
-    chapter: Math.min(Math.max(Number(match[2]), 1), matchingBook[1]),
-  };
-}
-
 export default function Bible() {
+  const route = useRoute<any>();
   const { colors, fonts } = useAccessibility();
   const styles = makeStyles(colors, fonts);
 
@@ -142,6 +109,20 @@ export default function Bible() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [linkedReference, setLinkedReference] = useState<string | null>(null);
+  const handledLinkRequest = useRef<string | null>(null);
+
+  useEffect(() => {
+    const reference = route.params?.scriptureReference;
+    const nonce = route.params?.scriptureLinkNonce;
+    const requestKey = typeof reference === 'string' ? `${reference}:${String(nonce ?? '')}` : null;
+    if (!requestKey || requestKey === handledLinkRequest.current) return;
+    if (!getFirstPassageFromScriptureReference(reference)) return;
+
+    handledLinkRequest.current = requestKey;
+    setLinkedReference(reference);
+    setTab('read');
+  }, [route.params?.scriptureLinkNonce, route.params?.scriptureReference]);
 
   const loadReading = useCallback(async () => {
     setLoading(true);
@@ -282,10 +263,13 @@ export default function Bible() {
       {tab === 'read' ? (
         <BibleReader
           key={
-            reading && !completed
+            linkedReference
+              ? `linked-reference-${linkedReference}`
+              : reading && !completed
               ? `daily-reading-${reading.id}`
               : 'personal-reading'
           }
+          directReference={linkedReference || undefined}
           dailyReadingReference={
             reading && !completed ? reading.scripture_ref : undefined
           }
@@ -361,23 +345,27 @@ export default function Bible() {
 }
 
 function BibleReader({
+  directReference,
   dailyReadingReference,
 }: {
+  directReference?: string;
   dailyReadingReference?: string;
 }) {
   const { colors, fonts, colorScheme } = useAccessibility();
-  const dailyReadingStart = getFirstChapterFromReference(dailyReadingReference);
-  const isGuidedDailyReading = Boolean(dailyReadingStart);
+  const directReferenceStart = getFirstPassageFromScriptureReference(directReference);
+  const dailyReadingStart = getFirstPassageFromScriptureReference(dailyReadingReference);
+  const initialReferenceStart = directReferenceStart ?? dailyReadingStart;
+  const isGuidedDailyReading = Boolean(dailyReadingStart) && !directReferenceStart;
 
   const [book, setBook] = useState<string>(
-    () => dailyReadingStart?.book ?? 'Genesis'
+    () => initialReferenceStart?.book ?? 'Genesis'
   );
-  const [chapter, setChapter] = useState(() => dailyReadingStart?.chapter ?? 1);
-  const [verse, setVerse] = useState<number | undefined>();
+  const [chapter, setChapter] = useState(() => initialReferenceStart?.chapter ?? 1);
+  const [verse, setVerse] = useState<number | undefined>(() => initialReferenceStart?.verse);
   const [input, setInput] = useState(
     () =>
-      dailyReadingStart
-        ? `${dailyReadingStart.book} ${dailyReadingStart.chapter}`
+      initialReferenceStart
+        ? `${initialReferenceStart.book} ${initialReferenceStart.chapter}${initialReferenceStart.verse ? `:${initialReferenceStart.verse}` : ''}`
         : 'Genesis'
   );
   const [passage, setPassage] = useState<any>(null);

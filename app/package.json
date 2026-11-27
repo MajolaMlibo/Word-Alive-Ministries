@@ -41,7 +41,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "verify:supabase": "node scripts/verify-supabase-connection.mjs",
-    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs"
+    "test:release": "tsc --noEmit && node scripts/test-admin-reading-months.cjs && node scripts/test-editor-bridge.cjs && node scripts/test-private-prayer-care.cjs && node scripts/test-scripture-cache.cjs && node scripts/test-scripture-reference-links.cjs"
   },
   "private": true
 }
