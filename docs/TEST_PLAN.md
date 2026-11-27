@@ -33,6 +33,22 @@ It is not a substitute for the read-only production report or staff review.
 The three `expo export` commands create artifacts; obtain owner approval before
 running them as part of a release audit.
 
+### Build 7 integration checks
+
+Run the complete local suite only after installing dependencies from the locked
+package file:
+
+```powershell
+npm ci
+npm run test:release
+```
+
+The suite includes reading-reference validation and reader links, optional-plan
+membership and the ministry-wide streak, named study comments, notice reads,
+study/saved-verse cursor paging, editor behaviour, private-care/RLS fixtures,
+and Bible cache behaviour. These are local fixtures, not production or native
+push verification. Do not run a build without separate owner approval.
+
 `verify:supabase` checks that the public Supabase URL and publishable key can
 reach Auth settings. It does not test member permissions or write database
 data.

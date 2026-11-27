@@ -265,19 +265,19 @@ upgrade still require verification.
 - [ ] Save a test stream as live, confirm only the subscribed phone receives the alert, and tap it from the background and after a cold start. Confirm Home opens with Watch live. End the stream before tapping another test alert and confirm Home reports it has ended. Editing an already-live stream should stay silent.
 - [ ] Publish one notice with Send push notification off, then another with it on. Expect one alert for the second notice only. Editing the published message should stay silent. Disable alerts or sign out, then verify later publications stay silent.
 - Delivery is best effort. Local tests capture outgoing payloads without contacting Expo. The initial sender does not automate Expo receipt polling, retry failed batches, or remove stale tokens from delivery receipts. Monitor during the pilot and add receipt handling before broad distribution.
-- `202611270002_harden_ministry_alerts.sql` is prepared and locally tested but
-  not applied. It prevents a published notice without `published_at` and
-  prevents untimed, future or expired notices from enqueueing a push. It makes
-  no data changes, but still needs explicit production approval and the native
-  credential/device checks above.
+- [x] On 27 November 2026, `202611270002_harden_ministry_alerts.sql` was
+  applied in `word-alive-prod` after live-result review and returned “Success.
+  No rows returned.” A read-only catalogue check confirmed the published-notice
+  timestamp trigger and alert sender exist. Native credential/device checks
+  above remain required before activating or relying on push delivery.
 
 ### Reading-reference integrity — 27 November 2026
 
-- [ ] Before Build 7, open Administration → Readings and resolve every item
-  under Reading checks → Current & upcoming. The app checks book names and
-  chapter bounds; use All active to review older records too. A new or changed
-  bad reference cannot be saved or published. An existing bad reference can be
-  archived if it is no longer needed.
+- [x] The live current-and-upcoming report returned 23 affected rows. The
+  project owner reports that all have been reviewed and corrected in the app
+  except the 29 December 2027 draft (`2 JOHN/ 3 JOHN 1/1`), which is awaiting
+  pastoral confirmation. Do not publish that entry until its intended reference
+  is confirmed.
 - Local source-plan audit found 25 structurally invalid or app-unresolvable
   references: 3 in the 2026 import and 22 in the 2027 draft import. On
   27 November, 23 of those dates are current or future. The two historic 2026
@@ -292,11 +292,13 @@ upgrade still require verification.
   correcting rows in Administration. It is read-only and returns no member
   data. This checkout cannot run it because production credentials are not
   available locally.
-- `202611270001_validate_daily_reading_references.sql` is prepared but has
-  not been applied. It prevents future direct database writes with an invalid
-  recognised book/chapter range while leaving existing rows reviewable. Obtain
-  explicit production approval before applying it. Exact verse counts still
-  require a final reader/provider check.
+- [x] On 27 November 2026,
+  `202611270001_validate_daily_reading_references.sql` was applied in
+  `word-alive-prod` after live-result review and returned “Success. No rows
+  returned.” A read-only verification confirmed that `Haggai 1-3` is rejected,
+  `Haggai 1-2` is accepted, and the trigger exists. It blocks future invalid
+  book/chapter writes while leaving legacy rows reviewable; exact verse counts
+  still require a final reader/provider check.
 - Android uses local version-code management. The audit worktree now reserves
   `versionCode` 7 for the next internal artifact; no build has been started.
 
@@ -304,4 +306,15 @@ upgrade still require verification.
 
 Mlibo confirmed all six iPhone Expo Go walkthrough checks: the complete Profile blessing, collapsed creation forms and timed Admin introduction, notice publication switch, draft search/spacing/editor, stream management under Notices, and Links/Members filters. Real remote delivery is pending. Expo Go deliberately hides the device opt-in switch.
 
-Continue from GitHub main after integrating PRs 73–78. Keep the original local checkout and its Expo owner change, private configuration and local files. Project owner Mlibo K. Majola, Expo account mlibo, Supabase word-alive-prod. Ask before production changes, credentials, spending or builds. Before Build 7 verify push setup and release checklist; Android and iOS require separate artifacts. Remaining feature decisions include automatic recurring streams, yearly main-plan streak with optional plans tracked separately, moderated study comments with delegated access, daily study notes, reading history, reference links and mention privacy.
+Continue from the Build 7 integration branch after its full local suite passes.
+Keep the original local checkout and its Expo owner change, private configuration
+and local files. Project owner Mlibo K. Majola, Expo account mlibo, Supabase
+word-alive-prod. GitHub pushes, production changes and credential changes are
+approved; do not start EAS, TestFlight, Google Play, or other builds until the
+owner gives separate approval. Apple Developer Program payment was made on 27
+November, but App Store Connect remains unavailable until Apple activates the
+individual membership. Google Play Console payment is planned for 28 November.
+Before any future Android/iOS test artifact, verify push setup and the release
+checklist; the platforms require separate artifacts. The public-store route
+should become an organisation membership once the ministry has its legal-entity
+D-U-N-S number and Apple approves the conversion.

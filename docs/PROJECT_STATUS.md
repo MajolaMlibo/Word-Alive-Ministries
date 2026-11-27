@@ -374,7 +374,29 @@ Editor and reported `Success. No rows returned`.
   substitute for physical Android testing.
 - The project owner approved build 5 as Pastor's first Android tester release.
   iOS testing is deliberately deferred to the final-release milestone because
-  the project does not currently have Apple Developer Program membership.
+  the project did not then have Apple Developer Program membership.
+
+## 27 November 2026 — Build 7 integration and store-account status
+
+- `202611270001_validate_daily_reading_references.sql` and
+  `202611270002_harden_ministry_alerts.sql` were applied to
+  `word-alive-prod` after the read-only live result was reviewed. Both returned
+  “Success. No rows returned”; read-only checks confirmed the reference guard,
+  announcement trigger, and alert sender are present.
+- The live reading report identified 23 current/upcoming rows. The owner reports
+  that all but the 29 December 2027 draft are corrected. The remaining
+  slash-delimited reference awaits pastoral confirmation and must stay a draft.
+- A local integration branch combines reading safeguards, Streams routing,
+  Scripture links, named immediate study comments, required/optional reading
+  plans with one ministry-wide streak, and cursor pagination for saved verses
+  and study history. It needs the full suite and physical-device checks before
+  any release artefact.
+- Apple Developer Program payment was made for an individual membership. App
+  Store Connect access remains pending Apple activation. Individual membership
+  would show the Account Holder’s legal name as the App Store seller; obtain the
+  ministry legal entity’s D-U-N-S number and request conversion before public
+  App Store distribution. Google Play Console payment is planned for 28
+  November. No EAS, TestFlight, Play Console, or other build is authorised yet.
 
 ## Known blockers
 
