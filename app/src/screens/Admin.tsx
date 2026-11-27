@@ -1090,7 +1090,7 @@ export default function AdminScreen({ registerMemberBack }: { registerMemberBack
       {section === 'studies' ? <StudiesManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'plans' ? <PlansManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'readings' ? <ReadingsManager administratorId={administratorId} styles={styles} scrollTo={y => scroll.current?.scrollTo({ y, animated: true })} /> : null}
-      {section === 'announcements' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
+      {section === 'streams' ? <StreamsManager administratorId={administratorId} styles={styles} /> : null}
       {section === 'members' && viewMembers ? <MembersManager canEdit={manageMembers} registerMemberBack={registerMemberBack} styles={styles} ownerId={administratorId} onSelfChange={checkAccess} /> : null}
       {section === 'links' ? <LinksManager administratorId={administratorId} styles={styles} /> : null}
     </ScrollView>
