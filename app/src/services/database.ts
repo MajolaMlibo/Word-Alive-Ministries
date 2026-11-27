@@ -9,6 +9,8 @@
 export type AppRole = 'pastor' | 'admin' | 'editor' | 'member';
 export type ContentStatus = 'draft' | 'published' | 'archived';
 export type PrayerRequestStatus = 'pending' | 'reviewed' | 'closed';
+export type ReadingPlanEnrollmentMode = 'required' | 'optional';
+export type ReadingPlanMembershipStatus = 'active' | 'left';
 
 export interface Profile {
   id: string;
@@ -39,7 +41,18 @@ export interface ReadingPlan {
   plan_year: number;
   description: string | null;
   status: ContentStatus;
+  enrollment_mode: ReadingPlanEnrollmentMode;
   created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReadingPlanMembership {
+  plan_id: string;
+  user_id: string;
+  status: ReadingPlanMembershipStatus;
+  joined_at: string;
+  left_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,6 +70,7 @@ export interface DailyReading {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  reading_plans?: Pick<ReadingPlan, 'id' | 'name' | 'plan_year' | 'status' | 'enrollment_mode'> | null;
 }
 
 export type BibleHighlightColor = 'gold' | 'green' | 'blue' | 'pink';

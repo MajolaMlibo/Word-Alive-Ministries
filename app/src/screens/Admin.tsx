@@ -28,6 +28,7 @@ import {
   LiveStream,
   MinistryLink,
   ReadingPlan,
+  ReadingPlanEnrollmentMode,
   StudyMedia,
 } from '../services/database';
 import {
@@ -64,6 +65,7 @@ import { spacing } from '../theme/theme';
 type AdminSection = 'prayer' | 'announcements' | 'studies' | 'plans' | 'readings' | 'streams' | 'links' | 'members';
 
 const CONTENT_STATUSES: ContentStatus[] = ['draft', 'published', 'archived'];
+const PLAN_ENROLLMENT_MODES: ReadingPlanEnrollmentMode[] = ['required', 'optional'];
 const SECTIONS: { key: AdminSection; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'prayer', label: 'Prayer', icon: 'heart-outline' },
   { key: 'announcements', label: 'Notices', icon: 'megaphone-outline' },
@@ -153,6 +155,31 @@ function ContentStatusPicker({
       ))}
     </View>
   );
+}
+
+function PlanEnrollmentModePicker({
+  value,
+  onChange,
+  disabled,
+  styles,
+}: {
+  value: ReadingPlanEnrollmentMode;
+  onChange: (value: ReadingPlanEnrollmentMode) => void;
+  disabled?: boolean;
+  styles: any;
+}) {
+  return <View style={styles.statusPicker}>
+    {PLAN_ENROLLMENT_MODES.map((mode) => <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ selected: value === mode, disabled }}
+      disabled={disabled}
+      key={mode}
+      onPress={() => onChange(mode)}
+      style={[styles.statusOption, value === mode && styles.statusOptionActive, disabled && styles.disabledButton]}
+    >
+      <Text style={[styles.statusOptionText, value === mode && styles.statusOptionTextActive]}>{mode === 'required' ? 'Required' : 'Optional'}</Text>
+    </TouchableOpacity>)}
+  </View>;
 }
 
 function Field({
@@ -607,7 +634,7 @@ function StudiesManager({ administratorId, styles }: { administratorId: string; 
 }
 
 function PlansManager({ administratorId, styles }: { administratorId: string; styles: any }) {
-  const blank = () => ({ name: '', year: '', description: '', status: 'draft' as ContentStatus });
+  const blank = () => ({ name: '', year: '', description: '', status: 'draft' as ContentStatus, enrollmentMode: 'required' as ReadingPlanEnrollmentMode });
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [form, setForm] = useState(blank);
   const [draftNumber, setDraftNumber] = useState(0);
@@ -622,16 +649,21 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
   }, []);
   useEffect(() => { void load(); }, [load]);
   const reset = () => { setDraftNumber(n => n + 1); setEditing(null); setForm(blank()); };
-  const edit = (plan: ReadingPlan) => { setEditing(plan); setForm({ name: plan.name, year: String(plan.plan_year), description: plan.description || '', status: plan.status }); };
+  const edit = (plan: ReadingPlan) => { setEditing(plan); setForm({ name: plan.name, year: String(plan.plan_year), description: plan.description || '', status: plan.status, enrollmentMode: plan.enrollment_mode }); };
   const save = async () => {
     const year = Number(form.year);
     if (!form.name.trim() || !Number.isInteger(year) || year < 2000 || year > 2100) {
       Alert.alert('Check plan details', 'A name and year between 2000 and 2100 are required.'); return;
     }
     setSaving(true);
-    const { plan, error } = await saveReadingPlan({ name: form.name, planYear: year, description: toOptional(form.description), status: form.status }, administratorId, editing?.id);
+    const { plan, error } = await saveReadingPlan({ name: form.name, planYear: year, description: toOptional(form.description), status: form.status, enrollmentMode: form.enrollmentMode }, administratorId, editing?.id);
     setSaving(false);
-    if (error || !plan) { Alert.alert('Unable to save plan', 'Plan names must be unique within the same year.'); return; }
+    if (error || !plan) {
+      Alert.alert('Unable to save plan', error?.message?.includes('Archive a published reading plan')
+        ? 'Published plans keep their member-access setting. Archive this plan first, then save the access change.'
+        : 'Plan names must be unique within the same year.');
+      return;
+    }
     setPlans((current) => [plan, ...current.filter((item) => item.id !== plan.id)].sort((a, b) => b.plan_year - a.plan_year));
     reset();
   };
@@ -640,11 +672,15 @@ function PlansManager({ administratorId, styles }: { administratorId: string; st
       <Field label="Plan name" value={form.name} onChangeText={(name) => setForm(current => ({ ...current, name }))} styles={styles} />
       <Field label="Plan year" value={form.year} onChangeText={(year) => setForm(current => ({ ...current, year }))} keyboardType="numeric" placeholder="2027" styles={styles} />
       <Field label="Description (optional)" value={form.description} onChangeText={(description) => setForm(current => ({ ...current, description }))} multiline documentId={editing?.id || 'new-reading-plan-' + draftNumber} styles={styles} />
+      <Text style={styles.fieldLabel}>Member access</Text>
+      <PlanEnrollmentModePicker value={form.enrollmentMode} onChange={(enrollmentMode) => setForm(current => ({ ...current, enrollmentMode }))} disabled={editing?.status === 'published'} styles={styles} />
+      <Text style={styles.helperText}>{form.enrollmentMode === 'required' ? 'Required plans appear for every member and cannot be left.' : 'Optional plans appear in Calendar search; members choose whether to join them.'}</Text>
+      {editing?.status === 'published' ? <Text style={styles.helperText}>Published plans keep this setting. Archive the plan before changing it.</Text> : null}
       <Text style={styles.fieldLabel}>Status</Text><ContentStatusPicker value={form.status} onChange={(status) => setForm(current => ({ ...current, status }))} styles={styles} />
       <ContentActions saving={saving} editing={Boolean(editing)} onSave={() => void save()} onCancel={reset} styles={styles} />
     </EditorCard>
     <Text style={styles.listTitle}>Reading plans</Text>
-    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : plans.length ? plans.map((plan) => <ContentListCard key={plan.id} title={`${plan.name} (${plan.plan_year})`} subtitle={titleCase(plan.status)} onEdit={() => edit(plan)} onDelete={undefined} styles={styles} />) : <EmptyState icon="list-outline" message="No reading plans found." styles={styles} />}
+    {loading ? <ActivityIndicator color={styles.primaryColor} size="large" style={styles.loading} /> : plans.length ? plans.map((plan) => <ContentListCard key={plan.id} title={`${plan.name} (${plan.plan_year})`} subtitle={`${titleCase(plan.status)} · ${plan.enrollment_mode === 'required' ? 'Required' : 'Optional'}`} onEdit={() => edit(plan)} onDelete={undefined} styles={styles} />) : <EmptyState icon="list-outline" message="No reading plans found." styles={styles} />}
   </View>;
 }
 
@@ -741,7 +777,7 @@ function ReadingsManager({ administratorId, styles, scrollTo }: {
     setSaving(true);
     const { reading, error } = await saveDailyReading({ planId: form.planId, dayNumber, scheduledDate: form.date, scriptureRef: form.scripture, reflection: toOptional(form.reflection), audioUrl: toOptional(form.audioUrl), status: form.status, publishedAt: editing?.published_at || null }, administratorId, editing?.id);
     setSaving(false);
-    if (error || !reading) { Alert.alert('Unable to save reading', error?.message?.includes('Publish the reading plan') ? 'Publish the year plan first, or save the reading as a draft.' : 'Check the day number and date. Only one reading across all plans can be published for a date.'); return; }
+    if (error || !reading) { Alert.alert('Unable to save reading', error?.message?.includes('Publish the reading plan') ? 'Publish the year plan first, or save the reading as a draft.' : 'Check the day number and date. Each plan can have one reading per date.'); return; }
     revealId.current = reading.id;
     setLoading(true);
     setMonth(Number(reading.scheduled_date.slice(5, 7)) - 1);

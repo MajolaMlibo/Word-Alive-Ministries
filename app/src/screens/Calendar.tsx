@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FormattedText from '../components/FormattedText';
+import ReadingPlanPicker from '../components/ReadingPlanPicker';
 import { supabase } from '../services/supabase';
 import { BibleStudy, DailyReading } from '../services/database';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
@@ -194,7 +195,7 @@ export default function CalendarScreen() {
           .order('study_date', { ascending: true }),
         supabase
           .from('daily_readings')
-          .select('*, reading_plans!inner(status)')
+          .select('*, reading_plans!inner(id, name, plan_year, status, enrollment_mode)')
           .eq('reading_plans.status', 'published')
           .eq('status', 'published')
           .gte('scheduled_date', start)
@@ -249,14 +250,19 @@ export default function CalendarScreen() {
     [readings]
   );
   const readingsByDate = useMemo(
-    () => new Map(readings.map((reading) => [reading.scheduled_date, reading])),
+    () => readings.reduce((grouped, reading) => {
+      const forDate = grouped.get(reading.scheduled_date) || [];
+      forDate.push(reading);
+      grouped.set(reading.scheduled_date, forDate);
+      return grouped;
+    }, new Map<string, DailyReading[]>()),
     [readings]
   );
 
   const selectedISO = toISO(year, month, selectedDay);
 
   const dayEvents = events.filter((e) => e.study_date === selectedISO);
-  const selectedReading = readingsByDate.get(selectedISO) || null;
+  const selectedReadings = readingsByDate.get(selectedISO) || [];
 
   const isToday = (day: number) =>
     day === today.getDate() &&
@@ -303,6 +309,8 @@ export default function CalendarScreen() {
           Align and Prosper
         </Text>
       </View>
+
+      <ReadingPlanPicker onMembershipChanged={loadCalendarContent} />
 
       {/* MONTH CARD */}
       <View style={styles.calendarCard}>
@@ -470,14 +478,14 @@ export default function CalendarScreen() {
             </View>
           ) : null}
 
-          {selectedReading ? (
-            <View style={styles.readingCard}>
+          {selectedReadings.map((selectedReading) => (
+            <View key={selectedReading.id} style={styles.readingCard}>
               <View style={styles.readingIcon}>
                 <Ionicons name="book" size={21} color={colors.primary} />
               </View>
               <View style={styles.readingContent}>
                 <Text style={styles.readingLabel}>
-                  {selectedReading.scheduled_date.slice(0, 4)} Reading Plan
+                  {selectedReading.reading_plans?.name || `${selectedReading.scheduled_date.slice(0, 4)} Reading Plan`}
                 </Text>
                 <Text style={styles.readingReference}>
                   {selectedReading.scripture_ref}
@@ -487,7 +495,7 @@ export default function CalendarScreen() {
                 </Text>
               </View>
             </View>
-          ) : null}
+          ))}
 
           {dayEvents.length ? (
             <View style={styles.studyNotesSection}>
@@ -507,7 +515,7 @@ export default function CalendarScreen() {
             </View>
           ) : null}
 
-          {!selectedReading && !dayEvents.length ? (
+          {!selectedReadings.length && !dayEvents.length ? (
             <View style={styles.emptyCard}>
               <Ionicons
                 name="calendar-clear-outline"
