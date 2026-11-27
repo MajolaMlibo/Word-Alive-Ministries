@@ -1028,7 +1028,9 @@ function makeStyles(
     primaryButton: {
       backgroundColor: colors.primary,
       borderRadius: 14,
+      minHeight: 46,
       paddingVertical: 14,
+      paddingHorizontal: spacing.md,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
@@ -1038,7 +1040,10 @@ function makeStyles(
       color: '#FFF',
       fontWeight: '700',
       fontSize: fonts.body,
+      flexShrink: 1,
+      lineHeight: fonts.body * 1.3,
       marginRight: 6,
+      textAlign: 'center',
     },
 
     quickTitle: {

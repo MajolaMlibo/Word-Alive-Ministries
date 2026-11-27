@@ -48,7 +48,6 @@ import {
 import {
   BIBLE_BOOKS,
   getChapterCount,
-  getFirstChapterFromScriptureReference,
   getFirstPassageFromScriptureReference,
   validateScriptureReference,
 } from '../services/scriptureReference';
@@ -361,7 +360,7 @@ function BibleReader({
     ? validateScriptureReference(dailyReadingReference)
     : null;
   const dailyReadingStart = dailyReferenceValidation?.isValid
-    ? getFirstChapterFromScriptureReference(dailyReadingReference)
+    ? getFirstPassageFromScriptureReference(dailyReadingReference)
     : null;
   const dailyPassages = dailyReferenceValidation?.isValid
     ? dailyReferenceValidation.reference.passages

@@ -6,8 +6,8 @@ import { useAccessibility } from '../theme/AccessibilityContext';
 function Action({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
   const { colors } = useAccessibility();
   return <TouchableOpacity accessibilityRole="button" disabled={disabled} onPress={onPress}
-    style={{ paddingVertical: 12, opacity: disabled ? 0.6 : 1 }}>
-    <Text style={{ color: colors.text, fontWeight: '700' }}>{label}</Text>
+    style={{ alignItems: 'center', borderColor: colors.primary, borderRadius: 12, borderWidth: 1, justifyContent: 'center', minHeight: 44, opacity: disabled ? 0.6 : 1, paddingHorizontal: 16, paddingVertical: 10, width: '100%' }}>
+    <Text style={{ color: colors.primary, flexShrink: 1, fontWeight: '700', lineHeight: 20, textAlign: 'center' }}>{label}</Text>
   </TouchableOpacity>;
 }
 
