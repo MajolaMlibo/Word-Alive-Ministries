@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import FormattedText from '../components/FormattedText';
 import { supabase } from '../services/supabase';
-import { BibleStudy, StudyMedia } from '../services/database';
+import { BibleStudy, StudyComment, StudyMedia } from '../services/database';
 import { getStudyMedia, getStudyMediaUrls } from '../services/studyMediaService';
+import { getStudyCommentPage, StudyCommentCursor, submitStudyComment } from '../services/studyCommentService';
 import { getSouthAfricaDate } from '../services/dailyReadingService';
 import { getCurrentUserRole, isAdminRole } from '../services/roleService';
 import { useAccessibility } from '../theme/AccessibilityContext';
@@ -50,6 +52,13 @@ export default function StudyScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [canSeeUpcoming, setCanSeeUpcoming] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [comments, setComments] = useState<StudyComment[]>([]);
+  const [commentsCursor, setCommentsCursor] = useState<StudyCommentCursor | null>(null);
+  const [commentsHaveMore, setCommentsHaveMore] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [commentSending, setCommentSending] = useState(false);
 
   const loadStudies = useCallback(async (which: StudyFilter, includeUpcoming: boolean) => {
     setLoading(true);
@@ -156,9 +165,68 @@ export default function StudyScreen() {
     return () => { active = false; };
   }, [expandedId, mediaAttempt]);
 
+  useEffect(() => {
+    let active = true;
+    setComments([]);
+    setCommentsCursor(null);
+    setCommentsHaveMore(false);
+    setCommentsError(null);
+    setCommentDraft('');
+
+    if (!expandedId) return () => { active = false; };
+
+    setCommentsLoading(true);
+    void (async () => {
+      const result = await getStudyCommentPage(expandedId);
+      if (!active) return;
+      setCommentsLoading(false);
+      if (result.error) {
+        console.warn('Unable to load study comments.', result.error.message);
+        setCommentsError('Comments are unavailable right now. Please try again.');
+        return;
+      }
+      setComments(result.items);
+      setCommentsCursor(result.nextCursor);
+      setCommentsHaveMore(result.hasMore);
+    })();
+
+    return () => { active = false; };
+  }, [expandedId]);
+
+  const loadMoreComments = async () => {
+    if (!expandedId || !commentsCursor || commentsLoading) return;
+    setCommentsLoading(true);
+    const result = await getStudyCommentPage(expandedId, commentsCursor);
+    setCommentsLoading(false);
+    if (result.error) {
+      console.warn('Unable to load more study comments.', result.error.message);
+      setCommentsError('More comments could not be loaded. Please try again.');
+      return;
+    }
+    setComments((current) => [...current, ...result.items.filter((item) => !current.some((known) => known.id === item.id))]);
+    setCommentsCursor(result.nextCursor);
+    setCommentsHaveMore(result.hasMore);
+  };
+
+  const sendComment = async () => {
+    if (!expandedId || !commentDraft.trim() || commentSending) return;
+    setCommentSending(true);
+    setCommentsError(null);
+    const result = await submitStudyComment(expandedId, commentDraft);
+    setCommentSending(false);
+    if (result.error || !result.comment) {
+      console.warn('Unable to submit study comment.', result.error?.message);
+      setCommentsError(result.error?.message || 'Your comment could not be posted. Please try again.');
+      return;
+    }
+    setComments((current) => [result.comment!, ...current.filter((item) => item.id !== result.comment!.id)]);
+    setCommentDraft('');
+  };
+
   const renderStudyCard = (study: BibleStudy) => {
     const open = expandedId === study.id;
     const mediaForStudy = studyMedia.filter((item) => item.study_id === study.id);
+    const commentsAvailable = study.status === 'published' && study.study_date <= getSouthAfricaDate();
 
     return (
       <View key={study.id} style={styles.card}>
@@ -240,6 +308,57 @@ export default function StudyScreen() {
                 <Text style={styles.locationText}>{study.location_or_url}</Text>
               </View>
             ) : null}
+
+            <View style={styles.commentsSection}>
+              <Text style={styles.detailTitle}>Study comments</Text>
+              {commentsAvailable ? (
+                <>
+                  <Text style={styles.commentsHint}>Comments are posted with your account name. Keep the discussion kind and relevant to the study.</Text>
+                  <TextInput
+                    accessibilityLabel="Write a study comment"
+                    editable={!commentSending}
+                    maxLength={1200}
+                    onChangeText={setCommentDraft}
+                    placeholder="Share a thought from this study"
+                    placeholderTextColor={colors.textMuted}
+                    style={styles.commentInput}
+                    value={commentDraft}
+                  />
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: !commentDraft.trim() || commentSending }}
+                    disabled={!commentDraft.trim() || commentSending}
+                    onPress={() => void sendComment()}
+                    style={[styles.commentSubmit, (!commentDraft.trim() || commentSending) && styles.commentSubmitDisabled]}
+                  >
+                    <Ionicons color="#FFFFFF" name="chatbubble-ellipses-outline" size={18} />
+                    <Text style={styles.commentSubmitText}>{commentSending ? 'Posting…' : 'Post comment'}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <Text style={styles.commentsHint}>Comments open when this study is published and takes place.</Text>
+              )}
+
+              {commentsError ? <Text style={styles.commentsError}>{commentsError}</Text> : null}
+              {commentsLoading && comments.length === 0 ? <ActivityIndicator color={colors.primary} style={styles.commentsLoading} /> : null}
+              {comments.map((comment) => (
+                <View key={comment.id} style={styles.commentCard}>
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentAuthor}>{comment.author_name}</Text>
+                    <Text style={styles.commentDate}>{new Date(comment.created_at).toLocaleDateString('en-GB')}</Text>
+                  </View>
+                  {comment.is_hidden ? (
+                    <Text style={styles.commentHidden}>This comment is hidden by the ministry team.</Text>
+                  ) : <Text style={styles.commentBody}>{comment.body}</Text>}
+                </View>
+              ))}
+              {!commentsLoading && commentsAvailable && comments.length === 0 && !commentsError ? <Text style={styles.commentsHint}>Be the first to comment.</Text> : null}
+              {commentsHaveMore ? (
+                <TouchableOpacity accessibilityRole="button" onPress={() => void loadMoreComments()} style={styles.commentsMore}>
+                  <Text style={styles.commentsMoreText}>{commentsLoading ? 'Loading…' : 'Load older comments'}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           </View>
         )}
       </View>
@@ -591,6 +710,23 @@ function makeStyles(colors: any, fonts: any) {
       flex: 1,
       marginLeft: spacing.xs,
     },
+
+    commentsSection: { borderTopColor: colors.borderSoft, borderTopWidth: 1, marginTop: spacing.lg, paddingTop: spacing.md },
+    commentsHint: { color: colors.textMuted, fontSize: fonts.caption, lineHeight: fonts.caption * 1.5, marginBottom: spacing.sm },
+    commentsError: { color: colors.danger, fontSize: fonts.caption, lineHeight: fonts.caption * 1.4, marginTop: spacing.sm },
+    commentsLoading: { marginVertical: spacing.sm },
+    commentInput: { borderColor: colors.borderSoft, borderRadius: 12, borderWidth: 1, color: colors.text, fontSize: fonts.body, minHeight: 46, paddingHorizontal: spacing.sm },
+    commentSubmit: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', marginTop: spacing.sm, minHeight: 44, paddingHorizontal: spacing.md },
+    commentSubmitDisabled: { opacity: 0.55 },
+    commentSubmitText: { color: '#FFFFFF', fontSize: fonts.body, fontWeight: '700', marginLeft: spacing.xs },
+    commentCard: { backgroundColor: colors.background, borderRadius: 12, marginTop: spacing.sm, padding: spacing.sm },
+    commentHeader: { alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between' },
+    commentAuthor: { color: colors.text, flex: 1, fontSize: fonts.caption, fontWeight: '800', paddingRight: spacing.sm },
+    commentDate: { color: colors.textMuted, fontSize: fonts.caption },
+    commentBody: { color: colors.text, fontSize: fonts.body, lineHeight: fonts.body * 1.45, marginTop: 3 },
+    commentHidden: { color: colors.textMuted, fontSize: fonts.caption, fontStyle: 'italic', marginTop: 3 },
+    commentsMore: { alignItems: 'center', borderColor: colors.primary, borderRadius: 10, borderWidth: 1, marginTop: spacing.sm, paddingVertical: 9 },
+    commentsMoreText: { color: colors.primary, fontSize: fonts.caption, fontWeight: '700' },
 
     retryButton: {
       alignItems: 'center',

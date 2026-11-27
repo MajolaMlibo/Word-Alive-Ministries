@@ -104,6 +104,29 @@ export interface BibleStudy {
   updated_at: string;
 }
 
+export type StudyCommentStatus = 'visible' | 'hidden';
+
+export interface StudyComment {
+  id: string;
+  study_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  is_own: boolean;
+  is_hidden: boolean;
+}
+
+export interface StudyCommentModerationItem {
+  id: string;
+  study_id: string;
+  study_name: string;
+  study_date: string;
+  author_name: string;
+  body: string;
+  status: StudyCommentStatus;
+  created_at: string;
+}
+
 export interface StudyMedia {
   upload_pending: boolean;
   id: string;
